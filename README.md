@@ -28,20 +28,23 @@ npm install -g gh-ci-artifacts
 ## Quick Start
 
 ```bash
-# Download artifacts for a PR
-gh-ci-artifacts owner/repo 123
+# Download artifacts for a PR (from current repo)
+gh-ci-artifacts 123
+
+# Specify a different repository
+gh-ci-artifacts 123 owner/repo
 
 # With custom output directory
-gh-ci-artifacts owner/repo 123 --output-dir ./ci-data
+gh-ci-artifacts 123 --output-dir ./ci-data
 
 # Dry run to see what would be downloaded
-gh-ci-artifacts owner/repo 123 --dry-run
+gh-ci-artifacts 123 --dry-run
 
 # Resume interrupted download
-gh-ci-artifacts owner/repo 123 --resume
+gh-ci-artifacts 123 --resume
 
 # Enable debug logging
-gh-ci-artifacts owner/repo 123 --debug
+gh-ci-artifacts 123 --debug
 ```
 
 ## Configuration
@@ -172,11 +175,11 @@ Array<{
 ## CLI Options
 
 ```
-Usage: gh-ci-artifacts [options] <repo> <pr>
+Usage: gh-ci-artifacts [options] <pr> [repo]
 
 Arguments:
-  repo                     Repository in owner/repo format
   pr                       Pull request number
+  repo                     Repository in owner/repo format (defaults to current repo)
 
 Options:
   -V, --version            output the version number
@@ -197,8 +200,8 @@ Options:
 import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 
-// Download artifacts
-execSync('gh-ci-artifacts owner/repo 123', { stdio: 'inherit' });
+// Download artifacts (uses current repo)
+execSync('gh-ci-artifacts 123', { stdio: 'inherit' });
 
 // Load summary for analysis
 const summary = JSON.parse(

@@ -20,6 +20,20 @@ export function checkGhAuth(): void {
   }
 }
 
+export function getCurrentRepo(): string {
+  try {
+    const result = execSync('gh repo view --json nameWithOwner -q .nameWithOwner', {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    return result.trim();
+  } catch (error) {
+    throw new Error(
+      'Could not detect current repository. Either provide owner/repo argument or run from within a git repository.'
+    );
+  }
+}
+
 export function validateGhSetup(): void {
   checkGhCli();
   checkGhAuth();

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { loadConfig, mergeConfig, getOutputDir } from './config.js';
-import { validateGhSetup } from './utils/gh.js';
+import { validateGhSetup, getCurrentRepo } from './utils/gh.js';
 import { Logger } from './utils/logger.js';
 import { downloadArtifacts } from './downloader.js';
 import { extractLogs } from './log-extractor.js';
@@ -15,20 +15,23 @@ program
   .name('gh-ci-artifacts')
   .description('Download and parse GitHub Actions CI artifacts and logs for LLM analysis')
   .version('0.1.0')
-  .argument('<repo>', 'Repository in owner/repo format')
   .argument('<pr>', 'Pull request number', parseInt)
+  .argument('[repo]', 'Repository in owner/repo format (defaults to current repo)')
   .option('-o, --output-dir <dir>', 'Output directory')
   .option('--max-retries <count>', 'Maximum retry attempts', parseInt)
   .option('--retry-delay <seconds>', 'Retry delay in seconds', parseInt)
   .option('--resume', 'Resume incomplete/failed downloads')
   .option('--debug', 'Enable debug logging')
   .option('--dry-run', 'Show what would be downloaded without downloading')
-  .action(async (repo: string, pr: number, options) => {
+  .action(async (pr: number, repo: string | undefined, options) => {
     const logger = new Logger(options.debug);
 
     try {
       logger.info('Validating GitHub CLI setup...');
       validateGhSetup();
+
+      // Use current repo if not specified
+      const targetRepo = repo || getCurrentRepo();
 
       const fileConfig = loadConfig();
       const config = mergeConfig(fileConfig, {
@@ -39,7 +42,7 @@ program
 
       const outputDir = getOutputDir(config, pr);
 
-      logger.info(`Repository: ${repo}`);
+      logger.info(`Repository: ${targetRepo}`);
       logger.info(`Pull Request: #${pr}`);
       logger.info(`Output directory: ${outputDir}`);
       logger.info(`Max retries: ${config.maxRetries}`);
@@ -55,7 +58,7 @@ program
 
       logger.info('\n=== Downloading artifacts ===');
       const result = await downloadArtifacts(
-        repo,
+        targetRepo,
         pr,
         outputDir,
         config,
@@ -81,7 +84,7 @@ program
       if (result.runsWithoutArtifacts.length > 0 && !options.dryRun) {
         logger.info(`\n=== Extracting logs for ${result.runsWithoutArtifacts.length} runs without artifacts ===`);
         logResult = await extractLogs(
-          repo,
+          targetRepo,
           result.runsWithoutArtifacts,
           outputDir,
           logger
@@ -131,7 +134,7 @@ program
         logger.info('\n=== Generating summary ===');
         const summary = generateSummary(
           {
-            repo,
+            repo: targetRepo,
             pr,
             headSha: result.headSha,
             inventory: result.inventory,
