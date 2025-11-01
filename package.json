@@ -20,7 +20,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "tsc --noEmit",
-    "prepublishOnly": "npm run build && npm test"
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test"
   },
   "keywords": ["github", "actions", "ci", "artifacts", "testing", "llm", "claude", "playwright", "jest"],
   "author": "John Chilton",
@@ -37,15 +38,15 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
-    "@types/node": "^24.9.2",
     "@vitest/coverage-v8": "^4.0.6",
     "tsx": "^4.20.6",
-    "typescript": "^5.9.3",
     "vitest": "^4.0.6"
   },
   "dependencies": {
+    "@types/node": "^24.9.2",
     "cheerio": "^1.1.2",
     "commander": "^14.0.2",
-    "junit-xml-parser": "^0.0.3"
+    "junit-xml-parser": "^0.0.3",
+    "typescript": "^5.9.3"
   }
 }
