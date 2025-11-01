@@ -1,0 +1,36 @@
+{
+  "name": "gh-ci-artifacts",
+  "version": "0.1.0",
+  "description": "Download and parse GitHub Actions CI artifacts and logs for LLM analysis",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "gh-ci-artifacts": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": ["github", "actions", "ci", "artifacts", "testing", "llm"],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.9.2",
+    "@vitest/coverage-v8": "^4.0.6",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.6"
+  },
+  "dependencies": {
+    "cheerio": "^1.1.2",
+    "commander": "^14.0.2",
+    "junit-xml-parser": "^0.0.3"
+  }
+}

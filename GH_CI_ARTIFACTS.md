@@ -102,14 +102,15 @@
 - Performance/load testing
 - Cross-platform CLI behavior (assume POSIX-compliant shells)
 
-### Phase 1: Core CLI scaffold
-- Init TypeScript package (`gh-ci-artifacts`, Node 18+)
-- CLI entry: `gh-ci-artifacts <owner>/<repo> <pr-number> [--output-dir <dir>]`
-- Config file support (`.gh-ci-artifacts.json` in current directory only): `outputDir`, `defaultRepo`
-- Default output: `./.gh-ci-artifacts/<pr-number>/`
-- Validate `gh` CLI installed and authenticated
-- Setup progress logging to stderr
-- Add `--resume` flag: Resume incomplete/failed downloads for an existing PR (skip already downloaded artifacts, retry failed ones)
+### Phase 1: Core CLI scaffold ✅ COMPLETE
+- ✅ Init TypeScript package (`gh-ci-artifacts`, Node 18+)
+- ✅ CLI entry: `gh-ci-artifacts <owner>/<repo> <pr-number> [--output-dir <dir>]`
+- ✅ Config file support (`.gh-ci-artifacts.json` in current directory only): `outputDir`, `defaultRepo`
+- ✅ Default output: `./.gh-ci-artifacts/<pr-number>/`
+- ✅ Validate `gh` CLI installed and authenticated
+- ✅ Setup progress logging to stderr
+- ✅ Add `--resume` flag: Resume incomplete/failed downloads for an existing PR (skip already downloaded artifacts, retry failed ones)
+- ✅ Unit tests for config parsing (10 tests passing)
 
 ### Phase 2: Artifact inventory & download
 - Fetch PR head SHA (always target latest): `gh pr view <pr> --json headRefOid`
