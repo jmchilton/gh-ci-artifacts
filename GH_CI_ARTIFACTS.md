@@ -21,20 +21,108 @@
 
 ## Iterative Implementation Plan
 
+### Phase 0.5: Testing Strategy
+
+**Test framework:** Vitest (fast, TypeScript-native, Jest-compatible API)
+
+**Unit tests (high coverage target: 80%+):**
+- **Config parsing** (`src/config.ts`)
+  - Valid/invalid `.gh-ci-artifacts.json` handling
+  - CLI arg override behavior
+  - Default value resolution
+- **Artifact type detection** (`src/detectors/`)
+  - Filename pattern matching (playwright, jest, pytest, junit, eslint, etc.)
+  - Content-based detection fallbacks
+  - Binary file detection
+  - Test fixtures: Sample HTML/JSON/XML/binary files in `test/fixtures/artifacts/`
+- **HTML parsers** (`src/parsers/html/`)
+  - Playwright HTML reporter JSON extraction (`data-jsonblob` attribute)
+  - pytest-html parsing
+  - Test fixtures: `test/fixtures/html/` with real-world HTML reports
+- **Linter extraction** (`src/parsers/linters/`)
+  - Log pattern matching for eslint, prettier, ruff, flake8, tsc
+  - Output boundary detection
+  - Test fixtures: `test/fixtures/logs/` with sample CI logs
+- **Summary generation** (`src/summary.ts`)
+  - Combining run/artifact/log metadata
+  - Exit code logic (complete/partial/incomplete)
+  - Stats calculation
+  - Mock input data structures
+- **Rate limiting/retry** (`src/utils/retry.ts`)
+  - Exponential backoff calculation
+  - 429/410 response handling
+  - `Retry-After` header parsing
+  - Mock API responses with test doubles
+
+**Integration tests (snapshot-based):**
+- **`gh` CLI mocking** (`test/integration/`)
+  - Use `execa` mock or fixture-based subprocess stubbing
+  - Recorded API response fixtures in `test/fixtures/gh-responses/`
+  - Test scenarios:
+    - Successful artifact download flow
+    - Expired artifacts (410 responses)
+    - Rate limiting (429 with retry)
+    - In-progress runs
+    - Missing artifacts (empty runs)
+- **End-to-end output validation**
+  - Run CLI with mocked `gh` commands
+  - Assert `summary.json`, `catalog.json`, `artifacts.json` structure
+  - Use snapshot testing for JSON outputs
+  - Verify file system layout matches expected structure
+
+**Test utilities:**
+- **Fixture factory** (`test/utils/fixtures.ts`)
+  - Generate mock GitHub API responses
+  - Create sample artifact/log files
+  - Helper: `createMockRun(options)`, `createMockArtifact(options)`
+- **Temp directory manager** (`test/utils/fs.ts`)
+  - Create/cleanup test output dirs
+  - Use `tmp` package for isolated test environments
+- **`gh` CLI stub** (`test/utils/gh-stub.ts`)
+  - Intercept subprocess calls
+  - Return fixture data based on command patterns
+  - Track call history for assertions
+
+**CI setup:**
+- GitHub Actions workflow (`.github/workflows/test.yml`)
+  - Run on: push, PR
+  - Node versions: 18.x, 20.x, 22.x
+  - Steps: install, lint (eslint), type-check (tsc), test (vitest), coverage report
+- Coverage reporting: vitest's built-in coverage (c8)
+- Fail PR if coverage drops below 75%
+
+**Testing phases:**
+- Phase 1: Add unit tests alongside CLI scaffold implementation
+- Phase 2-5: Add unit tests for each parser/detector as implemented
+- Phase 6: Add integration tests for full pipeline
+- Phase 7: Add error scenario tests (network failures, timeouts, invalid responses)
+
+**Out of scope for initial testing:**
+- Real GitHub API integration tests (too flaky, requires live repos)
+- Performance/load testing
+- Cross-platform CLI behavior (assume POSIX-compliant shells)
+
 ### Phase 1: Core CLI scaffold
 - Init TypeScript package (`gh-ci-artifacts`, Node 18+)
 - CLI entry: `gh-ci-artifacts <owner>/<repo> <pr-number> [--output-dir <dir>]`
-- Config file support (`.gh-ci-artifacts.json`): `outputDir`, `defaultRepo`
+- Config file support (`.gh-ci-artifacts.json` in current directory only): `outputDir`, `defaultRepo`
 - Default output: `./.gh-ci-artifacts/<pr-number>/`
 - Validate `gh` CLI installed and authenticated
 - Setup progress logging to stderr
+- Add `--resume` flag: Resume incomplete/failed downloads for an existing PR (skip already downloaded artifacts, retry failed ones)
 
 ### Phase 2: Artifact inventory & download
-- Fetch PR head SHA: `gh pr view <pr> --json headRefOid`
-- Find failed runs: `gh api repos/<owner>/<repo>/commits/<sha>/check-runs`
-- For each failed run, list artifacts: `gh api repos/<owner>/<repo>/actions/runs/<run-id>/artifacts`
+- Fetch PR head SHA (always target latest): `gh pr view <pr> --json headRefOid`
+- Find all runs for head SHA: `gh api repos/<owner>/<repo>/commits/<sha>/check-runs`
+- Track run states: `failed`, `in_progress`, `cancelled`, `success`
+- For each run, list artifacts: `gh api repos/<owner>/<repo>/actions/runs/<run-id>/artifacts`
 - Track each artifact: name, size, run ID, download status (pending/success/expired/failed)
 - Download artifacts **serially** (one at a time to avoid GitHub rate limits): `gh run download <run-id> --dir <output>/raw/<run-id>/`
+- **Rate limiting strategy:**
+  - Respect `Retry-After` header on 429 responses
+  - CLI flags: `--max-retries <count>` (default: 3), `--retry-delay <seconds>` (default: 5)
+  - Exponential backoff: delay *= 2 on each retry
+  - Max retry delay cap: 60 seconds
 - Detect expiry: Check error messages for "expired" or 410 HTTP status
 - Stream progress: "Downloading artifact 3/7: Playwright results (0.5 MB)..."
 - Save inventory: `<output>/artifacts.json` - array of `{runId, artifactName, sizeBytes, status, errorMessage?}`
@@ -50,21 +138,26 @@
   - JSON: `*playwright*.json`, `*jest*.json`, `*pytest*.json`
   - XML: `*.xml` (JUnit)
   - HTML: `*playwright*.html`, `*pytest*.html`, etc.
+  - Binary: images, videos, etc.
 - **For HTML artifacts only:**
   - Extract embedded JSON (e.g., `data-jsonblob` in Playwright HTML)
   - Save extracted JSON: `<output>/converted/<run-id>/<artifact-name>.json`
   - Track: `{converted: true, originalFormat: "html"}`
 - **For JSON/XML artifacts:**
   - Leave as-is, just catalog
+- **For binary artifacts:**
+  - Catalog only, no parsing attempted
+  - Track: `{detectedType: "binary", skipped: true}`
 - Save detection results: `<output>/catalog.json`:
   ```typescript
   [{
     artifactName: string,
     runId: string,
-    detectedType: "playwright-json" | "jest-json" | "pytest-json" | "junit-xml" | "playwright-html" | "eslint-txt" | "unknown",
-    originalFormat: "json" | "xml" | "html" | "txt",
+    detectedType: "playwright-json" | "jest-json" | "pytest-json" | "junit-xml" | "playwright-html" | "eslint-txt" | "binary" | "unknown",
+    originalFormat: "json" | "xml" | "html" | "txt" | "binary",
     filePath: string,           // Path to original or converted file
-    converted?: boolean         // True if we extracted JSON from HTML
+    converted?: boolean,        // True if we extracted JSON from HTML
+    skipped?: boolean           // True for binary artifacts
   }]
   ```
 
@@ -84,10 +177,11 @@
     pr: number,
     headSha: string,
     analyzedAt: string,
-    status: "complete" | "partial",  // partial if any downloads failed
+    status: "complete" | "partial" | "incomplete",  // incomplete if in_progress runs exist
+    inProgressRuns: number,  // Count of runs still in progress
     runs: [{
       runId: string,
-      conclusion: "failure",
+      conclusion: "failure" | "success" | "cancelled" | "in_progress",
       artifacts: [{
         name: string,
         sizeBytes: number,
@@ -114,15 +208,19 @@
     }
   }
   ```
-- Exit code: 0 if all downloads succeeded, non-zero if any failed
+- Exit codes:
+  - 0: All runs complete, all downloads succeeded
+  - 1: Partial success (some downloads failed but no in_progress runs)
+  - 2: Incomplete (in_progress runs detected)
 
 ### Phase 7: Error handling & polish
-- Network failure retry logic (configurable attempts)
+- Network failure retry logic with configurable `--max-retries` and `--retry-delay`
 - Timeout handling for large artifacts
 - Validate downloaded files exist and are non-empty
 - Progress indicators: "Run 2/5: Downloading 3 artifacts..."
 - Debug mode: `--debug` for verbose logging
 - Dry run: `--dry-run` to show what would be downloaded
+- Resume mode: `--resume` to skip successful downloads and retry failed ones based on existing `summary.json`
 
 ### Phase 8: Documentation & publishing
 - README: installation, usage examples, config schema, output schema
