@@ -5,6 +5,7 @@ import { validateGhSetup } from './utils/gh.js';
 import { Logger } from './utils/logger.js';
 import { downloadArtifacts } from './downloader.js';
 import { extractLogs } from './log-extractor.js';
+import { catalogArtifacts } from './cataloger.js';
 
 const program = new Command();
 
@@ -90,6 +91,21 @@ program
 
         logger.info(`\n=== Log extraction complete ===`);
         logger.info(`Total logs extracted: ${totalLogsExtracted}`);
+      }
+
+      // Catalog artifacts and convert HTML
+      if (!options.dryRun) {
+        logger.info('\n=== Cataloging artifacts and converting HTML ===');
+        const allRunIds = Array.from(result.runStates.keys());
+        const catalogResult = await catalogArtifacts(outputDir, allRunIds, logger);
+
+        const convertedCount = catalogResult.catalog.filter(c => c.converted).length;
+        const skippedCount = catalogResult.catalog.filter(c => c.skipped).length;
+
+        logger.info(`\n=== Cataloging complete ===`);
+        logger.info(`Total artifacts cataloged: ${catalogResult.catalog.length}`);
+        logger.info(`  HTML converted to JSON: ${convertedCount}`);
+        logger.info(`  Binary files skipped: ${skippedCount}`);
       }
 
     } catch (error) {

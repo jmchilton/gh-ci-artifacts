@@ -136,22 +136,23 @@
 - ✅ Track in inventory: `{runId, jobName, logExtracted: true/false, status}`
 - ✅ Filename sanitization for job names
 
-### Phase 4: Artifact type detection & HTML conversion
-- Detect artifact type by filename/content patterns:
+### Phase 4: Artifact type detection & HTML conversion ✅ COMPLETE
+- ✅ Detect artifact type by filename/content patterns:
   - JSON: `*playwright*.json`, `*jest*.json`, `*pytest*.json`
   - XML: `*.xml` (JUnit)
   - HTML: `*playwright*.html`, `*pytest*.html`, etc.
   - Binary: images, videos, etc.
-- **For HTML artifacts only:**
+- ✅ **For HTML artifacts only:**
   - Extract embedded JSON (e.g., `data-jsonblob` in Playwright HTML)
   - Save extracted JSON: `<output>/converted/<run-id>/<artifact-name>.json`
   - Track: `{converted: true, originalFormat: "html"}`
-- **For JSON/XML artifacts:**
+- ✅ **For JSON/XML artifacts:**
   - Leave as-is, just catalog
-- **For binary artifacts:**
+- ✅ **For binary artifacts:**
   - Catalog only, no parsing attempted
   - Track: `{detectedType: "binary", skipped: true}`
-- Save detection results: `<output>/catalog.json`:
+- ✅ Save detection results: `<output>/catalog.json`
+- ✅ Unit tests for type detection (11 tests passing):
   ```typescript
   [{
     artifactName: string,
