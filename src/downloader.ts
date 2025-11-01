@@ -14,6 +14,7 @@ export interface DownloadResult {
   headSha: string;
   inventory: ArtifactInventoryItem[];
   runStates: Map<string, RunConclusion>;
+  runsWithoutArtifacts: string[];
 }
 
 export async function downloadArtifacts(
@@ -35,6 +36,7 @@ export async function downloadArtifacts(
 
   const inventory: ArtifactInventoryItem[] = [];
   const runStates = new Map<string, RunConclusion>();
+  const runsWithoutArtifacts: string[] = [];
 
   // Load existing inventory if resuming
   const inventoryPath = join(outputDir, 'artifacts.json');
@@ -63,6 +65,8 @@ export async function downloadArtifacts(
     logger.info(`  Found ${artifacts.length} artifacts`);
 
     if (artifacts.length === 0) {
+      logger.info('  No artifacts found, will extract logs instead');
+      runsWithoutArtifacts.push(run.id);
       continue;
     }
 
@@ -147,6 +151,7 @@ export async function downloadArtifacts(
     headSha,
     inventory,
     runStates,
+    runsWithoutArtifacts,
   };
 }
 

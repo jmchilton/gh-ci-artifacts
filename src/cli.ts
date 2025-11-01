@@ -4,6 +4,7 @@ import { loadConfig, mergeConfig, getOutputDir } from './config.js';
 import { validateGhSetup } from './utils/gh.js';
 import { Logger } from './utils/logger.js';
 import { downloadArtifacts } from './downloader.js';
+import { extractLogs } from './log-extractor.js';
 
 const program = new Command();
 
@@ -71,6 +72,25 @@ program
       logger.info(`  Success: ${successCount}`);
       logger.info(`  Expired: ${expiredCount}`);
       logger.info(`  Failed: ${failedCount}`);
+
+      // Extract logs for runs without artifacts
+      if (result.runsWithoutArtifacts.length > 0 && !options.dryRun) {
+        logger.info(`\n=== Extracting logs for ${result.runsWithoutArtifacts.length} runs without artifacts ===`);
+        const logResult = await extractLogs(
+          repo,
+          result.runsWithoutArtifacts,
+          outputDir,
+          logger
+        );
+
+        let totalLogsExtracted = 0;
+        logResult.logs.forEach(runLogs => {
+          totalLogsExtracted += runLogs.filter(log => log.extractionStatus === 'success').length;
+        });
+
+        logger.info(`\n=== Log extraction complete ===`);
+        logger.info(`Total logs extracted: ${totalLogsExtracted}`);
+      }
 
     } catch (error) {
       logger.error(error instanceof Error ? error.message : String(error));

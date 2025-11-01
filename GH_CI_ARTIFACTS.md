@@ -129,11 +129,12 @@
 - ✅ Save inventory: `<output>/artifacts.json` - array of `{runId, artifactName, sizeBytes, status, errorMessage?}`
 - ✅ Unit tests for retry logic (13 tests passing)
 
-### Phase 3: Log extraction for artifact-less runs
-- For runs with no artifacts, fetch failed jobs: `gh api repos/<owner>/<repo>/actions/runs/<run-id>/jobs`
-- Extract job logs: `gh api repos/<owner>/<repo>/actions/jobs/<job-id>/logs`
-- Save raw logs: `<output>/raw/<run-id>/<job-name>.log`
-- Track in inventory: `{runId, jobName, logExtracted: true/false, status}`
+### Phase 3: Log extraction for artifact-less runs ✅ COMPLETE
+- ✅ For runs with no artifacts, fetch failed jobs: `gh api repos/<owner>/<repo>/actions/runs/<run-id>/jobs`
+- ✅ Extract job logs: `gh api repos/<owner>/<repo>/actions/jobs/<job-id>/logs`
+- ✅ Save raw logs: `<output>/raw/<run-id>/<job-name>.log`
+- ✅ Track in inventory: `{runId, jobName, logExtracted: true/false, status}`
+- ✅ Filename sanitization for job names
 
 ### Phase 4: Artifact type detection & HTML conversion
 - Detect artifact type by filename/content patterns:
