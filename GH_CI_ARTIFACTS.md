@@ -112,21 +112,22 @@
 - ✅ Add `--resume` flag: Resume incomplete/failed downloads for an existing PR (skip already downloaded artifacts, retry failed ones)
 - ✅ Unit tests for config parsing (10 tests passing)
 
-### Phase 2: Artifact inventory & download
-- Fetch PR head SHA (always target latest): `gh pr view <pr> --json headRefOid`
-- Find all runs for head SHA: `gh api repos/<owner>/<repo>/commits/<sha>/check-runs`
-- Track run states: `failed`, `in_progress`, `cancelled`, `success`
-- For each run, list artifacts: `gh api repos/<owner>/<repo>/actions/runs/<run-id>/artifacts`
-- Track each artifact: name, size, run ID, download status (pending/success/expired/failed)
-- Download artifacts **serially** (one at a time to avoid GitHub rate limits): `gh run download <run-id> --dir <output>/raw/<run-id>/`
-- **Rate limiting strategy:**
+### Phase 2: Artifact inventory & download ✅ COMPLETE
+- ✅ Fetch PR head SHA (always target latest): `gh pr view <pr> --json headRefOid`
+- ✅ Find all runs for head SHA: `gh api repos/<owner>/<repo>/commits/<sha>/check-runs`
+- ✅ Track run states: `failed`, `in_progress`, `cancelled`, `success`
+- ✅ For each run, list artifacts: `gh api repos/<owner>/<repo>/actions/runs/<run-id>/artifacts`
+- ✅ Track each artifact: name, size, run ID, download status (pending/success/expired/failed)
+- ✅ Download artifacts **serially** (one at a time to avoid GitHub rate limits): `gh run download <run-id> --dir <output>/raw/<run-id>/`
+- ✅ **Rate limiting strategy:**
   - Respect `Retry-After` header on 429 responses
   - CLI flags: `--max-retries <count>` (default: 3), `--retry-delay <seconds>` (default: 5)
   - Exponential backoff: delay *= 2 on each retry
   - Max retry delay cap: 60 seconds
-- Detect expiry: Check error messages for "expired" or 410 HTTP status
-- Stream progress: "Downloading artifact 3/7: Playwright results (0.5 MB)..."
-- Save inventory: `<output>/artifacts.json` - array of `{runId, artifactName, sizeBytes, status, errorMessage?}`
+- ✅ Detect expiry: Check error messages for "expired" or 410 HTTP status
+- ✅ Stream progress: "Downloading artifact 3/7: Playwright results (0.5 MB)..."
+- ✅ Save inventory: `<output>/artifacts.json` - array of `{runId, artifactName, sizeBytes, status, errorMessage?}`
+- ✅ Unit tests for retry logic (13 tests passing)
 
 ### Phase 3: Log extraction for artifact-less runs
 - For runs with no artifacts, fetch failed jobs: `gh api repos/<owner>/<repo>/actions/runs/<run-id>/jobs`

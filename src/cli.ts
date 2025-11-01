@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import { loadConfig, mergeConfig, getOutputDir } from './config.js';
 import { validateGhSetup } from './utils/gh.js';
 import { Logger } from './utils/logger.js';
+import { downloadArtifacts } from './downloader.js';
 
 const program = new Command();
 
@@ -48,8 +49,28 @@ program
         logger.info('Dry-run mode: No files will be downloaded');
       }
 
-      logger.info('\n=== Phase 1: CLI scaffold complete ===');
-      logger.info('Artifact download not yet implemented.');
+      logger.info('\n=== Downloading artifacts ===');
+      const result = await downloadArtifacts(
+        repo,
+        pr,
+        outputDir,
+        config,
+        logger,
+        options.resume,
+        options.dryRun
+      );
+
+      logger.info('\n=== Download complete ===');
+      logger.info(`Head SHA: ${result.headSha}`);
+      logger.info(`Total artifacts processed: ${result.inventory.length}`);
+
+      const successCount = result.inventory.filter(a => a.status === 'success').length;
+      const expiredCount = result.inventory.filter(a => a.status === 'expired').length;
+      const failedCount = result.inventory.filter(a => a.status === 'failed').length;
+
+      logger.info(`  Success: ${successCount}`);
+      logger.info(`  Expired: ${expiredCount}`);
+      logger.info(`  Failed: ${failedCount}`);
 
     } catch (error) {
       logger.error(error instanceof Error ? error.message : String(error));
