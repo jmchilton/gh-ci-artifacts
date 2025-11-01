@@ -1,0 +1,261 @@
+# gh-ci-artifacts
+
+Download and parse GitHub Actions CI artifacts and logs for LLM analysis.
+
+## Overview
+
+`gh-ci-artifacts` automates the collection and normalization of GitHub Actions CI failures into structured JSON optimized for LLM analysis (particularly Claude). It handles artifact downloads, log extraction, and parsing of common test/linter formats.
+
+**Key Features:**
+- Zero-config operation with optional configuration file
+- Automatic type detection for Playwright, Jest, pytest, JUnit, ESLint, and more
+- HTML to JSON conversion for test reports
+- Linter output extraction from logs
+- Robust error handling with retry logic
+- Resume functionality for incomplete downloads
+- Graceful handling of expired artifacts
+
+## Installation
+
+```bash
+npm install -g gh-ci-artifacts
+```
+
+**Requirements:**
+- Node.js 18+
+- [GitHub CLI (`gh`)](https://cli.github.com/) installed and authenticated
+
+## Quick Start
+
+```bash
+# Download artifacts for a PR
+gh-ci-artifacts owner/repo 123
+
+# With custom output directory
+gh-ci-artifacts owner/repo 123 --output-dir ./ci-data
+
+# Dry run to see what would be downloaded
+gh-ci-artifacts owner/repo 123 --dry-run
+
+# Resume interrupted download
+gh-ci-artifacts owner/repo 123 --resume
+
+# Enable debug logging
+gh-ci-artifacts owner/repo 123 --debug
+```
+
+## Configuration
+
+Create `.gh-ci-artifacts.json` in your project directory:
+
+```json
+{
+  "outputDir": "./custom-output",
+  "defaultRepo": "owner/repo",
+  "maxRetries": 5,
+  "retryDelay": 10
+}
+```
+
+**Configuration options:**
+- `outputDir` (string): Base output directory (default: `./.gh-ci-artifacts`)
+- `defaultRepo` (string): Default repository to use
+- `maxRetries` (number): Maximum retry attempts for failed downloads (default: 3)
+- `retryDelay` (number): Initial retry delay in seconds (default: 5)
+
+CLI arguments override config file values.
+
+## Output Structure
+
+```
+.gh-ci-artifacts/
+└── <pr-number>/
+    ├── summary.json          # Master summary with all metadata
+    ├── catalog.json          # Type detection results
+    ├── artifacts.json        # Download inventory
+    ├── raw/                  # Downloaded artifacts (original format)
+    │   └── <run-id>/
+    │       └── <artifact-name>/
+    ├── converted/            # HTML→JSON conversions
+    │   └── <run-id>/
+    │       └── <artifact-name>.json
+    └── linting/              # Extracted linter outputs
+        └── <run-id>/
+            └── <job-name>-<linter>.txt
+```
+
+## Output Schema
+
+### summary.json
+
+```typescript
+{
+  repo: string;
+  pr: number;
+  headSha: string;
+  analyzedAt: string;  // ISO 8601 timestamp
+  status: "complete" | "partial" | "incomplete";
+  inProgressRuns: number;
+  runs: Array<{
+    runId: string;
+    conclusion: "failure" | "success" | "cancelled" | "in_progress";
+    artifacts: Array<{
+      name: string;
+      sizeBytes: number;
+      downloadStatus: "success" | "expired" | "failed";
+      errorMessage?: string;
+      detectedType?: string;
+      filePath?: string;
+      converted?: boolean;
+    }>;
+    logs: Array<{
+      jobName: string;
+      extractionStatus: "success" | "failed";
+      logFile?: string;
+      linterOutputs?: Array<{
+        detectedType: string;
+        filePath: string;
+      }>;
+    }>;
+  }>;
+  catalogFile: string;
+  stats: {
+    totalRuns: number;
+    artifactsDownloaded: number;
+    artifactsFailed: number;
+    logsExtracted: number;
+    htmlConverted: number;
+  };
+}
+```
+
+### catalog.json
+
+```typescript
+Array<{
+  artifactName: string;
+  runId: string;
+  detectedType: "playwright-json" | "jest-json" | "pytest-json" | "junit-xml" | "playwright-html" | "eslint-txt" | "binary" | "unknown";
+  originalFormat: "json" | "xml" | "html" | "txt" | "binary";
+  filePath: string;
+  converted?: boolean;  // True if HTML was converted to JSON
+  skipped?: boolean;    // True for binary files
+}>
+```
+
+## Supported Test Frameworks
+
+**Artifact detection:**
+- Playwright (JSON and HTML reports)
+- Jest (JSON)
+- pytest (JSON, HTML)
+- JUnit (XML)
+- Binary files (screenshots, videos)
+
+**Linter detection:**
+- ESLint
+- Prettier
+- Ruff
+- flake8
+- isort
+- black
+- TypeScript (`tsc`)
+- mypy
+- pylint
+
+## Exit Codes
+
+- `0`: Complete success - all runs finished, all artifacts downloaded
+- `1`: Partial success - some artifacts failed to download
+- `2`: Incomplete - workflow runs still in progress
+
+## CLI Options
+
+```
+Usage: gh-ci-artifacts [options] <repo> <pr>
+
+Arguments:
+  repo                     Repository in owner/repo format
+  pr                       Pull request number
+
+Options:
+  -V, --version            output the version number
+  -o, --output-dir <dir>   Output directory
+  --max-retries <count>    Maximum retry attempts (default: 3)
+  --retry-delay <seconds>  Retry delay in seconds (default: 5)
+  --resume                 Resume incomplete/failed downloads
+  --debug                  Enable debug logging
+  --dry-run                Show what would be downloaded without downloading
+  -h, --help               display help for command
+```
+
+## Use Cases
+
+### Claude Code Integration
+
+```typescript
+import { execSync } from 'child_process';
+import { readFileSync } from 'fs';
+
+// Download artifacts
+execSync('gh-ci-artifacts owner/repo 123', { stdio: 'inherit' });
+
+// Load summary for analysis
+const summary = JSON.parse(
+  readFileSync('.gh-ci-artifacts/123/summary.json', 'utf-8')
+);
+
+// Feed to Claude for analysis
+console.log(summary);
+```
+
+### Recommended Test Reporter Setup
+
+For optimal results, configure your test frameworks to output JSON:
+
+**Playwright:**
+```typescript
+// playwright.config.ts
+export default {
+  reporter: [['json', { outputFile: 'results.json' }]],
+};
+```
+
+**Jest:**
+```json
+{
+  "reporters": ["default", "jest-json-reporter"]
+}
+```
+
+This reduces the need for HTML parsing and improves data quality.
+
+## How It Works
+
+1. **Fetch PR metadata**: Get the latest commit SHA for the PR
+2. **Find workflow runs**: Query all runs for that commit
+3. **Download artifacts**: Serially download artifacts (rate-limit friendly)
+4. **Extract logs**: For runs without artifacts, fetch job logs
+5. **Detect types**: Identify test frameworks and linters
+6. **Convert HTML**: Extract JSON from HTML reports where possible
+7. **Extract linters**: Parse linter outputs from logs
+8. **Generate summary**: Combine everything into a master summary
+
+## Limitations
+
+- Artifacts expire after 90 days (GitHub limitation) - tool gracefully handles this
+- Serial downloads to respect GitHub rate limits
+- `gh` CLI must be authenticated
+- Some HTML formats may not be parseable (cataloged as-is)
+
+## Contributing
+
+Contributions welcome! Areas for improvement:
+- Additional test framework support
+- More linter patterns
+- HTML parser improvements
+- Performance optimizations
+
+## License
+
+MIT

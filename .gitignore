@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.gh-ci-artifacts/
+*.log
+.DS_Store
+coverage/
+test-tmp-*/
