@@ -21,6 +21,7 @@ export type OriginalFormat = 'json' | 'xml' | 'html' | 'txt' | 'binary';
 export interface ArtifactInventoryItem {
   runId: string;
   artifactName: string;
+  artifactId: number;
   sizeBytes: number;
   status: DownloadStatus;
   errorMessage?: string;
@@ -29,6 +30,7 @@ export interface ArtifactInventoryItem {
 
 export interface CatalogEntry {
   artifactName: string;
+  artifactId: number;
   runId: string;
   detectedType: ArtifactType;
   originalFormat: OriginalFormat;

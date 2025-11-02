@@ -50,9 +50,9 @@ export function generateSummary(
     const runArtifacts = inventory
       .filter(item => item.runId === runId)
       .map(item => {
-        // Find catalog entry for this artifact
+        // Find catalog entry for this artifact (match by runId and artifactId)
         const catalogEntry = catalog.find(
-          c => c.runId === runId && c.artifactName === item.artifactName
+          c => c.runId === runId && c.artifactId === item.artifactId
         );
 
         return {

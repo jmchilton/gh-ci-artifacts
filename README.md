@@ -177,14 +177,16 @@ CLI arguments override config file values.
     ├── artifacts.json        # Download inventory
     ├── raw/                  # Downloaded artifacts (original format)
     │   └── <run-id>/
-    │       └── <artifact-name>/
+    │       └── artifact-<artifact-id>/  # Each artifact in its own directory
     ├── converted/            # HTML→JSON conversions
     │   └── <run-id>/
-    │       └── <artifact-name>.json
+    │       └── <filename>.json
     └── linting/              # Extracted linter outputs
         └── <run-id>/
             └── <job-name>-<linter>.txt
 ```
+
+**Note:** Artifacts are downloaded to `artifact-<id>` directories to handle cases where multiple artifacts have the same name (common in matrix builds). The artifact ID uniquely identifies each artifact.
 
 ## Output Schema
 
@@ -265,6 +267,7 @@ CLI arguments override config file values.
 ```typescript
 Array<{
   artifactName: string;
+  artifactId: number;  // Unique GitHub artifact ID (used in directory names)
   runId: string;
   detectedType: "playwright-json" | "jest-json" | "pytest-json" | "junit-xml" | "playwright-html" | "eslint-txt" | "binary" | "unknown";
   originalFormat: "json" | "xml" | "html" | "txt" | "binary";

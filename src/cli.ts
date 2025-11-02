@@ -140,7 +140,7 @@ program
       if (!options.dryRun) {
         logger.info('\n=== Cataloging artifacts and converting HTML ===');
         const allRunIds = Array.from(result.runStates.keys());
-        catalogResult = await catalogArtifacts(outputDir, allRunIds, logger);
+        catalogResult = await catalogArtifacts(outputDir, allRunIds, result.inventory, logger);
 
         const convertedCount = catalogResult.catalog.filter(c => c.converted).length;
         const skippedCount = catalogResult.catalog.filter(c => c.skipped).length;

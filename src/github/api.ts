@@ -164,15 +164,15 @@ export function getJobsForRun(repo: string, runId: string): Job[] {
   }
 }
 
-export function downloadArtifact(runId: string, outputDir: string): void {
+export function downloadArtifact(runId: string, artifactName: string, artifactId: number, outputDir: string): void {
   try {
-    execSync(`gh run download ${runId} --dir "${outputDir}"`, {
+    execSync(`gh run download ${runId} --name "${artifactName}" --dir "${outputDir}"`, {
       encoding: 'utf-8',
       stdio: 'pipe'
     });
   } catch (error) {
     throw new Error(
-      `Failed to download artifacts: ${error instanceof Error ? error.message : String(error)}`
+      `Failed to download artifact "${artifactName}": ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }

@@ -1,7 +1,7 @@
 import { readdirSync, statSync, mkdirSync, writeFileSync } from 'fs';
 import { join, basename } from 'path';
 import type { Logger } from './utils/logger.js';
-import type { CatalogEntry } from './types.js';
+import type { CatalogEntry, ArtifactInventoryItem } from './types.js';
 import { detectArtifactType } from './detectors/type-detector.js';
 import { extractPlaywrightJSON } from './parsers/html/playwright-html.js';
 
@@ -12,6 +12,7 @@ export interface CatalogResult {
 export async function catalogArtifacts(
   outputDir: string,
   runIds: string[],
+  inventory: ArtifactInventoryItem[],
   logger: Logger
 ): Promise<CatalogResult> {
   const catalog: CatalogEntry[] = [];
@@ -32,7 +33,7 @@ export async function catalogArtifacts(
 
     logger.debug(`Cataloging artifacts in run ${runId}...`);
 
-    // Get all artifact directories
+    // Get all artifact directories (now named artifact-<id>)
     const artifactDirs = readdirSync(runDir).filter(name => {
       try {
         return statSync(join(runDir, name)).isDirectory();
@@ -41,8 +42,28 @@ export async function catalogArtifacts(
       }
     });
 
-    for (const artifactName of artifactDirs) {
-      const artifactDir = join(runDir, artifactName);
+    for (const dirName of artifactDirs) {
+      // Parse artifact ID from directory name (format: artifact-<id>)
+      const match = dirName.match(/^artifact-(\d+)$/);
+      if (!match) {
+        logger.warn(`Skipping directory with unexpected name: ${dirName}`);
+        continue;
+      }
+      
+      const artifactId = parseInt(match[1], 10);
+      
+      // Find artifact info from inventory
+      const artifactInfo = inventory.find(
+        item => item.runId === runId && item.artifactId === artifactId
+      );
+      
+      if (!artifactInfo) {
+        logger.warn(`Could not find inventory entry for artifact ${artifactId} in run ${runId}`);
+        continue;
+      }
+      
+      const artifactName = artifactInfo.artifactName;
+      const artifactDir = join(runDir, dirName);
       const files = getAllFiles(artifactDir);
 
       for (const filePath of files) {
@@ -52,6 +73,7 @@ export async function catalogArtifacts(
           // Skip binary files
           catalog.push({
             artifactName,
+            artifactId,
             runId,
             detectedType: detection.detectedType,
             originalFormat: detection.originalFormat,
@@ -79,6 +101,7 @@ export async function catalogArtifacts(
 
               catalog.push({
                 artifactName,
+                artifactId,
                 runId,
                 detectedType: detection.detectedType,
                 originalFormat: detection.originalFormat,
@@ -92,6 +115,7 @@ export async function catalogArtifacts(
               logger.debug(`    Could not extract JSON, cataloging HTML`);
               catalog.push({
                 artifactName,
+                artifactId,
                 runId,
                 detectedType: detection.detectedType,
                 originalFormat: detection.originalFormat,
@@ -104,6 +128,7 @@ export async function catalogArtifacts(
             );
             catalog.push({
               artifactName,
+              artifactId,
               runId,
               detectedType: detection.detectedType,
               originalFormat: detection.originalFormat,
@@ -114,6 +139,7 @@ export async function catalogArtifacts(
           // Non-HTML or non-convertible, just catalog
           catalog.push({
             artifactName,
+            artifactId,
             runId,
             detectedType: detection.detectedType,
             originalFormat: detection.originalFormat,

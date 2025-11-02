@@ -130,6 +130,7 @@ export async function downloadArtifacts(
         inventory.push({
           runId: runId,
           artifactName: artifact.name,
+          artifactId: artifact.id,
           sizeBytes: artifact.size_in_bytes,
           status: 'skipped',
           skipReason: reason,
@@ -139,7 +140,7 @@ export async function downloadArtifacts(
 
       // Check if already downloaded in resume mode
       const existingEntry = existingInventory.find(
-        item => item.runId === runId && item.artifactName === artifact.name
+        item => item.runId === runId && item.artifactId === artifact.id
       );
 
       if (resume && existingEntry && existingEntry.status === 'success') {
@@ -149,10 +150,11 @@ export async function downloadArtifacts(
       }
 
       if (dryRun) {
-        logger.info(`    [DRY RUN] Would download to ${outputDir}/raw/${runId}/`);
+        logger.info(`    [DRY RUN] Would download to ${outputDir}/raw/${runId}/artifact-${artifact.id}/`);
         inventory.push({
           runId: runId,
           artifactName: artifact.name,
+          artifactId: artifact.id,
           sizeBytes: artifact.size_in_bytes,
           status: 'success',
         });
@@ -160,12 +162,13 @@ export async function downloadArtifacts(
       }
 
       // Attempt download with retry
-      const artifactOutputDir = join(outputDir, 'raw', runId);
+      // Use artifact ID in directory name to handle duplicate artifact names
+      const artifactOutputDir = join(outputDir, 'raw', runId, `artifact-${artifact.id}`);
       mkdirSync(artifactOutputDir, { recursive: true });
 
       const result = await withRetry(
         () => {
-          downloadArtifact(runId, artifactOutputDir);
+          downloadArtifact(runId, artifact.name, artifact.id, artifactOutputDir);
           return Promise.resolve();
         },
         {
@@ -179,6 +182,7 @@ export async function downloadArtifacts(
         inventory.push({
           runId: runId,
           artifactName: artifact.name,
+          artifactId: artifact.id,
           sizeBytes: artifact.size_in_bytes,
           status: 'success',
         });
@@ -190,6 +194,7 @@ export async function downloadArtifacts(
         inventory.push({
           runId: runId,
           artifactName: artifact.name,
+          artifactId: artifact.id,
           sizeBytes: artifact.size_in_bytes,
           status,
           errorMessage: error.message,
