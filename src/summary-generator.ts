@@ -1,5 +1,6 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
+import { generateHtmlViewer } from './html-viewer.js';
 import type {
   Summary,
   SummaryStatus,
@@ -100,6 +101,9 @@ export function generateSummary(
   // Save summary
   const summaryPath = join(outputDir, 'summary.json');
   writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
+
+  // Generate HTML viewer
+  generateHtmlViewer(outputDir, summary, catalog);
 
   return summary;
 }

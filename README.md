@@ -67,6 +67,8 @@ npx gh-ci-artifacts 123 --debug
 
 **Note:** If installed globally, you can omit `npx` and use `gh-ci-artifacts` directly.
 
+After downloading, open `.gh-ci-artifacts/<pr-number>/index.html` in your browser for an interactive file tree viewer.
+
 ## Configuration
 
 Create `.gh-ci-artifacts.json` in your project directory:
@@ -93,6 +95,7 @@ CLI arguments override config file values.
 ```
 .gh-ci-artifacts/
 └── <pr-number>/
+    ├── index.html            # Interactive HTML viewer
     ├── summary.json          # Master summary with all metadata
     ├── catalog.json          # Type detection results
     ├── artifacts.json        # Download inventory

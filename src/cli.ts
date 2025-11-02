@@ -150,6 +150,8 @@ program
         logger.info(`Summary saved to: ${outputDir}/summary.json`);
         logger.info(`Catalog saved to: ${outputDir}/catalog.json`);
         logger.info(`Inventory saved to: ${outputDir}/artifacts.json`);
+        logger.info(`HTML viewer saved to: ${outputDir}/index.html`);
+        logger.info(`\nOpen ${outputDir}/index.html in your browser to explore results`);
 
         // Exit with appropriate code
         const exitCode = determineExitCode(summary.status);
