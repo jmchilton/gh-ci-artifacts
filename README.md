@@ -58,7 +58,7 @@ npx gh-ci-artifacts 123 --output-dir ./ci-data
 # Dry run to see what would be downloaded
 npx gh-ci-artifacts 123 --dry-run
 
-# Resume interrupted download
+# Resume interrupted download (retry failures/incomplete)
 npx gh-ci-artifacts 123 --resume
 
 # Enable debug logging
@@ -68,6 +68,14 @@ npx gh-ci-artifacts 123 --debug
 **Note:** If installed globally, you can omit `npx` and use `gh-ci-artifacts` directly.
 
 After downloading, open `.gh-ci-artifacts/<pr-number>/index.html` in your browser for an interactive file tree viewer.
+
+### Re-downloading PR Artifacts
+
+When re-running for an existing PR:
+- **Without --resume**: Existing artifacts backed up to `.gh-ci-artifacts/<pr>-<timestamp>`, fresh download starts
+- **With --resume**: Uses existing artifacts, retries only failures and incomplete downloads
+
+This allows tracking PR evolution over time while preserving historical snapshots.
 
 ## Configuration
 

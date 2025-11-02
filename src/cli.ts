@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
+import { existsSync, statSync, renameSync } from 'fs';
 import { loadConfig, mergeConfig, getOutputDir } from './config.js';
 import { validateGhSetup, getCurrentRepo } from './utils/gh.js';
 import { Logger } from './utils/logger.js';
@@ -20,7 +21,7 @@ program
   .option('-o, --output-dir <dir>', 'Output directory')
   .option('--max-retries <count>', 'Maximum retry attempts', parseInt)
   .option('--retry-delay <seconds>', 'Retry delay in seconds', parseInt)
-  .option('--resume', 'Resume incomplete/failed downloads')
+  .option('--resume', 'Resume incomplete/failed downloads (without this, existing artifacts are backed up)')
   .option('--debug', 'Enable debug logging')
   .option('--dry-run', 'Show what would be downloaded without downloading')
   .action(async (pr: number, options) => {
@@ -41,6 +42,20 @@ program
       });
 
       const outputDir = getOutputDir(config, pr);
+
+      // Handle existing directory
+      if (existsSync(outputDir) && !options.resume && !options.dryRun) {
+        const stats = statSync(outputDir);
+        const timestamp = stats.birthtime.toISOString()
+          .replace(/[:.]/g, '-')
+          .replace('T', '_')
+          .split('.')[0];
+        const backupDir = `${outputDir}-${timestamp}`;
+
+        logger.info(`Found existing artifacts for PR #${pr}`);
+        logger.info(`Backing up to: ${backupDir}`);
+        renameSync(outputDir, backupDir);
+      }
 
       logger.info(`Repository: ${targetRepo}`);
       logger.info(`Pull Request: #${pr}`);
