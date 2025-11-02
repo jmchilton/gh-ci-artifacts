@@ -7,6 +7,7 @@ Download and parse GitHub Actions CI artifacts and logs for LLM analysis.
 `gh-ci-artifacts` automates the collection and normalization of GitHub Actions CI failures into structured JSON optimized for LLM analysis (particularly Claude). It handles artifact downloads, log extraction, and parsing of common test/linter formats.
 
 **Key Features:**
+- Focuses on failures by default (skips successful runs)
 - Zero-config operation with optional configuration file
 - Automatic type detection for Playwright, Jest, pytest, JUnit, ESLint, and more
 - HTML to JSON conversion for test reports
@@ -61,11 +62,16 @@ npx gh-ci-artifacts 123 --dry-run
 # Resume interrupted download (retry failures/incomplete)
 npx gh-ci-artifacts 123 --resume
 
+# Include successful runs (by default, only failures/cancelled are downloaded)
+npx gh-ci-artifacts 123 --include-successes
+
 # Enable debug logging
 npx gh-ci-artifacts 123 --debug
 ```
 
 **Note:** If installed globally, you can omit `npx` and use `gh-ci-artifacts` directly.
+
+**Default Behavior:** Only failed and cancelled runs are downloaded. Use `--include-successes` to download all runs.
 
 After downloading, open `.gh-ci-artifacts/<pr-number>/index.html` in your browser for an interactive file tree viewer.
 
@@ -218,6 +224,7 @@ Options:
   --max-retries <count>        Maximum retry attempts (default: 3)
   --retry-delay <seconds>      Retry delay in seconds (default: 5)
   --resume                     Resume incomplete/failed downloads
+  --include-successes          Include successful runs (default: only failures/cancelled)
   --debug                      Enable debug logging
   --dry-run                    Show what would be downloaded without downloading
   -h, --help                   display help for command

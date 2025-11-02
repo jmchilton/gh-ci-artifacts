@@ -22,6 +22,7 @@ program
   .option('--max-retries <count>', 'Maximum retry attempts', parseInt)
   .option('--retry-delay <seconds>', 'Retry delay in seconds', parseInt)
   .option('--resume', 'Resume incomplete/failed downloads (without this, existing artifacts are backed up)')
+  .option('--include-successes', 'Include artifacts from successful runs (by default, only failed/cancelled runs)')
   .option('--debug', 'Enable debug logging')
   .option('--dry-run', 'Show what would be downloaded without downloading')
   .action(async (pr: number, options) => {
@@ -72,6 +73,9 @@ program
       }
 
       logger.info('\n=== Downloading artifacts ===');
+      if (!options.includeSuccesses) {
+        logger.info('Skipping successful runs (use --include-successes to download all)');
+      }
       const result = await downloadArtifacts(
         targetRepo,
         pr,
@@ -79,7 +83,8 @@ program
         config,
         logger,
         options.resume,
-        options.dryRun
+        options.dryRun,
+        options.includeSuccesses
       );
 
       logger.info('\n=== Download complete ===');

@@ -24,7 +24,8 @@ export async function downloadArtifacts(
   config: Config,
   logger: Logger,
   resume: boolean = false,
-  dryRun: boolean = false
+  dryRun: boolean = false,
+  includeSuccesses: boolean = false
 ): Promise<DownloadResult> {
   logger.info('Fetching PR information...');
   const prInfo = getPRInfo(repo, prNumber);
@@ -62,6 +63,12 @@ export async function downloadArtifacts(
     const conclusion = mapRunConclusion(run.conclusion, run.status);
     runStates.set(runId, conclusion);
     logger.info(`  Status: ${conclusion}`);
+
+    // Skip successful runs unless explicitly requested
+    if (conclusion === 'success' && !includeSuccesses) {
+      logger.debug(`  Skipping successful run`);
+      continue;
+    }
 
     // Get artifacts for this run
     logger.info('  Fetching artifacts...');
