@@ -73,6 +73,8 @@ export function mergeConfig(
     defaultRepo: cliConfig.defaultRepo ?? fileConfig.defaultRepo,
     maxRetries: cliConfig.maxRetries ?? fileConfig.maxRetries ?? 3,
     retryDelay: cliConfig.retryDelay ?? fileConfig.retryDelay ?? 5,
+    pollInterval: cliConfig.pollInterval ?? fileConfig.pollInterval ?? 1800, // 30 minutes
+    maxWaitTime: cliConfig.maxWaitTime ?? fileConfig.maxWaitTime ?? 21600, // 6 hours
     skipArtifacts: cliConfig.skipArtifacts ?? fileConfig.skipArtifacts,
     workflows: cliConfig.workflows ?? fileConfig.workflows,
   };

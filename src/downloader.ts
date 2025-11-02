@@ -43,37 +43,51 @@ export async function downloadArtifacts(
   resume: boolean = false,
   dryRun: boolean = false,
   includeSuccesses: boolean = false,
+  wait: boolean = false,
 ): Promise<DownloadResult> {
-  logger.info("Fetching PR information...");
-  const prInfo = getPRInfo(repo, prNumber);
-  const headSha = prInfo.headRefOid;
-  const branch = prInfo.headRefName;
-  logger.info(`Head SHA: ${headSha}`);
-  logger.info(`Branch: ${branch}`);
+  // Polling setup for --wait mode
+  const startTime = Date.now();
+  const pollInterval = (config.pollInterval ?? 1800) * 1000; // Convert to milliseconds
+  const maxWaitTime = (config.maxWaitTime ?? 21600) * 1000; // Convert to milliseconds
+  let pollAttempt = 0;
 
-  logger.info("Finding workflow runs for commit...");
-  const runs = getWorkflowRunsForBranch(repo, branch, headSha);
-  logger.info(`Found ${runs.length} workflow runs`);
+  while (true) {
+    pollAttempt++;
 
-  const inventory: ArtifactInventoryItem[] = [];
-  const runStates = new Map<string, RunConclusion>();
-  const runsWithoutArtifacts: string[] = [];
-  const validationResults: ValidationResult[] = [];
-  const workflowRuns = new Map<
-    string,
-    { name: string; path: string; run_attempt: number; run_number: number }
-  >();
+    if (pollAttempt > 1) {
+      logger.info(`\n=== Polling attempt ${pollAttempt} ===`);
+    }
 
-  // Load existing inventory if resuming
-  const inventoryPath = join(outputDir, "artifacts.json");
-  let existingInventory: ArtifactInventoryItem[] = [];
-  if (resume && existsSync(inventoryPath)) {
-    logger.info("Resume mode: loading existing inventory...");
-    existingInventory = JSON.parse(readFileSync(inventoryPath, "utf-8"));
-    logger.info(`Found ${existingInventory.length} existing entries`);
-  }
+    logger.info("Fetching PR information...");
+    const prInfo = getPRInfo(repo, prNumber);
+    const headSha = prInfo.headRefOid;
+    const branch = prInfo.headRefName;
+    logger.info(`Head SHA: ${headSha}`);
+    logger.info(`Branch: ${branch}`);
 
-  // Process each run
+    logger.info("Finding workflow runs for commit...");
+    const runs = getWorkflowRunsForBranch(repo, branch, headSha);
+    logger.info(`Found ${runs.length} workflow runs`);
+
+    const inventory: ArtifactInventoryItem[] = [];
+    const runStates = new Map<string, RunConclusion>();
+    const runsWithoutArtifacts: string[] = [];
+    const validationResults: ValidationResult[] = [];
+    const workflowRuns = new Map<
+      string,
+      { name: string; path: string; run_attempt: number; run_number: number }
+    >();
+
+    // Load existing inventory if resuming
+    const inventoryPath = join(outputDir, "artifacts.json");
+    let existingInventory: ArtifactInventoryItem[] = [];
+    if (resume && existsSync(inventoryPath)) {
+      logger.info("Resume mode: loading existing inventory...");
+      existingInventory = JSON.parse(readFileSync(inventoryPath, "utf-8"));
+      logger.info(`Found ${existingInventory.length} existing entries`);
+    }
+
+    // Process each run
   for (let i = 0; i < runs.length; i++) {
     const run = runs[i];
     const runNum = i + 1;
@@ -261,21 +275,67 @@ export async function downloadArtifacts(
     }
   }
 
-  // Save inventory
-  if (!dryRun) {
-    mkdirSync(outputDir, { recursive: true });
-    writeFileSync(inventoryPath, JSON.stringify(inventory, null, 2));
-    logger.info(`\nSaved inventory to ${inventoryPath}`);
-  }
+    // Save inventory
+    if (!dryRun) {
+      mkdirSync(outputDir, { recursive: true });
+      writeFileSync(inventoryPath, JSON.stringify(inventory, null, 2));
+      logger.info(`\nSaved inventory to ${inventoryPath}`);
+    }
 
-  return {
-    headSha,
-    inventory,
-    runStates,
-    runsWithoutArtifacts,
-    validationResults,
-    workflowRuns,
-  };
+    // Check if we should continue polling
+    const inProgressCount = Array.from(runStates.values()).filter(
+      (state) => state === "in_progress"
+    ).length;
+
+    // If --wait is not enabled, or no runs in progress, exit loop
+    if (!wait || inProgressCount === 0) {
+      if (inProgressCount === 0 && pollAttempt > 1) {
+        logger.info("\n=== All workflows completed ===");
+      }
+      return {
+        headSha,
+        inventory,
+        runStates,
+        runsWithoutArtifacts,
+        validationResults,
+        workflowRuns,
+      };
+    }
+
+    // Check if max wait time exceeded
+    const elapsedTime = Date.now() - startTime;
+    if (elapsedTime >= maxWaitTime) {
+      const elapsedHours = (elapsedTime / (1000 * 60 * 60)).toFixed(1);
+      const maxHours = (maxWaitTime / (1000 * 60 * 60)).toFixed(1);
+      logger.warn(
+        `\n=== Maximum wait time reached (${elapsedHours}/${maxHours} hours) ===`
+      );
+      logger.warn(
+        `${inProgressCount} workflow(s) still in progress - exiting with incomplete status`
+      );
+      return {
+        headSha,
+        inventory,
+        runStates,
+        runsWithoutArtifacts,
+        validationResults,
+        workflowRuns,
+      };
+    }
+
+    // Log polling status
+    const remainingTime = maxWaitTime - elapsedTime;
+    const remainingHours = (remainingTime / (1000 * 60 * 60)).toFixed(1);
+    const pollMinutes = (pollInterval / (1000 * 60)).toFixed(0);
+
+    logger.info(`\n=== Waiting for ${inProgressCount} in-progress workflow(s) ===`);
+    logger.info(
+      `Polling again in ${pollMinutes} minutes (${remainingHours} hours remaining until timeout)`
+    );
+
+    // Sleep for poll interval
+    await new Promise((resolve) => setTimeout(resolve, pollInterval));
+  }
 }
 
 function mapRunConclusion(

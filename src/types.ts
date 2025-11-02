@@ -131,6 +131,8 @@ export interface Config {
   defaultRepo?: string;
   maxRetries?: number;
   retryDelay?: number;
+  pollInterval?: number;  // Seconds between polls when waiting (default: 1800 = 30 min)
+  maxWaitTime?: number;   // Maximum seconds to wait for completion (default: 21600 = 6 hours)
   skipArtifacts?: SkipPattern[];
   workflows?: WorkflowConfig[];
 }

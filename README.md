@@ -71,6 +71,12 @@ npx gh-ci-artifacts 123 --resume
 # Include successful runs (by default, only failures/cancelled are downloaded)
 npx gh-ci-artifacts 123 --include-successes
 
+# Wait for in-progress workflows to complete (polls every 30 min, max 6 hours)
+npx gh-ci-artifacts 123 --wait
+
+# Wait with custom polling interval and timeout
+npx gh-ci-artifacts 123 --wait --poll-interval 600 --max-wait-time 7200
+
 # Open HTML viewer in browser automatically when complete
 npx gh-ci-artifacts 123 --open
 
@@ -106,6 +112,8 @@ Create `.gh-ci-artifacts.json` in your project directory:
   "defaultRepo": "owner/repo",
   "maxRetries": 5,
   "retryDelay": 10,
+  "pollInterval": 1800,
+  "maxWaitTime": 21600,
   "skipArtifacts": [
     {
       "pattern": ".*-screenshots$",
@@ -145,6 +153,8 @@ Create `.gh-ci-artifacts.json` in your project directory:
 - `defaultRepo` (string): Default repository to use
 - `maxRetries` (number): Maximum retry attempts for failed downloads (default: 3)
 - `retryDelay` (number): Initial retry delay in seconds (default: 5)
+- `pollInterval` (number): Seconds between polls when using `--wait` (default: 1800 = 30 minutes)
+- `maxWaitTime` (number): Maximum seconds to wait for workflows to complete (default: 21600 = 6 hours)
 - `skipArtifacts` (array): Global skip patterns applied to all workflows
   - `pattern` (string): Regex pattern to match artifact names
   - `reason` (string, optional): Documentation for why this is skipped
@@ -444,16 +454,20 @@ Arguments:
   pr                           Pull request number
 
 Options:
-  -V, --version                output the version number
-  -r, --repo <owner/repo>      Repository in owner/repo format (defaults to current repo)
-  -o, --output-dir <dir>       Output directory
-  --max-retries <count>        Maximum retry attempts (default: 3)
-  --retry-delay <seconds>      Retry delay in seconds (default: 5)
-  --resume                     Resume incomplete/failed downloads
-  --include-successes          Include successful runs (default: only failures/cancelled)
-  --debug                      Enable debug logging
-  --dry-run                    Show what would be downloaded without downloading
-  -h, --help                   display help for command
+  -V, --version                      output the version number
+  -r, --repo <owner/repo>            Repository in owner/repo format (defaults to current repo)
+  -o, --output-dir <dir>             Output directory
+  --max-retries <count>              Maximum retry attempts (default: 3)
+  --retry-delay <seconds>            Retry delay in seconds (default: 5)
+  --resume                           Resume incomplete/failed downloads
+  --include-successes                Include successful runs (default: only failures/cancelled)
+  --wait                             Wait for in-progress workflows to complete (polls periodically)
+  --poll-interval <seconds>          Seconds between polls when waiting (default: 1800 = 30 min)
+  --max-wait-time <seconds>          Maximum seconds to wait for completion (default: 21600 = 6 hours)
+  --open                             Open HTML viewer in browser when complete
+  --debug                            Enable debug logging
+  --dry-run                          Show what would be downloaded without downloading
+  -h, --help                         display help for command
 ```
 
 ## Use Cases

@@ -35,6 +35,20 @@ program
     "--include-successes",
     "Include artifacts from successful runs (by default, only failed/cancelled runs)",
   )
+  .option(
+    "--wait",
+    "Wait for in-progress workflows to complete, polling periodically",
+  )
+  .option(
+    "--poll-interval <seconds>",
+    "Seconds between polls when waiting (default: 1800 = 30 min)",
+    parseInt,
+  )
+  .option(
+    "--max-wait-time <seconds>",
+    "Maximum seconds to wait for completion (default: 21600 = 6 hours)",
+    parseInt,
+  )
   .option("--open", "Open the generated HTML viewer in default browser")
   .option("--debug", "Enable debug logging")
   .option("--dry-run", "Show what would be downloaded without downloading")
@@ -53,6 +67,8 @@ program
         outputDir: options.outputDir,
         maxRetries: options.maxRetries,
         retryDelay: options.retryDelay,
+        pollInterval: options.pollInterval,
+        maxWaitTime: options.maxWaitTime,
       });
 
       const outputDir = getOutputDir(config, pr);
@@ -101,6 +117,7 @@ program
         options.resume,
         options.dryRun,
         options.includeSuccesses,
+        options.wait,
       );
 
       logger.info("\n=== Download complete ===");
