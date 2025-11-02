@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import type { Logger } from './utils/logger.js';
-import type { Config, ArtifactInventoryItem, RunConclusion } from './types.js';
+import type { Config, ArtifactInventoryItem, RunConclusion, ValidationResult } from './types.js';
 import {
   getPRInfo,
   getWorkflowRunsForBranch,
@@ -9,12 +9,20 @@ import {
   downloadArtifact,
 } from './github/api.js';
 import { withRetry, isExpiredError } from './utils/retry.js';
+import {
+  getWorkflowName,
+  findWorkflowConfig,
+  shouldSkipArtifact,
+  getCombinedSkipPatterns,
+  validateExpectations,
+} from './workflow-matcher.js';
 
 export interface DownloadResult {
   headSha: string;
   inventory: ArtifactInventoryItem[];
   runStates: Map<string, RunConclusion>;
   runsWithoutArtifacts: string[];
+  validationResults: ValidationResult[];
 }
 
 export async function downloadArtifacts(
@@ -41,6 +49,7 @@ export async function downloadArtifacts(
   const inventory: ArtifactInventoryItem[] = [];
   const runStates = new Map<string, RunConclusion>();
   const runsWithoutArtifacts: string[] = [];
+  const validationResults: ValidationResult[] = [];
 
   // Load existing inventory if resuming
   const inventoryPath = join(outputDir, 'artifacts.json');
@@ -56,13 +65,22 @@ export async function downloadArtifacts(
     const run = runs[i];
     const runNum = i + 1;
     const runId = String(run.id);
+    const workflowName = getWorkflowName(run);
 
     logger.info(`\nRun ${runNum}/${runs.length}: ${run.name} (${runId})`);
+    logger.debug(`  Workflow: ${workflowName}`);
 
     // Map run conclusion to our type
     const conclusion = mapRunConclusion(run.conclusion, run.status);
     runStates.set(runId, conclusion);
     logger.info(`  Status: ${conclusion}`);
+
+    // Check if entire workflow should be skipped
+    const workflowConfig = findWorkflowConfig(run, config.workflows || []);
+    if (workflowConfig?.skip) {
+      logger.info(`  Skipping entire workflow (configured in .gh-ci-artifacts.json)`);
+      continue;
+    }
 
     // Skip successful runs unless explicitly requested
     if (conclusion === 'success' && !includeSuccesses) {
@@ -81,6 +99,12 @@ export async function downloadArtifacts(
       continue;
     }
 
+    // Build combined skip patterns (global + workflow-specific)
+    const skipPatterns = getCombinedSkipPatterns(
+      config.skipArtifacts,
+      workflowConfig?.skipArtifacts
+    );
+
     // Download each artifact serially
     for (let j = 0; j < artifacts.length; j++) {
       const artifact = artifacts[j];
@@ -89,6 +113,21 @@ export async function downloadArtifacts(
       logger.progress(
         `  Downloading artifact ${artifactNum}/${artifacts.length}: ${artifact.name} (${formatBytes(artifact.size_in_bytes)})...`
       );
+
+      // Check if artifact should be skipped
+      const skipMatch = shouldSkipArtifact(artifact.name, skipPatterns);
+      if (skipMatch) {
+        const reason = skipMatch.reason || skipMatch.pattern;
+        logger.info(`    Skipped: ${reason}`);
+        inventory.push({
+          runId: runId,
+          artifactName: artifact.name,
+          sizeBytes: artifact.size_in_bytes,
+          status: 'skipped',
+          skipReason: reason,
+        });
+        continue;
+      }
 
       // Check if already downloaded in resume mode
       const existingEntry = existingInventory.find(
@@ -149,6 +188,31 @@ export async function downloadArtifacts(
         });
       }
     }
+
+    // Validate expectations after processing all artifacts for this run
+    const allArtifactNames = artifacts.map(a => a.name);
+    const validationResult = validateExpectations(run, workflowConfig, allArtifactNames);
+    
+    if (validationResult) {
+      validationResults.push(validationResult);
+      
+      // Log validation failures
+      if (validationResult.missingRequired.length > 0) {
+        logger.error(`  Validation failed: ${validationResult.missingRequired.length} required artifact(s) missing`);
+        for (const violation of validationResult.missingRequired) {
+          const reason = violation.reason ? ` (${violation.reason})` : '';
+          logger.error(`    Missing required: ${violation.pattern}${reason}`);
+        }
+      }
+      
+      if (validationResult.missingOptional.length > 0) {
+        logger.warn(`  Warning: ${validationResult.missingOptional.length} optional artifact(s) missing`);
+        for (const violation of validationResult.missingOptional) {
+          const reason = violation.reason ? ` (${violation.reason})` : '';
+          logger.debug(`    Missing optional: ${violation.pattern}${reason}`);
+        }
+      }
+    }
   }
 
   // Save inventory
@@ -163,6 +227,7 @@ export async function downloadArtifacts(
     inventory,
     runStates,
     runsWithoutArtifacts,
+    validationResults,
   };
 }
 

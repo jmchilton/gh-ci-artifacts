@@ -1,5 +1,5 @@
 export type RunConclusion = 'failure' | 'success' | 'cancelled' | 'in_progress';
-export type DownloadStatus = 'success' | 'expired' | 'failed';
+export type DownloadStatus = 'success' | 'expired' | 'failed' | 'skipped';
 export type ExtractionStatus = 'success' | 'failed';
 export type SummaryStatus = 'complete' | 'partial' | 'incomplete';
 
@@ -24,6 +24,7 @@ export interface ArtifactInventoryItem {
   sizeBytes: number;
   status: DownloadStatus;
   errorMessage?: string;
+  skipReason?: string;
 }
 
 export interface CatalogEntry {
@@ -58,11 +59,27 @@ export interface RunArtifact {
   converted?: boolean;
 }
 
+export interface ExpectationViolation {
+  pattern: string;
+  required: boolean;
+  reason?: string;
+}
+
+export interface ValidationResult {
+  workflowName: string;
+  workflowPath: string;
+  runId: string;
+  runName: string;
+  missingRequired: ExpectationViolation[];
+  missingOptional: ExpectationViolation[];
+}
+
 export interface RunSummary {
   runId: string;
   conclusion: RunConclusion;
   artifacts: RunArtifact[];
   logs: JobLog[];
+  validationResult?: ValidationResult;
 }
 
 export interface Summary {
@@ -74,6 +91,7 @@ export interface Summary {
   inProgressRuns: number;
   runs: RunSummary[];
   catalogFile: string;
+  validationResults?: ValidationResult[];
   stats: {
     totalRuns: number;
     artifactsDownloaded: number;
@@ -83,9 +101,30 @@ export interface Summary {
   };
 }
 
+export interface SkipPattern {
+  pattern: string;
+  reason?: string;
+}
+
+export interface ExpectPattern {
+  pattern: string;
+  required?: boolean;
+  reason?: string;
+}
+
+export interface WorkflowConfig {
+  workflow: string;
+  skipArtifacts?: SkipPattern[];
+  expectArtifacts?: ExpectPattern[];
+  skip?: boolean;
+  description?: string;
+}
+
 export interface Config {
   outputDir?: string;
   defaultRepo?: string;
   maxRetries?: number;
   retryDelay?: number;
+  skipArtifacts?: SkipPattern[];
+  workflows?: WorkflowConfig[];
 }

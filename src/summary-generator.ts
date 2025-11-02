@@ -9,6 +9,7 @@ import type {
   ArtifactInventoryItem,
   CatalogEntry,
   JobLog,
+  ValidationResult,
 } from './types.js';
 
 export interface SummaryInput {
@@ -19,13 +20,14 @@ export interface SummaryInput {
   runStates: Map<string, RunConclusion>;
   logs: Map<string, JobLog[]>;
   catalog: CatalogEntry[];
+  validationResults?: ValidationResult[];
 }
 
 export function generateSummary(
   input: SummaryInput,
   outputDir: string
 ): Summary {
-  const { repo, pr, headSha, inventory, runStates, logs, catalog } = input;
+  const { repo, pr, headSha, inventory, runStates, logs, catalog, validationResults } = input;
 
   // Determine overall status
   const inProgressCount = Array.from(runStates.values()).filter(
@@ -64,12 +66,16 @@ export function generateSummary(
       });
 
     const runLogs = logs.get(runId) || [];
+    
+    // Find validation result for this run
+    const validationResult = validationResults?.find(v => v.runId === runId);
 
     runs.push({
       runId,
       conclusion,
       artifacts: runArtifacts,
       logs: runLogs,
+      validationResult,
     });
   }
 
@@ -95,6 +101,7 @@ export function generateSummary(
     inProgressRuns: inProgressCount,
     runs,
     catalogFile: './catalog.json',
+    validationResults: validationResults && validationResults.length > 0 ? validationResults : undefined,
     stats,
   };
 

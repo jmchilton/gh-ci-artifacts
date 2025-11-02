@@ -15,6 +15,7 @@ export interface CheckRun {
 export interface WorkflowRun {
   id: number;
   name: string;
+  path: string;
   conclusion: string | null;
   status: string;
 }
@@ -55,7 +56,7 @@ export function getWorkflowRunsForBranch(repo: string, branch: string, sha: stri
     // Query by branch and PR event first (much faster than paginating all runs)
     // Then filter by SHA for exact match
     const runsOutput = execSync(
-      `gh api --paginate 'repos/${repo}/actions/runs?event=pull_request&branch=${branch}' --jq '.workflow_runs[] | select(.head_sha == "${sha}")'`,
+      `gh api --paginate 'repos/${repo}/actions/runs?event=pull_request&branch=${branch}' --jq '.workflow_runs[] | select(.head_sha == "${sha}") | {id, name, path, conclusion, status}'`,
       { encoding: 'utf-8', maxBuffer: 50 * 1024 * 1024 }
     );
 
@@ -78,7 +79,7 @@ export function getWorkflowRunsForCommit(repo: string, sha: string): WorkflowRun
   // Fallback for direct SHA queries (slower, but works without branch name)
   try {
     const runsOutput = execSync(
-      `gh api --paginate repos/${repo}/actions/runs --jq '.workflow_runs[] | select(.head_sha == "${sha}")'`,
+      `gh api --paginate repos/${repo}/actions/runs --jq '.workflow_runs[] | select(.head_sha == "${sha}") | {id, name, path, conclusion, status}'`,
       { encoding: 'utf-8', maxBuffer: 50 * 1024 * 1024 }
     );
 

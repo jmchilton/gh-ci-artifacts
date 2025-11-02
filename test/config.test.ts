@@ -119,3 +119,178 @@ describe('getOutputDir', () => {
     expect(outputDir).toBe('/base/789');
   });
 });
+
+describe('loadConfig with skip patterns', () => {
+  const testDir = join(process.cwd(), 'test-tmp-config-skip');
+  const configPath = join(testDir, '.gh-ci-artifacts.json');
+
+  beforeEach(() => {
+    if (existsSync(testDir)) {
+      rmSync(testDir, { recursive: true });
+    }
+    mkdirSync(testDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    if (existsSync(testDir)) {
+      rmSync(testDir, { recursive: true });
+    }
+  });
+
+  it('loads config with global skip patterns', () => {
+    const configWithSkip: Config = {
+      skipArtifacts: [
+        { pattern: '.*-screenshots$', reason: 'No screenshots' },
+      ],
+    };
+    writeFileSync(configPath, JSON.stringify(configWithSkip));
+
+    const config = loadConfig(testDir);
+    expect(config.skipArtifacts).toBeDefined();
+    expect(config.skipArtifacts).toHaveLength(1);
+    expect(config.skipArtifacts![0].pattern).toBe('.*-screenshots$');
+  });
+
+  it('loads config with workflow configurations', () => {
+    const configWithWorkflows: Config = {
+      workflows: [
+        {
+          workflow: 'ci',
+          skipArtifacts: [{ pattern: '.*-traces$' }],
+        },
+      ],
+    };
+    writeFileSync(configPath, JSON.stringify(configWithWorkflows));
+
+    const config = loadConfig(testDir);
+    expect(config.workflows).toBeDefined();
+    expect(config.workflows).toHaveLength(1);
+    expect(config.workflows![0].workflow).toBe('ci');
+  });
+
+  it('validates regex patterns in global skip', () => {
+    const invalidConfig = {
+      skipArtifacts: [{ pattern: '[invalid(regex' }],
+    };
+    writeFileSync(configPath, JSON.stringify(invalidConfig));
+
+    expect(() => loadConfig(testDir)).toThrow('Invalid regex pattern');
+  });
+
+  it('validates regex patterns in workflow skip', () => {
+    const invalidConfig = {
+      workflows: [
+        {
+          workflow: 'ci',
+          skipArtifacts: [{ pattern: '[invalid' }],
+        },
+      ],
+    };
+    writeFileSync(configPath, JSON.stringify(invalidConfig));
+
+    expect(() => loadConfig(testDir)).toThrow('Invalid regex pattern');
+    expect(() => loadConfig(testDir)).toThrow('workflow "ci"');
+  });
+
+  it('loads workflow with skip flag', () => {
+    const configWithSkipWorkflow: Config = {
+      workflows: [
+        {
+          workflow: 'deploy',
+          skip: true,
+          description: 'Skip deployment artifacts',
+        },
+      ],
+    };
+    writeFileSync(configPath, JSON.stringify(configWithSkipWorkflow));
+
+    const config = loadConfig(testDir);
+    expect(config.workflows![0].skip).toBe(true);
+    expect(config.workflows![0].description).toBe('Skip deployment artifacts');
+  });
+});
+
+describe('mergeConfig with skip patterns', () => {
+  it('preserves skip patterns from file config', () => {
+    const fileConfig: Config = {
+      skipArtifacts: [{ pattern: '.*-screenshots$' }],
+    };
+    const cliConfig: Partial<Config> = {};
+
+    const merged = mergeConfig(fileConfig, cliConfig);
+    expect(merged.skipArtifacts).toBeDefined();
+    expect(merged.skipArtifacts).toHaveLength(1);
+  });
+
+  it('preserves workflow configs from file config', () => {
+    const fileConfig: Config = {
+      workflows: [{ workflow: 'ci', skip: true }],
+    };
+    const cliConfig: Partial<Config> = {};
+
+    const merged = mergeConfig(fileConfig, cliConfig);
+    expect(merged.workflows).toBeDefined();
+    expect(merged.workflows).toHaveLength(1);
+  });
+});
+
+describe('loadConfig with expectArtifacts', () => {
+  const testDir = join(process.cwd(), 'test-tmp-config-expect');
+  const configPath = join(testDir, '.gh-ci-artifacts.json');
+
+  beforeEach(() => {
+    if (existsSync(testDir)) {
+      rmSync(testDir, { recursive: true });
+    }
+    mkdirSync(testDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    if (existsSync(testDir)) {
+      rmSync(testDir, { recursive: true });
+    }
+  });
+
+  it('loads workflow with expectArtifacts', () => {
+    const configWithExpect: Config = {
+      workflows: [
+        {
+          workflow: 'ci',
+          expectArtifacts: [
+            {
+              pattern: 'test-results',
+              required: true,
+              reason: 'Must have test results',
+            },
+          ],
+        },
+      ],
+    };
+    writeFileSync(configPath, JSON.stringify(configWithExpect));
+
+    const config = loadConfig(testDir);
+    expect(config.workflows).toBeDefined();
+    expect(config.workflows![0].expectArtifacts).toBeDefined();
+    expect(config.workflows![0].expectArtifacts).toHaveLength(1);
+    expect(config.workflows![0].expectArtifacts![0].pattern).toBe('test-results');
+    expect(config.workflows![0].expectArtifacts![0].required).toBe(true);
+  });
+
+  it('loads workflow with both skip and expect patterns', () => {
+    const configWithBoth: Config = {
+      workflows: [
+        {
+          workflow: 'e2e',
+          skipArtifacts: [{ pattern: '.*-videos$' }],
+          expectArtifacts: [{ pattern: 'playwright-report' }],
+        },
+      ],
+    };
+    writeFileSync(configPath, JSON.stringify(configWithBoth));
+
+    const config = loadConfig(testDir);
+    expect(config.workflows![0].skipArtifacts).toHaveLength(1);
+    expect(config.workflows![0].expectArtifacts).toHaveLength(1);
+  });
+});
+

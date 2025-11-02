@@ -1,0 +1,55 @@
+{
+  "outputDir": "./.gh-ci-artifacts",
+  "maxRetries": 3,
+  "retryDelay": 5,
+  "skipArtifacts": [
+    {
+      "pattern": ".*-screenshots$",
+      "reason": "Screenshots not needed for LLM analysis"
+    },
+    {
+      "pattern": ".*-videos$",
+      "reason": "Video recordings too large"
+    }
+  ],
+  "workflows": [
+    {
+      "workflow": "ci",
+      "description": "Main CI workflow - expect test results",
+      "expectArtifacts": [
+        {
+          "pattern": "test-results.*",
+          "required": true,
+          "reason": "CI should always produce test results"
+        },
+        {
+          "pattern": "coverage-.*",
+          "required": false,
+          "reason": "Coverage reports are optional but nice to have"
+        }
+      ]
+    },
+    {
+      "workflow": "e2e",
+      "description": "E2E tests - skip traces and videos, expect playwright report",
+      "skipArtifacts": [
+        {
+          "pattern": ".*-trace\\.zip$",
+          "reason": "Playwright traces are too large"
+        }
+      ],
+      "expectArtifacts": [
+        {
+          "pattern": "playwright-report",
+          "required": true,
+          "reason": "E2E tests must produce playwright report"
+        }
+      ]
+    },
+    {
+      "workflow": "deploy-preview",
+      "skip": true,
+      "description": "Don't download deployment artifacts"
+    }
+  ]
+}

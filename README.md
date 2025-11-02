@@ -92,7 +92,37 @@ Create `.gh-ci-artifacts.json` in your project directory:
   "outputDir": "./custom-output",
   "defaultRepo": "owner/repo",
   "maxRetries": 5,
-  "retryDelay": 10
+  "retryDelay": 10,
+  "skipArtifacts": [
+    {
+      "pattern": ".*-screenshots$",
+      "reason": "Screenshots not needed for analysis"
+    }
+  ],
+  "workflows": [
+    {
+      "workflow": "ci",
+      "expectArtifacts": [
+        {
+          "pattern": "test-results",
+          "required": true
+        }
+      ]
+    },
+    {
+      "workflow": "e2e",
+      "skipArtifacts": [
+        {
+          "pattern": ".*-videos$",
+          "reason": "E2E videos too large"
+        }
+      ]
+    },
+    {
+      "workflow": "deploy-preview",
+      "skip": true
+    }
+  ]
 }
 ```
 
@@ -101,6 +131,36 @@ Create `.gh-ci-artifacts.json` in your project directory:
 - `defaultRepo` (string): Default repository to use
 - `maxRetries` (number): Maximum retry attempts for failed downloads (default: 3)
 - `retryDelay` (number): Initial retry delay in seconds (default: 5)
+- `skipArtifacts` (array): Global skip patterns applied to all workflows
+  - `pattern` (string): Regex pattern to match artifact names
+  - `reason` (string, optional): Documentation for why this is skipped
+- `workflows` (array): Per-workflow configuration
+  - `workflow` (string): Workflow filename without extension (e.g., "ci" for `.github/workflows/ci.yml`)
+  - `skip` (boolean, optional): Skip this entire workflow
+  - `skipArtifacts` (array, optional): Skip patterns specific to this workflow
+  - `expectArtifacts` (array, optional): Expected artifacts for validation
+    - `pattern` (string): Regex pattern that at least one artifact should match
+    - `required` (boolean, optional): If true (default), error if not found; if false, just warn
+    - `reason` (string, optional): Documentation for why this is expected
+  - `description` (string, optional): Documentation for this workflow config
+
+**Skip Pattern Matching:**
+- Patterns are matched against artifact names using regex
+- Global skip patterns are applied first, then workflow-specific patterns
+- First matching pattern determines the skip reason
+- Invalid regex patterns are caught at config load time
+
+**Artifact Expectations:**
+- Validate that expected artifacts are present after download
+- Required expectations (default) will log errors if artifacts are missing
+- Optional expectations will log warnings if artifacts are missing
+- Validation results are included in `summary.json` for analysis
+- Useful for ensuring CI workflows produce expected outputs
+
+**Workflow Matching:**
+- Workflows are matched by their filename without the `.yml` or `.yaml` extension
+- Example: `.github/workflows/ci.yml` → `"workflow": "ci"`
+- Example: `.github/workflows/e2e-tests.yaml` → `"workflow": "e2e-tests"`
 
 CLI arguments override config file values.
 
@@ -142,8 +202,9 @@ CLI arguments override config file values.
     artifacts: Array<{
       name: string;
       sizeBytes: number;
-      downloadStatus: "success" | "expired" | "failed";
+      downloadStatus: "success" | "expired" | "failed" | "skipped";
       errorMessage?: string;
+      skipReason?: string;  // Present when downloadStatus is "skipped"
       detectedType?: string;
       filePath?: string;
       converted?: boolean;
@@ -157,8 +218,32 @@ CLI arguments override config file values.
         filePath: string;
       }>;
     }>;
+    validationResult?: {  // Present if expectations configured and violations found
+      workflowName: string;
+      workflowPath: string;
+      runId: string;
+      runName: string;
+      missingRequired: Array<{
+        pattern: string;
+        required: boolean;
+        reason?: string;
+      }>;
+      missingOptional: Array<{
+        pattern: string;
+        required: boolean;
+        reason?: string;
+      }>;
+    };
   }>;
   catalogFile: string;
+  validationResults?: Array<{  // Summary of all validation failures
+    workflowName: string;
+    workflowPath: string;
+    runId: string;
+    runName: string;
+    missingRequired: Array<{ pattern: string; required: boolean; reason?: string }>;
+    missingOptional: Array<{ pattern: string; required: boolean; reason?: string }>;
+  }>;
   stats: {
     totalRuns: number;
     artifactsDownloaded: number;
@@ -181,6 +266,103 @@ Array<{
   converted?: boolean;  // True if HTML was converted to JSON
   skipped?: boolean;    // True for binary files
 }>
+```
+
+## Common Skip Patterns
+
+Here are some useful skip patterns for common scenarios:
+
+**Skip all screenshots:**
+```json
+{ "pattern": ".*-screenshots$" }
+```
+
+**Skip videos and traces:**
+```json
+{ "pattern": ".*(videos|traces).*" }
+```
+
+**Skip binary artifacts (screenshots, videos, recordings):**
+```json
+{ "pattern": "^(screenshots|videos|recordings|traces)-.*" }
+```
+
+**Skip all Playwright traces:**
+```json
+{ "pattern": ".*-trace\\.zip$" }
+```
+
+**Skip debug/dev builds:**
+```json
+{ "pattern": ".*(debug|dev).*" }
+```
+
+**Skip large HTML reports (when JSON available):**
+```json
+{
+  "workflow": "e2e",
+  "skipArtifacts": [
+    { "pattern": "playwright-report", "reason": "Using JSON report instead" }
+  ]
+}
+```
+
+## Common Expectation Patterns
+
+Validate that your CI workflows produce expected artifacts:
+
+**Require test results:**
+```json
+{
+  "workflow": "ci",
+  "expectArtifacts": [
+    {
+      "pattern": "test-results.*",
+      "required": true,
+      "reason": "CI must produce test results"
+    }
+  ]
+}
+```
+
+**Expect coverage (optional):**
+```json
+{
+  "workflow": "ci",
+  "expectArtifacts": [
+    {
+      "pattern": "coverage-.*",
+      "required": false,
+      "reason": "Coverage reports are nice to have"
+    }
+  ]
+}
+```
+
+**Multiple expectations:**
+```json
+{
+  "workflow": "e2e",
+  "expectArtifacts": [
+    { "pattern": "playwright-report", "required": true },
+    { "pattern": "test-results\\.json", "required": true },
+    { "pattern": "screenshots-.*", "required": false }
+  ]
+}
+```
+
+**Flexible format matching:**
+```json
+{
+  "workflow": "build",
+  "expectArtifacts": [
+    {
+      "pattern": "dist-(linux|windows|macos).*",
+      "required": true,
+      "reason": "Must build for all platforms"
+    }
+  ]
+}
 ```
 
 ## Supported Test Frameworks

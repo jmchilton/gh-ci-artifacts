@@ -161,12 +161,33 @@ program
             runStates: result.runStates,
             logs: logResult?.logs || new Map(),
             catalog: catalogResult.catalog,
+            validationResults: result.validationResults,
           },
           outputDir
         );
 
         logger.info(`\n=== Complete ===`);
         logger.info(`Status: ${summary.status}`);
+        
+        // Report validation results if any
+        if (summary.validationResults && summary.validationResults.length > 0) {
+          const totalRequiredViolations = summary.validationResults.reduce(
+            (sum, v) => sum + v.missingRequired.length,
+            0
+          );
+          const totalOptionalViolations = summary.validationResults.reduce(
+            (sum, v) => sum + v.missingOptional.length,
+            0
+          );
+          
+          if (totalRequiredViolations > 0) {
+            logger.error(`Validation: ${totalRequiredViolations} required artifact(s) missing`);
+          }
+          if (totalOptionalViolations > 0) {
+            logger.warn(`Validation: ${totalOptionalViolations} optional artifact(s) missing`);
+          }
+        }
+        
         logger.info(`Summary saved to: ${outputDir}/summary.json`);
         logger.info(`Catalog saved to: ${outputDir}/catalog.json`);
         logger.info(`Inventory saved to: ${outputDir}/artifacts.json`);

@@ -15,6 +15,10 @@ export class Logger {
     }
   }
 
+  warn(message: string): void {
+    console.error(`[WARN] ${message}`);
+  }
+
   error(message: string): void {
     console.error(`[ERROR] ${message}`);
   }
