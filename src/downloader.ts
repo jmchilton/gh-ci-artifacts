@@ -23,7 +23,7 @@ export interface DownloadResult {
   runStates: Map<string, RunConclusion>;
   runsWithoutArtifacts: string[];
   validationResults: ValidationResult[];
-  workflowRuns: Map<string, { name: string; path: string }>;
+  workflowRuns: Map<string, { name: string; path: string; run_attempt: number; run_number: number }>;
 }
 
 export async function downloadArtifacts(
@@ -51,7 +51,7 @@ export async function downloadArtifacts(
   const runStates = new Map<string, RunConclusion>();
   const runsWithoutArtifacts: string[] = [];
   const validationResults: ValidationResult[] = [];
-  const workflowRuns = new Map<string, { name: string; path: string }>();
+  const workflowRuns = new Map<string, { name: string; path: string; run_attempt: number; run_number: number }>();
 
   // Load existing inventory if resuming
   const inventoryPath = join(outputDir, 'artifacts.json');
@@ -75,7 +75,12 @@ export async function downloadArtifacts(
     // Map run conclusion to our type
     const conclusion = mapRunConclusion(run.conclusion, run.status);
     runStates.set(runId, conclusion);
-    workflowRuns.set(runId, { name: run.name, path: run.path });
+    workflowRuns.set(runId, { 
+      name: run.name, 
+      path: run.path,
+      run_attempt: run.run_attempt,
+      run_number: run.run_number,
+    });
     logger.info(`  Status: ${conclusion}`);
 
     // Check if entire workflow should be skipped

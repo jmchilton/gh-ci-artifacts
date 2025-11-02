@@ -78,6 +78,8 @@ export interface RunSummary {
   runId: string;
   workflowName: string;
   workflowPath: string;
+  runAttempt: number;
+  runNumber: number;
   conclusion: RunConclusion;
   artifacts: RunArtifact[];
   logs: JobLog[];

@@ -71,7 +71,9 @@ npx gh-ci-artifacts 123 --debug
 
 **Note:** If installed globally, you can omit `npx` and use `gh-ci-artifacts` directly.
 
-**Default Behavior:** Only failed and cancelled runs are downloaded. Use `--include-successes` to download all runs.
+**Default Behavior:** 
+- Only failed and cancelled runs are downloaded. Use `--include-successes` to download all runs.
+- **Only the latest retry attempt** for each workflow is processed. If a workflow was retried, earlier failed attempts are automatically skipped to avoid duplicate artifacts/logs.
 
 After downloading, open `.gh-ci-artifacts/<pr-number>/index.html` in your browser for an interactive file tree viewer.
 
@@ -200,6 +202,8 @@ CLI arguments override config file values.
     runId: string;
     workflowName: string;
     workflowPath: string;
+    runAttempt: number;  // Which retry attempt this is (1 = first attempt, 2+ = retries)
+    runNumber: number;   // Sequential number for this workflow
     conclusion: "failure" | "success" | "cancelled" | "in_progress";
     artifacts: Array<{
       name: string;

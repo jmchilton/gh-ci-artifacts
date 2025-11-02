@@ -21,7 +21,7 @@ export interface SummaryInput {
   logs: Map<string, JobLog[]>;
   catalog: CatalogEntry[];
   validationResults?: ValidationResult[];
-  workflowRuns: Map<string, { name: string; path: string }>;
+  workflowRuns: Map<string, { name: string; path: string; run_attempt: number; run_number: number }>;
 }
 
 export function generateSummary(
@@ -78,6 +78,8 @@ export function generateSummary(
       runId,
       workflowName: workflowInfo?.name || 'Unknown',
       workflowPath: workflowInfo?.path || '',
+      runAttempt: workflowInfo?.run_attempt || 1,
+      runNumber: workflowInfo?.run_number || 0,
       conclusion,
       artifacts: runArtifacts,
       logs: runLogs,
