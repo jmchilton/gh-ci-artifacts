@@ -208,6 +208,11 @@ function detectXmlType(content: string, lowerContent: string): ArtifactType {
 }
 
 function detectTxtType(content: string, lowerContent: string): ArtifactType {
+  // TypeScript compiler output patterns (src/file.ts(line,col): error TS...)
+  if (/\.tsx?\(\d+,\d+\):\s+error\s+TS\d+/.test(content)) {
+    return "tsc-txt";
+  }
+
   // ESLint output patterns
   if (
     lowerContent.includes("eslint") ||

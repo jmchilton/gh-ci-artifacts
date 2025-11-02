@@ -1,0 +1,45 @@
+language: javascript
+node_version: "20.11.0"
+tools:
+  - name: jest
+    version: "29.7.0"
+  - name: "@playwright/test"
+    version: "1.40.0"
+  - name: eslint
+    version: "8.56.0"
+  - name: typescript
+    version: "5.3.3"
+
+artifacts:
+  - file: "jest-results.json"
+    type: jest-json
+    format: json
+    description: "Jest JSON reporter: 5 pass, 2 fail, 1 skip"
+    parsers: []
+    coverage_target: "type-detector"
+
+  - file: "playwright-results.json"
+    type: playwright-json
+    format: json
+    description: "Playwright JSON: 3 pass, 1 fail"
+    parsers: []
+    coverage_target: "type-detector"
+
+  - file: "eslint-output.txt"
+    type: eslint-txt
+    format: txt
+    description: "ESLint output with violations"
+    parsers: ["detectLinterType", "extractLinterOutput"]
+    coverage_target: "linter-collector.ts"
+
+  - file: "tsc-output.txt"
+    type: tsc-txt
+    format: txt
+    description: "TypeScript compiler errors"
+    parsers: ["detectLinterType"]
+    coverage_target: "linter-collector.ts"
+    notes: "extractLinterOutput for tsc requires 'tsc' trigger in content - extractor bug"
+
+commands:
+  generate: "docker-compose up --build"
+  clean: "docker-compose down -v && rm -rf ../../generated/javascript"

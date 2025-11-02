@@ -1,0 +1,4 @@
+src/sample.ts(3,19): error TS7006: Parameter 'x' implicitly has an 'any' type.
+src/sample.ts(9,3): error TS2353: Object literal may only specify known properties, and 'extra' does not exist in type '{ name: string; }'.
+src/sample.ts(12,5): error TS2322: Type 'number' is not assignable to type 'string'.
+src/sample.ts(20,15): error TS2339: Property 'email' does not exist on type 'User'.

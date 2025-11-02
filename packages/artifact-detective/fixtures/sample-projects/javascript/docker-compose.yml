@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  generate:
+    build: .
+    volumes:
+      - ../../generated/javascript:/output
+    command: /bin/sh -c "
+      echo 'Running Jest tests...' &&
+      npm run test:jest -- --json --outputFile=/output/jest-results.json 2>/dev/null || true &&
+      echo 'Running Playwright tests (JSON)...' &&
+      npx playwright test --reporter=json > /output/playwright-results.json 2>&1 || true &&
+      echo 'Running ESLint...' &&
+      npx eslint src/ 2>&1 > /output/eslint-output.txt || true &&
+      echo 'Running TypeScript compiler...' &&
+      npx tsc --noEmit 2>&1 > /output/tsc-output.txt || true &&
+      echo 'Artifact generation complete!'
+      "

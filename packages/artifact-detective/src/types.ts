@@ -8,6 +8,7 @@ export type ArtifactType =
   | "pytest-html"
   | "junit-xml"
   | "eslint-txt"
+  | "tsc-txt"
   | "flake8-txt"
   | "binary"
   | "unknown";
