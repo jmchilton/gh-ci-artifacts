@@ -198,6 +198,8 @@ CLI arguments override config file values.
   inProgressRuns: number;
   runs: Array<{
     runId: string;
+    workflowName: string;
+    workflowPath: string;
     conclusion: "failure" | "success" | "cancelled" | "in_progress";
     artifacts: Array<{
       name: string;

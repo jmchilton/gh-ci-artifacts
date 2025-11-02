@@ -21,13 +21,14 @@ export interface SummaryInput {
   logs: Map<string, JobLog[]>;
   catalog: CatalogEntry[];
   validationResults?: ValidationResult[];
+  workflowRuns: Map<string, { name: string; path: string }>;
 }
 
 export function generateSummary(
   input: SummaryInput,
   outputDir: string
 ): Summary {
-  const { repo, pr, headSha, inventory, runStates, logs, catalog, validationResults } = input;
+  const { repo, pr, headSha, inventory, runStates, logs, catalog, validationResults, workflowRuns } = input;
 
   // Determine overall status
   const inProgressCount = Array.from(runStates.values()).filter(
@@ -69,9 +70,14 @@ export function generateSummary(
     
     // Find validation result for this run
     const validationResult = validationResults?.find(v => v.runId === runId);
+    
+    // Get workflow info for this run
+    const workflowInfo = workflowRuns.get(runId);
 
     runs.push({
       runId,
+      workflowName: workflowInfo?.name || 'Unknown',
+      workflowPath: workflowInfo?.path || '',
       conclusion,
       artifacts: runArtifacts,
       logs: runLogs,

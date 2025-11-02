@@ -348,7 +348,7 @@ document.addEventListener('click', (e) => {
       const rowData = JSON.parse(row.dataset.row);
       const detailRow = document.createElement('tr');
       detailRow.className = 'expanded-row';
-      detailRow.innerHTML = '<td colspan="6">' + renderRunDetails(rowData) + '</td>';
+      detailRow.innerHTML = '<td colspan="7">' + renderRunDetails(rowData) + '</td>';
       row.after(detailRow);
       toggle.textContent = '▼';
     }

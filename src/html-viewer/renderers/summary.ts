@@ -105,6 +105,7 @@ function renderValidationSection(results: ValidationResult[]): string {
 function renderRunsTable(data: Summary): string {
   const columns: TableColumn[] = [
     { key: 'expand', label: '', sortable: false, render: () => '<span class="row-toggle">▶</span>' },
+    { key: 'workflowName', label: 'Workflow' },
     { key: 'runId', label: 'Run ID' },
     { key: 'conclusion', label: 'Status', render: (val) => renderStatusBadge(val) },
     { key: 'artifactCount', label: 'Artifacts' },
@@ -124,6 +125,7 @@ function renderRunsTable(data: Summary): string {
   ];
   
   const rows = data.runs.map(run => ({
+    workflowName: run.workflowName,
     runId: run.runId,
     conclusion: run.conclusion,
     artifactCount: run.artifacts.length,

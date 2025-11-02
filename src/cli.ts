@@ -162,6 +162,7 @@ program
             logs: logResult?.logs || new Map(),
             catalog: catalogResult.catalog,
             validationResults: result.validationResults,
+            workflowRuns: result.workflowRuns,
           },
           outputDir
         );

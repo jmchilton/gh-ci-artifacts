@@ -76,6 +76,8 @@ export interface ValidationResult {
 
 export interface RunSummary {
   runId: string;
+  workflowName: string;
+  workflowPath: string;
   conclusion: RunConclusion;
   artifacts: RunArtifact[];
   logs: JobLog[];
