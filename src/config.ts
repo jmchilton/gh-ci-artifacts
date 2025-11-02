@@ -1,8 +1,13 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { parse as parseYAML } from 'yaml';
 import type { Config, SkipPattern } from './types.js';
 
-const CONFIG_FILENAME = '.gh-ci-artifacts.json';
+const CONFIG_FILENAMES = [
+  '.gh-ci-artifacts.json',
+  '.gh-ci-artifacts.yml',
+  '.gh-ci-artifacts.yaml',
+];
 
 function validateSkipPatterns(patterns: SkipPattern[], context: string): void {
   for (const pattern of patterns) {
@@ -17,38 +22,46 @@ function validateSkipPatterns(patterns: SkipPattern[], context: string): void {
 }
 
 export function loadConfig(cwd: string = process.cwd()): Config {
-  const configPath = join(cwd, CONFIG_FILENAME);
-
-  if (!existsSync(configPath)) {
-    return {};
-  }
-
-  try {
-    const configContent = readFileSync(configPath, 'utf-8');
-    const config = JSON.parse(configContent) as Config;
+  // Check for config files in order of preference
+  for (const filename of CONFIG_FILENAMES) {
+    const configPath = join(cwd, filename);
     
-    // Validate skip patterns
-    if (config.skipArtifacts) {
-      validateSkipPatterns(config.skipArtifacts, 'global skipArtifacts');
+    if (!existsSync(configPath)) {
+      continue;
     }
-    
-    if (config.workflows) {
-      for (const workflow of config.workflows) {
-        if (workflow.skipArtifacts) {
-          validateSkipPatterns(
-            workflow.skipArtifacts,
-            `workflow "${workflow.workflow}" skipArtifacts`
-          );
+
+    try {
+      const configContent = readFileSync(configPath, 'utf-8');
+      const isYAML = filename.endsWith('.yml') || filename.endsWith('.yaml');
+      const config = isYAML 
+        ? (parseYAML(configContent) as Config)
+        : (JSON.parse(configContent) as Config);
+      
+      // Validate skip patterns
+      if (config.skipArtifacts) {
+        validateSkipPatterns(config.skipArtifacts, 'global skipArtifacts');
+      }
+      
+      if (config.workflows) {
+        for (const workflow of config.workflows) {
+          if (workflow.skipArtifacts) {
+            validateSkipPatterns(
+              workflow.skipArtifacts,
+              `workflow "${workflow.workflow}" skipArtifacts`
+            );
+          }
         }
       }
+      
+      return config;
+    } catch (error) {
+      throw new Error(
+        `Failed to parse ${filename}: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
-    
-    return config;
-  } catch (error) {
-    throw new Error(
-      `Failed to parse ${CONFIG_FILENAME}: ${error instanceof Error ? error.message : String(error)}`
-    );
   }
+
+  return {};
 }
 
 export function mergeConfig(

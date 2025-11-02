@@ -6,7 +6,9 @@ import type { Config } from '../src/types.js';
 
 describe('loadConfig', () => {
   const testDir = join(process.cwd(), 'test-tmp-config');
-  const configPath = join(testDir, '.gh-ci-artifacts.json');
+  const configPathJson = join(testDir, '.gh-ci-artifacts.json');
+  const configPathYml = join(testDir, '.gh-ci-artifacts.yml');
+  const configPathYaml = join(testDir, '.gh-ci-artifacts.yaml');
 
   beforeEach(() => {
     if (existsSync(testDir)) {
@@ -33,14 +35,14 @@ describe('loadConfig', () => {
       maxRetries: 5,
       retryDelay: 10,
     };
-    writeFileSync(configPath, JSON.stringify(validConfig));
+    writeFileSync(configPathJson, JSON.stringify(validConfig));
 
     const config = loadConfig(testDir);
     expect(config).toEqual(validConfig);
   });
 
   it('throws on invalid JSON', () => {
-    writeFileSync(configPath, '{ invalid json }');
+    writeFileSync(configPathJson, '{ invalid json }');
 
     expect(() => loadConfig(testDir)).toThrow('Failed to parse');
   });
@@ -49,10 +51,74 @@ describe('loadConfig', () => {
     const partialConfig: Config = {
       outputDir: '/custom/output',
     };
-    writeFileSync(configPath, JSON.stringify(partialConfig));
+    writeFileSync(configPathJson, JSON.stringify(partialConfig));
 
     const config = loadConfig(testDir);
     expect(config).toEqual(partialConfig);
+  });
+
+  it('loads valid .yml config file', () => {
+    const yamlContent = `outputDir: /custom/output
+defaultRepo: owner/repo
+maxRetries: 5
+retryDelay: 10`;
+    writeFileSync(configPathYml, yamlContent);
+
+    const config = loadConfig(testDir);
+    expect(config).toEqual({
+      outputDir: '/custom/output',
+      defaultRepo: 'owner/repo',
+      maxRetries: 5,
+      retryDelay: 10,
+    });
+  });
+
+  it('loads valid .yaml config file', () => {
+    const yamlContent = `outputDir: /yaml/output
+maxRetries: 7`;
+    writeFileSync(configPathYaml, yamlContent);
+
+    const config = loadConfig(testDir);
+    expect(config).toEqual({
+      outputDir: '/yaml/output',
+      maxRetries: 7,
+    });
+  });
+
+  it('prefers .json over .yml when both exist', () => {
+    const jsonConfig: Config = { outputDir: '/json/output' };
+    const yamlContent = `outputDir: /yaml/output`;
+    
+    writeFileSync(configPathJson, JSON.stringify(jsonConfig));
+    writeFileSync(configPathYml, yamlContent);
+
+    const config = loadConfig(testDir);
+    expect(config.outputDir).toBe('/json/output');
+  });
+
+  it('loads .yml when only .yml exists', () => {
+    const yamlContent = `outputDir: /yml/output`;
+    writeFileSync(configPathYml, yamlContent);
+
+    const config = loadConfig(testDir);
+    expect(config.outputDir).toBe('/yml/output');
+  });
+
+  it('prefers .yml over .yaml when both exist', () => {
+    const ymlContent = `outputDir: /yml/output`;
+    const yamlContent = `outputDir: /yaml/output`;
+    
+    writeFileSync(configPathYml, ymlContent);
+    writeFileSync(configPathYaml, yamlContent);
+
+    const config = loadConfig(testDir);
+    expect(config.outputDir).toBe('/yml/output');
+  });
+
+  it('throws on invalid YAML', () => {
+    writeFileSync(configPathYml, 'invalid:\n\t\tyaml: [unclosed');
+
+    expect(() => loadConfig(testDir)).toThrow('Failed to parse');
   });
 });
 

@@ -23,7 +23,17 @@
     "prepare": "npm run build",
     "prepublishOnly": "npm test"
   },
-  "keywords": ["github", "actions", "ci", "artifacts", "testing", "llm", "claude", "playwright", "jest"],
+  "keywords": [
+    "github",
+    "actions",
+    "ci",
+    "artifacts",
+    "testing",
+    "llm",
+    "claude",
+    "playwright",
+    "jest"
+  ],
   "author": "John Chilton",
   "license": "MIT",
   "repository": {
@@ -47,6 +57,7 @@
     "cheerio": "^1.1.2",
     "commander": "^14.0.2",
     "junit-xml-parser": "^0.0.3",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "yaml": "^2.8.1"
   }
 }
