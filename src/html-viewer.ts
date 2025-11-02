@@ -77,13 +77,24 @@ function buildFileTree(
     const filePath = join(outputDir, filename);
     try {
       const stats = statSync(filePath);
-      root.children!.push({
+      const fileNode: FileNode = {
         name: filename,
         path: filePath,
         type: 'file',
         size: stats.size,
         detectedType: 'json',
-      });
+      };
+
+      // Add preview for small text files
+      if (shouldInlinePreview(stats.size, filePath)) {
+        try {
+          fileNode.preview = readFileSync(filePath, 'utf-8');
+        } catch (e) {
+          // Binary file or read error
+        }
+      }
+
+      root.children!.push(fileNode);
     } catch (e) {
       // File doesn't exist
     }
