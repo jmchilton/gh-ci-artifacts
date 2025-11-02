@@ -204,7 +204,7 @@ function generateHtml(summary: Summary, tree: FileNode): string {
   </section>
 
   <section class="tree">
-    ${renderTreeNode(tree, 0)}
+    ${tree.children?.map(child => renderTreeNode(child, 0)).join('') || ''}
   </section>
 
   <section class="preview-panel hidden">
@@ -262,17 +262,14 @@ function renderTreeNode(node: FileNode, depth: number): string {
       ? `<span class="type-badge">${node.detectedType}</span>`
       : '';
     const size = node.size ? formatBytes(node.size) : '';
-    const previewBtn = node.preview || (node.size && node.size < PREVIEW_SIZE_LAZY)
-      ? `<button class="preview-btn" data-path="${escapeHtml(node.path)}">Preview</button>`
-      : '';
+    const canPreview = node.preview || (node.size && node.size < PREVIEW_SIZE_LAZY);
 
     return `
-    <div class="tree-node file" style="padding-left: ${indent}px">
+    <div class="tree-node file ${canPreview ? 'clickable' : ''}" style="padding-left: ${indent}px" ${canPreview ? `data-path="${escapeHtml(node.path)}"` : ''}>
       <span class="icon">📄</span>
       <span class="name">${escapeHtml(node.name)}</span>
       ${typeBadge}
       <span class="size">${size}</span>
-      ${previewBtn}
     </div>`;
   }
 }
@@ -424,6 +421,14 @@ header h1 {
 
 .tree-node.file .toggle {
   display: none;
+}
+
+.tree-node.file.clickable {
+  cursor: pointer;
+}
+
+.tree-node.file.clickable:hover {
+  background: #e5e7eb;
 }
 
 .tree-node .icon {
@@ -581,11 +586,11 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Preview file
+// Preview file - click on file row
 document.addEventListener('click', (e) => {
-  const btn = e.target.closest('.preview-btn');
-  if (btn) {
-    const path = btn.dataset.path;
+  const fileNode = e.target.closest('.tree-node.file.clickable');
+  if (fileNode) {
+    const path = fileNode.dataset.path;
     const content = window.fileData[path];
     const panel = document.querySelector('.preview-panel');
     const title = document.querySelector('.preview-title');
