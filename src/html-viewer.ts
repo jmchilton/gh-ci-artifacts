@@ -275,12 +275,19 @@ function renderTreeNode(node: FileNode, depth: number): string {
     const size = node.size ? formatBytes(node.size) : '';
     const canPreview = node.preview || (node.size && node.size < PREVIEW_SIZE_LAZY);
 
+    // Use file:// protocol for absolute path
+    const fileUrl = 'file://' + node.path;
+
     return `
     <div class="tree-node file ${canPreview ? 'clickable' : ''}" style="padding-left: ${indent}px" ${canPreview ? `data-path="${escapeHtml(node.path)}"` : ''}>
       <span class="icon">📄</span>
       <span class="name">${escapeHtml(node.name)}</span>
       ${typeBadge}
       <span class="size">${size}</span>
+      <div class="file-actions">
+        <a href="${fileUrl}" target="_blank" class="action-link" title="Open raw file">Open</a>
+        <button class="copy-path-btn" data-path="${escapeHtml(node.path)}" title="Copy file path">Copy Path</button>
+      </div>
     </div>`;
   }
 }
@@ -449,6 +456,51 @@ header h1 {
 .tree-node .name {
   flex: 1;
   font-size: 14px;
+  min-width: 150px;
+}
+
+.file-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.action-link {
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: #3b82f6;
+  text-decoration: none;
+  border: 1px solid #3b82f6;
+  transition: all 0.2s;
+}
+
+.action-link:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.copy-path-btn {
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  border: 1px solid #6b7280;
+  background: white;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copy-path-btn:hover {
+  background: #6b7280;
+  color: white;
+}
+
+.copy-path-btn.copied {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
 }
 
 .tree-node .children {
@@ -632,6 +684,30 @@ document.addEventListener('click', (e) => {
 // Close preview
 document.querySelector('.close-btn').addEventListener('click', () => {
   document.querySelector('.preview-panel').classList.add('hidden');
+});
+
+// Prevent action buttons from triggering file preview
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.file-actions')) {
+    e.stopPropagation();
+  }
+});
+
+// Copy path to clipboard
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.copy-path-btn');
+  if (btn) {
+    const path = btn.dataset.path;
+    navigator.clipboard.writeText(path).then(() => {
+      const originalText = btn.textContent;
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
 });
 `;
 }
