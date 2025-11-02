@@ -15,8 +15,6 @@ artifacts:
     type: jest-json
     format: json
     description: "Jest JSON reporter: 5 pass, 2 fail, 1 skip"
-    supports_auto_detection: true
-    validator: "validateJestJSON"
     parsers: []
     coverage_target: "validators/jest-validator.ts"
 
@@ -24,8 +22,6 @@ artifacts:
     type: playwright-json
     format: json
     description: "Playwright JSON: 3 pass, 1 fail"
-    supports_auto_detection: true
-    validator: "validatePlaywrightJSON"
     parsers: []
     coverage_target: "validators/playwright-validator.ts"
 
@@ -33,8 +29,6 @@ artifacts:
     type: eslint-txt
     format: txt
     description: "ESLint output with violations"
-    supports_auto_detection: false
-    validator: "validateESLintOutput"
     parsers: ["extractLinterOutput"]
     coverage_target: "validators/linter-validator.ts"
 
@@ -42,8 +36,6 @@ artifacts:
     type: tsc-txt
     format: txt
     description: "TypeScript compiler errors"
-    supports_auto_detection: false
-    validator: "validateTSCOutput"
     parsers: ["extractLinterOutput"]
     coverage_target: "validators/linter-validator.ts"
 

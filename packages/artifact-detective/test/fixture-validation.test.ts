@@ -4,8 +4,9 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { parse as parseYAML } from "yaml";
 import { detectArtifactType } from "../src/detectors/type-detector.js";
-import * as validators from "../src/validators/index.js";
+import { validate, ARTIFACT_TYPE_REGISTRY } from "../src/validators/index.js";
 import { extractLinterOutput } from "../src/parsers/linters/extractors.js";
+import type { ArtifactType } from "../src/types.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -32,20 +33,23 @@ describe("Generated fixture validation", () => {
             expect(existsSync(artifactPath)).toBe(true);
           });
 
-          // ALWAYS test validator (structural correctness)
-          it("passes validator", () => {
-            const content = readFileSync(artifactPath, "utf-8");
-            const validator = (validators as any)[artifact.validator];
-            expect(validator).toBeDefined();
-            const result = validator(content);
-            expect(result.valid).toBe(true);
-            if (!result.valid) {
-              console.error(`Validation error: ${result.error}`);
-            }
-          });
+          const artifactType = artifact.type as ArtifactType;
+          const capabilities = ARTIFACT_TYPE_REGISTRY[artifactType];
 
-          // ONLY test auto-detection if supported
-          if (artifact.supports_auto_detection) {
+          // ALWAYS test validator if one exists (structural correctness)
+          if (capabilities?.validator) {
+            it("passes validator", () => {
+              const content = readFileSync(artifactPath, "utf-8");
+              const result = validate(artifactType, content);
+              expect(result.valid).toBe(true);
+              if (!result.valid) {
+                console.error(`Validation error: ${result.error}`);
+              }
+            });
+          }
+
+          // ONLY test auto-detection if supported (based on registry)
+          if (capabilities?.supportsAutoDetection) {
             it(`auto-detects as ${artifact.type}`, () => {
               const result = detectArtifactType(artifactPath);
               expect(result.detectedType).toBe(artifact.type);
