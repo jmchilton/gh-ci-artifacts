@@ -93,10 +93,20 @@ function renderCatalogTable(data: CatalogEntry[]): string {
       sortable: false,
       render: (val, row) => {
         if (!row.filePath) return "";
+        // Extract relative path from absolute path (everything after the last occurrence of /pr_reviews/NNN/)
+        // or just use the last path segments (converted/, linting/, raw/)
+        const pathParts = row.filePath.split("/");
+        const dirIndex = pathParts.lastIndexOf("converted") !== -1
+          ? pathParts.lastIndexOf("converted")
+          : pathParts.lastIndexOf("linting") !== -1
+          ? pathParts.lastIndexOf("linting")
+          : pathParts.lastIndexOf("raw");
+        const relativePath = dirIndex !== -1 ? pathParts.slice(dirIndex).join("/") : row.filePath;
+
         return `
           <div class="catalog-actions">
-            <a href="${escapeHtml(row.filePath)}" target="_blank" class="action-link" title="Open artifact file">Open</a>
-            <button class="copy-path-btn" data-path="${escapeHtml(row.filePath)}" title="Copy file path">Copy Path</button>
+            <a href="${escapeHtml(relativePath)}" target="_blank" class="action-link" title="Open artifact file">Open</a>
+            <button class="copy-path-btn" data-path="${escapeHtml(relativePath)}" title="Copy file path">Copy Path</button>
           </div>
         `;
       },
