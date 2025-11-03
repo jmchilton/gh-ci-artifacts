@@ -1,0 +1,9 @@
+[package]
+name = "rust-sample"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[dev-dependencies]
+# No dependencies needed for basic tests

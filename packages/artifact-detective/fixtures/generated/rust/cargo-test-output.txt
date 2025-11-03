@@ -1,0 +1,15 @@
+
+running 5 tests
+test tests::test_add_pass ... ok
+test tests::test_check_empty_pass ... ok
+test tests::test_ignored ... ignored
+test tests::test_deliberately_fails - should panic ... ok
+test tests::test_replace_pass ... ok
+
+test result: ok. 4 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

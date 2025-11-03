@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  generate:
+    build: .
+    volumes:
+      - ../../generated/rust:/output
+    command: /bin/sh -c "
+      echo 'Running cargo test (text output)...' &&
+      cargo test 2>&1 > /output/cargo-test-output.txt || true &&
+      echo 'Running clippy (JSON)...' &&
+      cargo clippy --message-format=json 2>&1 > /output/clippy-output.json || true &&
+      echo 'Running clippy (text)...' &&
+      cargo clippy 2>&1 > /output/clippy-output.txt || true &&
+      echo 'Running rustfmt check (diff)...' &&
+      cargo fmt -- --check 2>&1 > /output/rustfmt-output.txt || true &&
+      echo 'Rust artifact generation complete!'
+      "
