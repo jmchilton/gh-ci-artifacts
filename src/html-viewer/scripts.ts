@@ -4,10 +4,33 @@
 
 export function getScripts(): string {
   return `
+${getTabScripts()}
 ${getTreeScripts()}
 ${getPreviewScripts()}
 ${getTableScripts()}
 ${getUtilityScripts()}
+`;
+}
+
+function getTabScripts(): string {
+  return `
+// Tab switching
+document.addEventListener('click', (e) => {
+  const tabBtn = e.target.closest('.tab-btn');
+  if (tabBtn) {
+    const tabName = tabBtn.dataset.tab;
+
+    // Update button states
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tabName);
+    });
+
+    // Update content visibility
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.classList.toggle('active', content.dataset.tabContent === tabName);
+    });
+  }
+});
 `;
 }
 

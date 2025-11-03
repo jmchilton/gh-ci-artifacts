@@ -5,6 +5,7 @@
 export function getStyles(): string {
   return `
 ${getBaseStyles()}
+${getTabStyles()}
 ${getTreeStyles()}
 ${getPreviewStyles()}
 ${getRichViewStyles()}
@@ -106,16 +107,63 @@ code {
 `;
 }
 
-function getTreeStyles(): string {
+function getTabStyles(): string {
   return `
-.tree {
+.tab-nav {
+  display: flex;
+  gap: 0;
   background: white;
-  margin: 20px;
-  border-radius: 8px;
+  margin: 20px 20px 0;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 15px 20px;
+  background: #f9fafb;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  background: #f3f4f6;
+  color: #333;
+}
+
+.tab-btn.active {
+  background: white;
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+.tab-content {
+  display: none;
+  background: white;
+  margin: 0 20px 20px;
+  border-radius: 0 0 8px 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   padding: 20px;
   max-height: calc(100vh - 400px);
   overflow-y: auto;
+}
+
+.tab-content.active {
+  display: block;
+}
+`;
+}
+
+function getTreeStyles(): string {
+  return `
+.tree {
+  /* No extra styling needed - now inside tab-content */
 }
 
 .tree-node {
@@ -384,7 +432,7 @@ function getPreviewStyles(): string {
 function getRichViewStyles(): string {
   return `
 .rich-view {
-  padding: 20px;
+  /* No padding needed - parent tab-content has padding */
 }
 
 .rich-header {

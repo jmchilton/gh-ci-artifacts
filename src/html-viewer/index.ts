@@ -283,8 +283,24 @@ function generateHtml(
     <div class="stat">📄 ${summary.stats.logsExtracted} Logs</div>
   </section>
 
-  <section class="tree">
-    ${tree.children?.map((child) => renderTreeNode(child, 0)).join("") || ""}
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="catalog">Catalog</button>
+    <button class="tab-btn" data-tab="summary">Summary</button>
+    <button class="tab-btn" data-tab="files">Files</button>
+  </nav>
+
+  <section class="tab-content active" data-tab-content="catalog">
+    ${catalogRichHtml}
+  </section>
+
+  <section class="tab-content" data-tab-content="summary">
+    ${summaryRichHtml}
+  </section>
+
+  <section class="tab-content" data-tab-content="files">
+    <div class="tree">
+      ${tree.children?.map((child) => renderTreeNode(child, 0)).join("") || ""}
+    </div>
   </section>
 
   <section class="preview-panel hidden">
@@ -297,12 +313,12 @@ function generateHtml(
 
   <script>
     window.fileData = ${JSON.stringify(embeddedData)};
-    
+
     // Embed pre-rendered rich views
     window.__summaryRenderer = ${JSON.stringify(summaryRichHtml)};
     window.__catalogRenderer = ${JSON.stringify(catalogRichHtml)};
     window.__artifactsRenderer = ${JSON.stringify(artifactsRichHtml)};
-    
+
     ${getScripts()}
   </script>
 </body>
