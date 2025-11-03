@@ -36,8 +36,9 @@ function testArtifact(
 describe("detectArtifactType", () => {
   describe("HTML detection", () => {
     it("detects pytest-html by content", () => {
+      // Use the generated pytest-html fixture
       testArtifact(
-        join(FIXTURES_DIR, "html/pytest-html-sample.html"),
+        join(FIXTURES_DIR, "generated/python/pytest-report.html"),
         "pytest-html",
         "html",
       );

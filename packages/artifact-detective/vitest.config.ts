@@ -18,7 +18,6 @@ export default defineConfig({
         "**/*.config.ts",
         "**/types.ts",
         "**/parsers/linters/extractors.ts", // CI log extraction tested via integration
-        "**/parsers/html/pytest-html.ts", // HTML parsing tested via integration, has legacy fallbacks
       ],
       thresholds: {
         lines: 75,

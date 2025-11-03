@@ -58,24 +58,6 @@ describe("extractPytestJSON", () => {
     });
   });
 
-  describe("Manual fixtures", () => {
-    it("extracts JSON from manually created pytest-html sample", () => {
-      const htmlPath = join(FIXTURES_DIR, "html/pytest-html-sample.html");
-      const report = extractPytestJSON(htmlPath);
-
-      expect(report).not.toBeNull();
-      expect(report!.tests).toBeDefined();
-      expect(Array.isArray(report!.tests)).toBe(true);
-
-      // Manual fixture is minimal - should have at least 1 test
-      expect(report!.tests.length).toBeGreaterThan(0);
-
-      // Check basic structure
-      const firstTest = report!.tests[0];
-      expect(firstTest.nodeid).toBeDefined();
-      expect(firstTest.outcome).toBeDefined();
-    });
-  });
 
   describe("Error handling", () => {
     it("throws on non-existent file", () => {
@@ -84,17 +66,32 @@ describe("extractPytestJSON", () => {
       }).toThrow();
     });
 
-    it("returns null for HTML without pytest data", () => {
-      // Create a minimal HTML file without pytest markers
-      const tempPath = join(FIXTURES_DIR, "html/generic.html");
-      // This will fail to read, but test the error path
-      expect(() => {
-        extractPytestJSON(tempPath);
-      }).toThrow();
+    it("returns null for HTML without embedded pytest data", () => {
+      // The old pytest-html-sample.html had table-based format - no longer supported
+      // Modern pytest-html (v3.x+) always embeds data in data-jsonblob attribute
+      const htmlPath = join(FIXTURES_DIR, "html/playwright-html-sample.html");
+      const report = extractPytestJSON(htmlPath);
+
+      // Playwright HTML doesn't have pytest data, should return null
+      expect(report).toBeNull();
     });
   });
 
   describe("Data conversion", () => {
+    it("parses duration from string format", () => {
+      // The fixture has duration in "1 ms" string format
+      const htmlPath = join(
+        FIXTURES_DIR,
+        "generated/python/pytest-report.html",
+      );
+      const report = extractPytestJSON(htmlPath);
+
+      // Verify durations are parsed (even if small/zero)
+      report!.tests.forEach((test) => {
+        expect(typeof test.duration).toBe("number");
+      });
+    });
+
     it("converts test outcomes correctly", () => {
       const htmlPath = join(
         FIXTURES_DIR,
