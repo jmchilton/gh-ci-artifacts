@@ -1,5 +1,10 @@
 # gh-ci-artifacts
 
+[![npm version](https://img.shields.io/npm/v/gh-ci-artifacts.svg?style=flat-square)](https://www.npmjs.com/package/gh-ci-artifacts)
+[![CI Status](https://img.shields.io/github/actions/workflow/status/jmchilton/gh-ci-artifacts/ci.yml?branch=main&style=flat-square)](https://github.com/jmchilton/gh-ci-artifacts/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![Node 18+](https://img.shields.io/badge/Node-18%2B-brightgreen.svg?style=flat-square)](https://nodejs.org/)
+
 Download and parse GitHub Actions CI artifacts and logs for LLM analysis.
 
 ## Overview
