@@ -59,7 +59,7 @@
     "vitest": "^4.0.6"
   },
   "dependencies": {
-    "artifact-detective": "file:../artifact-detective",
+    "artifact-detective": "^1.1.0",
     "@types/node": "^24.9.2",
     "cheerio": "^1.1.2",
     "commander": "^14.0.2",
