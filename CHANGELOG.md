@@ -1,3 +1,10 @@
+# 1.0.0 (2025-11-03)
+
+
+### Features
+
+* prepare initial npm package publication ([9f0c44b](https://github.com/jmchilton/gh-ci-artifacts/commit/9f0c44b2cf98b5773f5298fd26642e5d48372b14))
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
