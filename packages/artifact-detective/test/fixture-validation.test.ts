@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 describe("Generated fixture validation", () => {
-  const languages = ["javascript", "python"];
+  const languages = ["javascript", "python", "rust"];
 
   for (const lang of languages) {
     describe(`${lang} fixtures`, () => {

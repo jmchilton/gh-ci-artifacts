@@ -154,6 +154,27 @@ function detectHtmlType(content: string, lowerContent: string): ArtifactType {
 
 function detectJsonType(content: string, lowerContent: string): ArtifactType {
   try {
+    // Clippy JSON: newline-delimited JSON with "reason" field
+    // Check lines for clippy pattern (compiler-message, compiler-artifact, build-finished)
+    const lines = content.split("\n");
+    for (const line of lines) {
+      if (!line.trim().startsWith("{")) continue; // Skip non-JSON lines
+      try {
+        const obj = JSON.parse(line);
+        if (
+          obj.reason &&
+          ["compiler-message", "compiler-artifact", "build-finished"].includes(
+            obj.reason,
+          )
+        ) {
+          return "clippy-json";
+        }
+      } catch {
+        // Line isn't valid JSON, continue
+        continue;
+      }
+    }
+
     // Try to parse JSON to inspect structure
     const data = JSON.parse(content);
 

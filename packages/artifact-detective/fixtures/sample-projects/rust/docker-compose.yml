@@ -6,12 +6,12 @@ services:
       - ../../generated/rust:/output
     command: /bin/sh -c "
       echo 'Running cargo test (text output)...' &&
-      cargo test 2>&1 > /output/cargo-test-output.txt || true &&
+      cargo test > /output/cargo-test-output.txt 2>&1 || true &&
       echo 'Running clippy (JSON)...' &&
-      cargo clippy --message-format=json 2>&1 > /output/clippy-output.json || true &&
+      cargo clippy --message-format=json > /output/clippy-output.json 2>&1 || true &&
       echo 'Running clippy (text)...' &&
-      cargo clippy 2>&1 > /output/clippy-output.txt || true &&
+      cargo clippy > /output/clippy-output.txt 2>&1 || true &&
       echo 'Running rustfmt check (diff)...' &&
-      cargo fmt -- --check 2>&1 > /output/rustfmt-output.txt || true &&
+      cargo fmt -- --check > /output/rustfmt-output.txt 2>&1 || true &&
       echo 'Rust artifact generation complete!'
       "

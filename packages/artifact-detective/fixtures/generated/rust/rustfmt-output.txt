@@ -1,0 +1,25 @@
+Diff in /workspace/src/lib.rs at line 5:
+ // Clippy: should use is_empty()
+ // Rustfmt: bad spacing
+ pub fn check_empty(s: &str) -> bool {
+-    s.len()  ==  0  // Extra spaces
++    s.len() == 0 // Extra spaces
+ }
+ 
+ // Clippy: needless_return
+Diff in /workspace/src/lib.rs at line 12:
+ // Rustfmt: bad indentation
+ pub fn add(a: i32, b: i32) -> i32 {
+-      return a + b; // Extra indentation
++    return a + b; // Extra indentation
+ }
+ 
+ // Clippy: single_char_pattern
+Diff in /workspace/src/lib.rs at line 18:
+ // Rustfmt: inconsistent brace placement
+-pub fn replace_comma(s: &str) -> String
+-{
++pub fn replace_comma(s: &str) -> String {
+     s.replace(",", ";")
+ }
+ 

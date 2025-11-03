@@ -458,7 +458,56 @@ Goal: 100% coverage of all parsing and conversion logic.
 - `ruff-output.txt` (510 B)
 - `mypy-output.txt` (859 B)
 
-### Phase 3: CI Integration (FUTURE)
+### Phase 3: Rust Fixtures (✅ COMPLETED)
+
+**Status**: Successfully implemented. Generated 4 artifacts, 46/46 tests passing (71 total including previous phases).
+
+**Completed Tasks**:
+1. ✅ Setup sample project structure
+   - Created `fixtures/sample-projects/rust/`
+   - Added Dockerfile with Rust 1.75.0
+   - Added docker-compose.yml for artifact generation
+   - Added Cargo.toml with library project
+   - Added manifest.yml with artifact specifications
+
+2. ✅ Create minimal test code
+   - `src/lib.rs`: 5 clippy warnings (len_zero, needless_return, single_char_pattern, redundant_pattern_matching, manual_map)
+   - Tests: 4 pass, 1 should_panic, 1 ignored
+   - Deliberate formatting issues for rustfmt detection
+
+3. ✅ Generate artifacts via Docker
+   - Generated 4 artifacts in `fixtures/generated/rust/`
+   - Fixed redirection to capture both stdout and stderr
+   - Committed generated artifacts to git
+
+4. ✅ Add validation tests
+   - Extended fixture-validation.test.ts for Rust
+   - Added cargo-test-txt, clippy-json, clippy-txt, rustfmt-txt to type system
+   - Created validators: validateCargoTestOutput, validateClippyJSON, validateClippyText, validateRustfmtOutput
+   - Updated type detector for clippy-json (newline-delimited JSON with "reason" field)
+   - Added extractClippyOutput to linter extractors
+   - All 46 tests passing (13 type-detector + 46 fixture-validation)
+
+5. ✅ Verify coverage goal
+   - clippy JSON/text validators covered
+   - cargo test text validator covered
+   - rustfmt validator covered
+   - All Rust artifacts have validators
+
+**Artifacts Generated**:
+- `cargo-test-output.txt` (648 B) - 4 passed, 1 ignored test results
+- `clippy-output.json` (12 KB) - Newline-delimited JSON with 5 warnings
+- `clippy-output.txt` (2.1 KB) - Human-readable warning output with 5 warnings
+- `rustfmt-output.txt` (671 B) - 3 formatting diffs
+
+**Rust-Specific Patterns Learned**:
+- Clippy JSON uses `--message-format=json` producing newline-delimited JSON
+- Each JSON line has `reason` field: "compiler-message", "compiler-artifact", or "build-finished"
+- Cargo test has no stable JSON format yet (libtest-json experimental, targeted for 2025)
+- Rustfmt `--check` outputs diff format showing formatting violations
+- Cargo output intermixed with JSON requires skipping non-JSON lines in validation
+
+### Phase 4: CI Integration (FUTURE)
 
 1. Add `.github/workflows/regenerate-fixtures.yml`
 2. Run weekly or on-demand

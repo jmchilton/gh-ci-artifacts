@@ -12,6 +12,10 @@ export type ArtifactType =
   | "ruff-txt"
   | "mypy-txt"
   | "flake8-txt"
+  | "cargo-test-txt"
+  | "clippy-json"
+  | "clippy-txt"
+  | "rustfmt-txt"
   | "binary"
   | "unknown";
 

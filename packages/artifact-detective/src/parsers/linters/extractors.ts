@@ -64,6 +64,14 @@ export function extractLinterOutput(
     case "mypy":
       return extractMypyOutput(lines);
 
+    case "clippy":
+      return extractClippyOutput(lines);
+
+    case "cargo-test":
+    case "rustfmt":
+      // Raw output files, no extraction needed
+      return lines.join("\n").trim();
+
     default:
       return null;
   }
@@ -272,6 +280,43 @@ function extractMypyOutput(lines: string[]): string | null {
       if (line.match(/^[a-zA-Z0-9_\-\/\.]+\.py:\d+:\s*(error|warning):/)) {
         outputLines.push(line);
       } else if (line.match(/Found \d+ error/)) {
+        outputLines.push(line);
+        break;
+      }
+    }
+  }
+
+  return outputLines.length > 0 ? outputLines.join("\n") : null;
+}
+
+function extractClippyOutput(lines: string[]): string | null {
+  // If this looks like raw clippy output (not embedded in logs), return as-is
+  const hasClippyPattern = lines.some((line) =>
+    /^(warning|error):\s/.test(line) || /-->\s+\S+\.rs:\d+:\d+/.test(line),
+  );
+
+  if (hasClippyPattern) {
+    return lines.join("\n").trim();
+  }
+
+  // Otherwise, extract from CI logs
+  const outputLines: string[] = [];
+  let inOutput = false;
+
+  for (const line of lines) {
+    if (line.includes("clippy")) {
+      inOutput = true;
+      continue;
+    }
+
+    if (inOutput) {
+      // Clippy warnings start with "warning:" or "error:"
+      if (
+        line.match(/^(warning|error):/) ||
+        line.match(/-->\s+\S+\.rs:\d+:\d+/)
+      ) {
+        outputLines.push(line);
+      } else if (line.match(/\d+\s+warnings?\s+emitted/)) {
         outputLines.push(line);
         break;
       }

@@ -1,19 +1,23 @@
-// Sample Rust library with deliberate clippy warnings
+// Sample Rust library with deliberate clippy warnings and bad formatting
 
 #![allow(dead_code)]
 
 // Clippy: should use is_empty()
+// Rustfmt: bad spacing
 pub fn check_empty(s: &str) -> bool {
-    s.len() == 0
+    s.len()  ==  0  // Extra spaces
 }
 
 // Clippy: needless_return
+// Rustfmt: bad indentation
 pub fn add(a: i32, b: i32) -> i32 {
-    return a + b;
+      return a + b; // Extra indentation
 }
 
 // Clippy: single_char_pattern
-pub fn replace_comma(s: &str) -> String {
+// Rustfmt: inconsistent brace placement
+pub fn replace_comma(s: &str) -> String
+{
     s.replace(",", ";")
 }
 

@@ -1,0 +1,59 @@
+warning: length comparison to zero
+ --> src/lib.rs:8:5
+  |
+8 |     s.len()  ==  0  // Extra spaces
+  |     ^^^^^^^^^^^^^^ help: using `is_empty` is clearer and more explicit: `s.is_empty()`
+  |
+  = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#len_zero
+  = note: `#[warn(clippy::len_zero)]` on by default
+
+warning: unneeded `return` statement
+  --> src/lib.rs:14:7
+   |
+14 |       return a + b; // Extra indentation
+   |       ^^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#needless_return
+   = note: `#[warn(clippy::needless_return)]` on by default
+help: remove `return`
+   |
+14 -       return a + b; // Extra indentation
+14 +       a + b// Extra indentation
+   |
+
+warning: single-character string constant used as pattern
+  --> src/lib.rs:21:15
+   |
+21 |     s.replace(",", ";")
+   |               ^^^ help: try using a `char` instead: `','`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#single_char_pattern
+   = note: `#[warn(clippy::single_char_pattern)]` on by default
+
+warning: redundant pattern matching, consider using `is_some()`
+  --> src/lib.rs:26:5
+   |
+26 | /     match opt {
+27 | |         Some(_) => true,
+28 | |         None => false,
+29 | |     }
+   | |_____^ help: try: `opt.is_some()`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#redundant_pattern_matching
+   = note: `#[warn(clippy::redundant_pattern_matching)]` on by default
+
+warning: manual implementation of `Option::map`
+  --> src/lib.rs:34:5
+   |
+34 | /     if let Some(x) = opt {
+35 | |         Some(x * 2)
+36 | |     } else {
+37 | |         None
+38 | |     }
+   | |_____^ help: try: `opt.map(|x| x * 2)`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#manual_map
+   = note: `#[warn(clippy::manual_map)]` on by default
+
+warning: `rust-sample` (lib) generated 5 warnings (run `cargo clippy --fix --lib -p rust-sample` to apply 5 suggestions)
+    Finished dev [unoptimized + debuginfo] target(s) in 0.08s

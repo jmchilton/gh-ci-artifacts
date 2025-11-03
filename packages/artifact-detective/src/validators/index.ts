@@ -12,6 +12,9 @@ import {
   validateRuffOutput,
   validateMypyOutput,
 } from "./linter-validator.js";
+import { validateCargoTestOutput } from "./cargo-validator.js";
+import { validateClippyJSON, validateClippyText } from "./clippy-validator.js";
+import { validateRustfmtOutput } from "./rustfmt-validator.js";
 
 export { validateJestJSON } from "./jest-validator.js";
 export { validatePlaywrightJSON } from "./playwright-validator.js";
@@ -25,6 +28,9 @@ export {
   validateRuffOutput,
   validateMypyOutput,
 } from "./linter-validator.js";
+export { validateCargoTestOutput } from "./cargo-validator.js";
+export { validateClippyJSON, validateClippyText } from "./clippy-validator.js";
+export { validateRustfmtOutput } from "./rustfmt-validator.js";
 export type { ValidationResult, ValidatorFunction, ArtifactTypeCapabilities } from "./types.js";
 
 /**
@@ -81,6 +87,22 @@ export const ARTIFACT_TYPE_REGISTRY: Record<ArtifactType, ArtifactTypeCapabiliti
   "mypy-txt": {
     supportsAutoDetection: false,
     validator: validateMypyOutput,
+  },
+  "cargo-test-txt": {
+    supportsAutoDetection: false,
+    validator: validateCargoTestOutput,
+  },
+  "clippy-json": {
+    supportsAutoDetection: true,
+    validator: validateClippyJSON,
+  },
+  "clippy-txt": {
+    supportsAutoDetection: false,
+    validator: validateClippyText,
+  },
+  "rustfmt-txt": {
+    supportsAutoDetection: false,
+    validator: validateRustfmtOutput,
   },
   "binary": {
     supportsAutoDetection: true,
