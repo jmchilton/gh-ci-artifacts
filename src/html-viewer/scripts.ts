@@ -381,8 +381,8 @@ function renderRunDetails(run) {
       const statusBadge = '<span class="badge badge-' + l.extractionStatus + '">' + l.extractionStatus + '</span>';
       const linters = l.linterOutputs ? l.linterOutputs.length : 0;
       let jobLink = '';
-      if (l.jobId && data.repo) {
-        const jobUrl = 'https://github.com/' + data.repo + '/actions/runs/' + run.runId + '/job/' + l.jobId;
+      if (l.jobId && run.repo && run.runId) {
+        const jobUrl = 'https://github.com/' + run.repo + '/actions/runs/' + run.runId + '/job/' + l.jobId;
         jobLink = '<a href="' + jobUrl + '" target="_blank" rel="noopener noreferrer">View Logs</a>';
       }
       html += '<tr><td>' + l.jobName + '</td><td>' + statusBadge + '</td><td>' + linters + '</td><td>' + jobLink + '</td></tr>';
