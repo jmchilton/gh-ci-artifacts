@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.3.0...v1.3.1) (2025-11-03)
+
+
+### Bug Fixes
+
+* normalize catalog file paths to be relative ([c705ea8](https://github.com/jmchilton/gh-ci-artifacts/commit/c705ea8ca3fc4e8a446e132c4e4cbbff9ac92c57))
+
 # [1.3.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.2.1...v1.3.0) (2025-11-03)
 
 
