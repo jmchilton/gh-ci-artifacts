@@ -1,6 +1,6 @@
 {
   "name": "gh-ci-artifacts",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "description": "Download and parse GitHub Actions CI artifacts and logs for LLM analysis",
   "type": "module",
   "main": "./dist/index.js",

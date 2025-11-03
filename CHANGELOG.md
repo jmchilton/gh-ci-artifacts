@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.3.1...v1.4.0) (2025-11-03)
+
+
+### Features
+
+* add tabbed interface to HTML viewer ([ce5d0d9](https://github.com/jmchilton/gh-ci-artifacts/commit/ce5d0d9f2c55dea7244962326f86588b7cbd876e))
+
 ## [1.3.1](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.3.0...v1.3.1) (2025-11-03)
 
 
