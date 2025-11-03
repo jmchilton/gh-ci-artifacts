@@ -105,6 +105,20 @@ function renderArtifactsTable(data: ArtifactInventoryItem[]): string {
         return "";
       },
     },
+    {
+      key: "actions",
+      label: "Actions",
+      sortable: false,
+      render: (val, row) => {
+        const artifactPath = `raw/${row.runId}/artifact-${row.artifactId}`;
+        return `
+          <div class="artifact-actions">
+            <a href="file://${artifactPath}" target="_blank" class="action-link" title="Open artifact directory">Open</a>
+            <button class="copy-path-btn" data-path="${escapeHtml(artifactPath)}" title="Copy artifact path">Copy Path</button>
+          </div>
+        `;
+      },
+    },
   ];
 
   return renderTable(columns, data, {

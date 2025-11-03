@@ -160,7 +160,8 @@ function getTreeStyles(): string {
   min-width: 150px;
 }
 
-.file-actions {
+.file-actions,
+.artifact-actions {
   display: flex;
   gap: 8px;
   align-items: center;
