@@ -59,8 +59,8 @@
     "vitest": "^4.0.6"
   },
   "dependencies": {
-    "artifact-detective": "^1.1.0",
     "@types/node": "^24.9.2",
+    "artifact-detective": "^1.5.0",
     "cheerio": "^1.1.2",
     "commander": "^14.0.2",
     "junit-xml-parser": "^0.0.3",

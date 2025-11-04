@@ -7,7 +7,10 @@ import {
 } from "../components.js";
 import { join } from "path";
 
-export function renderCatalogJson(data: CatalogEntry[], outputDir?: string): string {
+export function renderCatalogJson(
+  data: CatalogEntry[],
+  outputDir?: string,
+): string {
   let html = '<div class="rich-view catalog-view">';
 
   // Header
@@ -96,15 +99,19 @@ function renderCatalogTable(data: CatalogEntry[], outputDir?: string): string {
         if (!row.filePath) return "";
         // Extract relative path for Open link
         const pathParts = row.filePath.split("/");
-        const dirIndex = pathParts.lastIndexOf("converted") !== -1
-          ? pathParts.lastIndexOf("converted")
-          : pathParts.lastIndexOf("linting") !== -1
-          ? pathParts.lastIndexOf("linting")
-          : pathParts.lastIndexOf("raw");
-        const relativePath = dirIndex !== -1 ? pathParts.slice(dirIndex).join("/") : row.filePath;
+        const dirIndex =
+          pathParts.lastIndexOf("converted") !== -1
+            ? pathParts.lastIndexOf("converted")
+            : pathParts.lastIndexOf("linting") !== -1
+              ? pathParts.lastIndexOf("linting")
+              : pathParts.lastIndexOf("raw");
+        const relativePath =
+          dirIndex !== -1 ? pathParts.slice(dirIndex).join("/") : row.filePath;
 
         // Construct absolute path for Copy button
-        const absolutePath = outputDir ? join(outputDir, row.filePath) : row.filePath;
+        const absolutePath = outputDir
+          ? join(outputDir, row.filePath)
+          : row.filePath;
 
         return `
           <div class="catalog-actions">

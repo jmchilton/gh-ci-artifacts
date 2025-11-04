@@ -1,11 +1,12 @@
 import { readdirSync, statSync, mkdirSync, writeFileSync } from "fs";
-import { join, basename } from "path";
+import { join, basename, extname } from "path";
 import type { Logger } from "./utils/logger.js";
 import type { ArtifactInventoryItem } from "./types.js";
 import {
+  canConvertToJSON,
+  convertToJSON,
   detectArtifactType,
-  extractPlaywrightJSON,
-  extractPytestJSON,
+  isJSON,
   type CatalogEntry,
 } from "artifact-detective";
 
@@ -90,26 +91,20 @@ export async function catalogArtifacts(
         }
 
         // Handle HTML conversion
-        if (
-          detection.originalFormat === "html" &&
-          (detection.detectedType === "playwright-html" ||
-            detection.detectedType === "pytest-html")
-        ) {
+        if (!isJSON(detection) && canConvertToJSON(detection)) {
           logger.debug(`  Converting ${basename(filePath)} to JSON...`);
 
           try {
             // Use appropriate extractor based on detected type
-            const jsonData =
-              detection.detectedType === "playwright-html"
-                ? extractPlaywrightJSON(filePath)
-                : extractPytestJSON(filePath);
+            const jsonData = convertToJSON(detection, filePath);
 
             if (jsonData) {
               // Save converted JSON
               const convertedRunDir = join(convertedDir, runId);
               mkdirSync(convertedRunDir, { recursive: true });
 
-              const convertedFileName = basename(filePath, ".html") + ".json";
+              const convertedFileName =
+                basename(filePath, extname(filePath)) + ".json";
               const convertedFilePath = join(
                 convertedRunDir,
                 convertedFileName,
@@ -132,7 +127,7 @@ export async function catalogArtifacts(
               logger.debug(`    Saved to ${convertedFilePath}`);
             } else {
               // Couldn't extract JSON, catalog the HTML as-is
-              logger.debug(`    Could not extract JSON, cataloging HTML`);
+              logger.debug(`    Could not extract JSON, cataloging original`);
               catalog.push({
                 artifactName,
                 artifactId,
@@ -144,7 +139,7 @@ export async function catalogArtifacts(
             }
           } catch (error) {
             logger.error(
-              `    Failed to convert HTML: ${error instanceof Error ? error.message : String(error)}`,
+              `    Failed to convert original: ${error instanceof Error ? error.message : String(error)}`,
             );
             catalog.push({
               artifactName,

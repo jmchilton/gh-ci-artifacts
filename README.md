@@ -470,7 +470,7 @@ Options:
 
 After downloading artifacts, you can create a custom Claude command to analyze the failures. Add this context block to your `.claude/commands/analyze-ci.md` file (or include it in any command prompt):
 
-````markdown
+```markdown
 # Analyze CI Failures
 
 Analyze the CI failures for PR {pr_number} and provide recommendations.
@@ -515,7 +515,7 @@ When analyzing CI failures from gh-ci-artifacts, the tool downloads and organize
 - Linter errors: Check `linting/<run-id>/<job>-eslint.txt`, etc.
 - Type errors: Check `linting/<run-id>/<job>-tsc.txt` or `<job>-mypy.txt`
 - Build failures: Look in `raw/` for build logs if no linter output extracted
-````
+```
 
 Then run the command after downloading artifacts:
 

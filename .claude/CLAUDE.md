@@ -28,6 +28,7 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/) w
 ### Breaking Changes
 
 Add `!` after type or `BREAKING CHANGE:` in footer for major version bump:
+
 ```
 feat!: change API signature → major bump
 BREAKING CHANGE: API redesign → major bump
@@ -65,6 +66,7 @@ chore: upgrade commander.js to 14.0.2
 ## Release Process
 
 Automated via semantic-release:
+
 1. Push conventional commits to main
 2. CI runs tests/lint
 3. semantic-release analyzes commits

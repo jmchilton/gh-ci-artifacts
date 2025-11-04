@@ -88,192 +88,192 @@ export async function downloadArtifacts(
     }
 
     // Process each run
-  for (let i = 0; i < runs.length; i++) {
-    const run = runs[i];
-    const runNum = i + 1;
-    const runId = String(run.id);
-    const workflowName = getWorkflowName(run);
+    for (let i = 0; i < runs.length; i++) {
+      const run = runs[i];
+      const runNum = i + 1;
+      const runId = String(run.id);
+      const workflowName = getWorkflowName(run);
 
-    logger.info(`\nRun ${runNum}/${runs.length}: ${run.name} (${runId})`);
-    logger.debug(`  Workflow: ${workflowName}`);
+      logger.info(`\nRun ${runNum}/${runs.length}: ${run.name} (${runId})`);
+      logger.debug(`  Workflow: ${workflowName}`);
 
-    // Map run conclusion to our type
-    const conclusion = mapRunConclusion(run.conclusion, run.status);
-    runStates.set(runId, conclusion);
-    workflowRuns.set(runId, {
-      name: run.name,
-      path: run.path,
-      run_attempt: run.run_attempt,
-      run_number: run.run_number,
-    });
-    logger.info(`  Status: ${conclusion}`);
+      // Map run conclusion to our type
+      const conclusion = mapRunConclusion(run.conclusion, run.status);
+      runStates.set(runId, conclusion);
+      workflowRuns.set(runId, {
+        name: run.name,
+        path: run.path,
+        run_attempt: run.run_attempt,
+        run_number: run.run_number,
+      });
+      logger.info(`  Status: ${conclusion}`);
 
-    // Check if entire workflow should be skipped
-    const workflowConfig = findWorkflowConfig(run, config.workflows || []);
-    if (workflowConfig?.skip) {
-      logger.info(
-        `  Skipping entire workflow (configured in .gh-ci-artifacts.json)`,
-      );
-      continue;
-    }
-
-    // Skip successful runs unless explicitly requested
-    if (conclusion === "success" && !includeSuccesses) {
-      logger.debug(`  Skipping successful run`);
-      continue;
-    }
-
-    // Get artifacts for this run
-    logger.info("  Fetching artifacts...");
-    const artifacts = getArtifactsForRun(repo, runId);
-    logger.info(`  Found ${artifacts.length} artifacts`);
-
-    if (artifacts.length === 0) {
-      logger.info("  No artifacts found, will extract logs instead");
-      runsWithoutArtifacts.push(runId);
-      continue;
-    }
-
-    // Build combined skip patterns (global + workflow-specific)
-    const skipPatterns = getCombinedSkipPatterns(
-      config.skipArtifacts,
-      workflowConfig?.skipArtifacts,
-    );
-
-    // Download each artifact serially
-    for (let j = 0; j < artifacts.length; j++) {
-      const artifact = artifacts[j];
-      const artifactNum = j + 1;
-
-      logger.progress(
-        `  Downloading artifact ${artifactNum}/${artifacts.length}: ${artifact.name} (${formatBytes(artifact.size_in_bytes)})...`,
-      );
-
-      // Check if artifact should be skipped
-      const skipMatch = shouldSkipArtifact(artifact.name, skipPatterns);
-      if (skipMatch) {
-        const reason = skipMatch.reason || skipMatch.pattern;
-        logger.info(`    Skipped: ${reason}`);
-        inventory.push({
-          runId: runId,
-          artifactName: artifact.name,
-          artifactId: artifact.id,
-          sizeBytes: artifact.size_in_bytes,
-          status: "skipped",
-          skipReason: reason,
-        });
-        continue;
-      }
-
-      // Check if already downloaded in resume mode
-      const existingEntry = existingInventory.find(
-        (item) => item.runId === runId && item.artifactId === artifact.id,
-      );
-
-      if (resume && existingEntry && existingEntry.status === "success") {
-        logger.debug(`    Skipping (already downloaded)`);
-        inventory.push(existingEntry);
-        continue;
-      }
-
-      if (dryRun) {
+      // Check if entire workflow should be skipped
+      const workflowConfig = findWorkflowConfig(run, config.workflows || []);
+      if (workflowConfig?.skip) {
         logger.info(
-          `    [DRY RUN] Would download to ${outputDir}/raw/${runId}/artifact-${artifact.id}/`,
+          `  Skipping entire workflow (configured in .gh-ci-artifacts.json)`,
         );
-        inventory.push({
-          runId: runId,
-          artifactName: artifact.name,
-          artifactId: artifact.id,
-          sizeBytes: artifact.size_in_bytes,
-          status: "success",
-        });
         continue;
       }
 
-      // Attempt download with retry
-      // Use artifact ID in directory name to handle duplicate artifact names
-      const artifactOutputDir = join(
-        outputDir,
-        "raw",
-        runId,
-        `artifact-${artifact.id}`,
-      );
-      mkdirSync(artifactOutputDir, { recursive: true });
+      // Skip successful runs unless explicitly requested
+      if (conclusion === "success" && !includeSuccesses) {
+        logger.debug(`  Skipping successful run`);
+        continue;
+      }
 
-      const result = await withRetry(
-        () => {
-          downloadArtifact(
-            runId,
-            artifact.name,
-            artifact.id,
-            artifactOutputDir,
+      // Get artifacts for this run
+      logger.info("  Fetching artifacts...");
+      const artifacts = getArtifactsForRun(repo, runId);
+      logger.info(`  Found ${artifacts.length} artifacts`);
+
+      if (artifacts.length === 0) {
+        logger.info("  No artifacts found, will extract logs instead");
+        runsWithoutArtifacts.push(runId);
+        continue;
+      }
+
+      // Build combined skip patterns (global + workflow-specific)
+      const skipPatterns = getCombinedSkipPatterns(
+        config.skipArtifacts,
+        workflowConfig?.skipArtifacts,
+      );
+
+      // Download each artifact serially
+      for (let j = 0; j < artifacts.length; j++) {
+        const artifact = artifacts[j];
+        const artifactNum = j + 1;
+
+        logger.progress(
+          `  Downloading artifact ${artifactNum}/${artifacts.length}: ${artifact.name} (${formatBytes(artifact.size_in_bytes)})...`,
+        );
+
+        // Check if artifact should be skipped
+        const skipMatch = shouldSkipArtifact(artifact.name, skipPatterns);
+        if (skipMatch) {
+          const reason = skipMatch.reason || skipMatch.pattern;
+          logger.info(`    Skipped: ${reason}`);
+          inventory.push({
+            runId: runId,
+            artifactName: artifact.name,
+            artifactId: artifact.id,
+            sizeBytes: artifact.size_in_bytes,
+            status: "skipped",
+            skipReason: reason,
+          });
+          continue;
+        }
+
+        // Check if already downloaded in resume mode
+        const existingEntry = existingInventory.find(
+          (item) => item.runId === runId && item.artifactId === artifact.id,
+        );
+
+        if (resume && existingEntry && existingEntry.status === "success") {
+          logger.debug(`    Skipping (already downloaded)`);
+          inventory.push(existingEntry);
+          continue;
+        }
+
+        if (dryRun) {
+          logger.info(
+            `    [DRY RUN] Would download to ${outputDir}/raw/${runId}/artifact-${artifact.id}/`,
           );
-          return Promise.resolve();
-        },
-        {
-          maxRetries: config.maxRetries ?? 3,
-          retryDelay: config.retryDelay ?? 5,
-        },
+          inventory.push({
+            runId: runId,
+            artifactName: artifact.name,
+            artifactId: artifact.id,
+            sizeBytes: artifact.size_in_bytes,
+            status: "success",
+          });
+          continue;
+        }
+
+        // Attempt download with retry
+        // Use artifact ID in directory name to handle duplicate artifact names
+        const artifactOutputDir = join(
+          outputDir,
+          "raw",
+          runId,
+          `artifact-${artifact.id}`,
+        );
+        mkdirSync(artifactOutputDir, { recursive: true });
+
+        const result = await withRetry(
+          () => {
+            downloadArtifact(
+              runId,
+              artifact.name,
+              artifact.id,
+              artifactOutputDir,
+            );
+            return Promise.resolve();
+          },
+          {
+            maxRetries: config.maxRetries ?? 3,
+            retryDelay: config.retryDelay ?? 5,
+          },
+        );
+
+        if (result.success) {
+          logger.debug(`    Downloaded successfully`);
+          inventory.push({
+            runId: runId,
+            artifactName: artifact.name,
+            artifactId: artifact.id,
+            sizeBytes: artifact.size_in_bytes,
+            status: "success",
+          });
+        } else {
+          const error = result.error!;
+          const status = isExpiredError(error) ? "expired" : "failed";
+          logger.error(`    Failed: ${error.message}`);
+
+          inventory.push({
+            runId: runId,
+            artifactName: artifact.name,
+            artifactId: artifact.id,
+            sizeBytes: artifact.size_in_bytes,
+            status,
+            errorMessage: error.message,
+          });
+        }
+      }
+
+      // Validate expectations after processing all artifacts for this run
+      const allArtifactNames = artifacts.map((a) => a.name);
+      const validationResult = validateExpectations(
+        run,
+        workflowConfig,
+        allArtifactNames,
       );
 
-      if (result.success) {
-        logger.debug(`    Downloaded successfully`);
-        inventory.push({
-          runId: runId,
-          artifactName: artifact.name,
-          artifactId: artifact.id,
-          sizeBytes: artifact.size_in_bytes,
-          status: "success",
-        });
-      } else {
-        const error = result.error!;
-        const status = isExpiredError(error) ? "expired" : "failed";
-        logger.error(`    Failed: ${error.message}`);
+      if (validationResult) {
+        validationResults.push(validationResult);
 
-        inventory.push({
-          runId: runId,
-          artifactName: artifact.name,
-          artifactId: artifact.id,
-          sizeBytes: artifact.size_in_bytes,
-          status,
-          errorMessage: error.message,
-        });
-      }
-    }
-
-    // Validate expectations after processing all artifacts for this run
-    const allArtifactNames = artifacts.map((a) => a.name);
-    const validationResult = validateExpectations(
-      run,
-      workflowConfig,
-      allArtifactNames,
-    );
-
-    if (validationResult) {
-      validationResults.push(validationResult);
-
-      // Log validation failures
-      if (validationResult.missingRequired.length > 0) {
-        logger.error(
-          `  Validation failed: ${validationResult.missingRequired.length} required artifact(s) missing`,
-        );
-        for (const violation of validationResult.missingRequired) {
-          const reason = violation.reason ? ` (${violation.reason})` : "";
-          logger.error(`    Missing required: ${violation.pattern}${reason}`);
+        // Log validation failures
+        if (validationResult.missingRequired.length > 0) {
+          logger.error(
+            `  Validation failed: ${validationResult.missingRequired.length} required artifact(s) missing`,
+          );
+          for (const violation of validationResult.missingRequired) {
+            const reason = violation.reason ? ` (${violation.reason})` : "";
+            logger.error(`    Missing required: ${violation.pattern}${reason}`);
+          }
         }
-      }
 
-      if (validationResult.missingOptional.length > 0) {
-        logger.warn(
-          `  Warning: ${validationResult.missingOptional.length} optional artifact(s) missing`,
-        );
-        for (const violation of validationResult.missingOptional) {
-          const reason = violation.reason ? ` (${violation.reason})` : "";
-          logger.debug(`    Missing optional: ${violation.pattern}${reason}`);
+        if (validationResult.missingOptional.length > 0) {
+          logger.warn(
+            `  Warning: ${validationResult.missingOptional.length} optional artifact(s) missing`,
+          );
+          for (const violation of validationResult.missingOptional) {
+            const reason = violation.reason ? ` (${violation.reason})` : "";
+            logger.debug(`    Missing optional: ${violation.pattern}${reason}`);
+          }
         }
       }
     }
-  }
 
     // Save inventory
     if (!dryRun) {
@@ -284,7 +284,7 @@ export async function downloadArtifacts(
 
     // Check if we should continue polling
     const inProgressCount = Array.from(runStates.values()).filter(
-      (state) => state === "in_progress"
+      (state) => state === "in_progress",
     ).length;
 
     // If --wait is not enabled, or no runs in progress, exit loop
@@ -308,10 +308,10 @@ export async function downloadArtifacts(
       const elapsedHours = (elapsedTime / (1000 * 60 * 60)).toFixed(1);
       const maxHours = (maxWaitTime / (1000 * 60 * 60)).toFixed(1);
       logger.warn(
-        `\n=== Maximum wait time reached (${elapsedHours}/${maxHours} hours) ===`
+        `\n=== Maximum wait time reached (${elapsedHours}/${maxHours} hours) ===`,
       );
       logger.warn(
-        `${inProgressCount} workflow(s) still in progress - exiting with incomplete status`
+        `${inProgressCount} workflow(s) still in progress - exiting with incomplete status`,
       );
       return {
         headSha,
@@ -328,9 +328,11 @@ export async function downloadArtifacts(
     const remainingHours = (remainingTime / (1000 * 60 * 60)).toFixed(1);
     const pollMinutes = (pollInterval / (1000 * 60)).toFixed(0);
 
-    logger.info(`\n=== Waiting for ${inProgressCount} in-progress workflow(s) ===`);
     logger.info(
-      `Polling again in ${pollMinutes} minutes (${remainingHours} hours remaining until timeout)`
+      `\n=== Waiting for ${inProgressCount} in-progress workflow(s) ===`,
+    );
+    logger.info(
+      `Polling again in ${pollMinutes} minutes (${remainingHours} hours remaining until timeout)`,
     );
 
     // Sleep for poll interval
