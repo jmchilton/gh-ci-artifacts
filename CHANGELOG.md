@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.4.1...v1.5.0) (2025-11-04)
+
+
+### Features
+
+* update to the latest artifact-detective release. ([f34029e](https://github.com/jmchilton/gh-ci-artifacts/commit/f34029ef45729b3e96f3131e78321ecdfe0d2488))
+
 ## [1.4.1](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.4.0...v1.4.1) (2025-11-03)
 
 ### Bug Fixes
