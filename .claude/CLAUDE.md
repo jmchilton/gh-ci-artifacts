@@ -1,5 +1,11 @@
 # gh-ci-artifacts - Claude Instructions
 
+## Artifact Detective
+
+Do not work around bugs or awkward interfaces in artifact-detective,
+that project spun out of this one and this is the primary consumer.
+Prompt user with instructions for fixing artifact-detective if this arises.
+
 ## Commit Message Convention
 
 This project uses [Conventional Commits](https://www.conventionalcommits.org/) with semantic-release for automated versioning and releases.
@@ -106,3 +112,9 @@ npm run build && npm test
 # Type check without building
 npm run lint
 ```
+
+## git
+
+- A release bot is constantly pushing release information to the changelog, so
+**always** fetch and rebase before pushing to origin/main.
+- **Always** lint and format your changes before committing.
