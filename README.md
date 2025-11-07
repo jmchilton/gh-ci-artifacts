@@ -100,6 +100,24 @@ When re-running for an existing PR or branch:
 
 This allows tracking evolution over time (PR updates or branch commits) while preserving historical snapshots.
 
+## Example Repository
+
+Try `gh-ci-artifacts` with our example repository:
+
+```bash
+# Download artifacts from an example PR
+npx gh-ci-artifacts 1 --repo jmchilton/gh-ci-artifacts-example-full-stack-fastapi
+```
+
+The [gh-ci-artifacts-example-full-stack-fastapi](https://github.com/jmchilton/gh-ci-artifacts-example-full-stack-fastapi) repository demonstrates the tool with:
+
+- **Full Stack Application:** FastAPI backend (Python) + React frontend (TypeScript)
+- **Multiple Artifact Types:** Pytest coverage reports, Playwright E2E test results, Linter outputs
+- **Intentional Failures:** Test failures showcasing error artifact analysis
+- **GitHub Actions CI:** Simplified workflows that generate realistic artifacts
+
+This is perfect for understanding what `gh-ci-artifacts` can do with your CI outputs.
+
 ## Configuration
 
 Create `.gh-ci-artifacts.json` in your project directory:
