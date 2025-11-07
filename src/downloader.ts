@@ -9,7 +9,9 @@ import type {
 } from "./types.js";
 import {
   getPRInfo,
+  getBranchHeadSha,
   getWorkflowRunsForBranch,
+  getWorkflowRunsForBranchPush,
   getArtifactsForRun,
   downloadArtifact,
 } from "./github/api.js";
@@ -36,7 +38,9 @@ export interface DownloadResult {
 
 export async function downloadArtifacts(
   repo: string,
-  prNumber: number,
+  prNumber: number | undefined,
+  branchName: string | undefined,
+  remoteName: string,
   outputDir: string,
   config: Config,
   logger: Logger,
@@ -58,15 +62,37 @@ export async function downloadArtifacts(
       logger.info(`\n=== Polling attempt ${pollAttempt} ===`);
     }
 
-    logger.info("Fetching PR information...");
-    const prInfo = getPRInfo(repo, prNumber);
-    const headSha = prInfo.headRefOid;
-    const branch = prInfo.headRefName;
-    logger.info(`Head SHA: ${headSha}`);
-    logger.info(`Branch: ${branch}`);
+    let headSha: string;
+    let branch: string;
 
-    logger.info("Finding workflow runs for commit...");
-    const runs = getWorkflowRunsForBranch(repo, branch, headSha);
+    if (prNumber !== undefined) {
+      // PR mode
+      logger.info("Fetching PR information...");
+      const prInfo = getPRInfo(repo, prNumber);
+      headSha = prInfo.headRefOid;
+      branch = prInfo.headRefName;
+      logger.info(`Head SHA: ${headSha}`);
+      logger.info(`Branch: ${branch}`);
+    } else if (branchName) {
+      // Branch mode
+      branch = branchName;
+      logger.info(`Fetching branch head SHA for '${branch}'...`);
+      headSha = getBranchHeadSha(repo, branch);
+      logger.info(`Head SHA: ${headSha}`);
+    } else {
+      throw new Error("Must provide either PR number or branch name");
+    }
+
+    // Get the runs (use appropriate query based on mode)
+    logger.info(
+      prNumber !== undefined
+        ? "Finding workflow runs for commit (PR event)..."
+        : "Finding workflow runs for commit (push event)...",
+    );
+    const runs =
+      prNumber !== undefined
+        ? getWorkflowRunsForBranch(repo, branch, headSha)
+        : getWorkflowRunsForBranchPush(repo, branch, headSha);
     logger.info(`Found ${runs.length} workflow runs`);
 
     const inventory: ArtifactInventoryItem[] = [];

@@ -41,6 +41,12 @@ export interface PR {
   headRefName: string;
 }
 
+export interface BranchInfo {
+  commit: {
+    sha: string;
+  };
+}
+
 export interface CheckRun {
   id: string;
   name: string;
@@ -88,6 +94,49 @@ export function getPRInfo(repo: string, prNumber: number): PR {
 
 export function getPRHeadSha(repo: string, prNumber: number): string {
   return getPRInfo(repo, prNumber).headRefOid;
+}
+
+export function getBranchHeadSha(repo: string, branch: string): string {
+  try {
+    const output = execSync(
+      `gh api repos/${repo}/branches/${branch} --jq '.commit.sha'`,
+      { encoding: "utf-8" },
+    );
+    return output.trim();
+  } catch (error) {
+    throw new Error(
+      `Failed to fetch branch info for '${branch}': ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+export function getWorkflowRunsForBranchPush(
+  repo: string,
+  branch: string,
+  sha: string,
+): WorkflowRun[] {
+  try {
+    // Query by branch and push event (filters to push events only)
+    // Then filter by SHA for exact match
+    const runsOutput = execSync(
+      `gh api --paginate 'repos/${repo}/actions/runs?event=push&branch=${branch}' --jq '.workflow_runs[] | select(.head_sha == "${sha}") | {id, name, path, conclusion, status, run_attempt, run_number, created_at}'`,
+      { encoding: "utf-8", maxBuffer: 50 * 1024 * 1024 },
+    );
+
+    // Parse NDJSON (newline-delimited JSON)
+    const runs = runsOutput
+      .trim()
+      .split("\n")
+      .filter((line) => line.trim())
+      .map((line) => JSON.parse(line) as WorkflowRun);
+
+    // Filter to only the latest attempt for each workflow
+    return filterToLatestAttempts(runs);
+  } catch (error) {
+    throw new Error(
+      `Failed to fetch workflow runs: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
 
 export function getWorkflowRunsForBranch(

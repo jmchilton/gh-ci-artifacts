@@ -14,7 +14,8 @@ import type {
 
 export interface SummaryInput {
   repo: string;
-  pr: number;
+  pr?: number; // Present in PR mode
+  branch?: string; // Present in branch mode
   headSha: string;
   inventory: ArtifactInventoryItem[];
   runStates: Map<string, RunConclusion>;
@@ -34,6 +35,7 @@ export function generateSummary(
   const {
     repo,
     pr,
+    branch,
     headSha,
     inventory,
     runStates,
@@ -130,7 +132,8 @@ export function generateSummary(
 
   const summary: Summary = {
     repo,
-    pr,
+    ...(pr !== undefined && { pr }),
+    ...(branch !== undefined && { branch }),
     headSha,
     analyzedAt: new Date().toISOString(),
     status,

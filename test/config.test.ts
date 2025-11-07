@@ -165,15 +165,15 @@ describe("getOutputDir", () => {
       outputDir: "/custom/output",
     };
 
-    const outputDir = getOutputDir(config, 123, "/cwd");
-    expect(outputDir).toBe("/custom/output/123");
+    const outputDir = getOutputDir(config, { pr: 123 }, "/cwd");
+    expect(outputDir).toBe("/custom/output/pr-123");
   });
 
   it("uses default .gh-ci-artifacts when no config", () => {
     const config: Config = {};
 
-    const outputDir = getOutputDir(config, 456, "/cwd");
-    expect(outputDir).toBe("/cwd/.gh-ci-artifacts/456");
+    const outputDir = getOutputDir(config, { pr: 456 }, "/cwd");
+    expect(outputDir).toBe("/cwd/.gh-ci-artifacts/pr-456");
   });
 
   it("appends PR number to output path", () => {
@@ -181,8 +181,34 @@ describe("getOutputDir", () => {
       outputDir: "/base",
     };
 
-    const outputDir = getOutputDir(config, 789, "/cwd");
-    expect(outputDir).toBe("/base/789");
+    const outputDir = getOutputDir(config, { pr: 789 }, "/cwd");
+    expect(outputDir).toBe("/base/pr-789");
+  });
+
+  it("uses branch name with remote in output path", () => {
+    const config: Config = {
+      outputDir: "/base",
+    };
+
+    const outputDir = getOutputDir(
+      config,
+      { branch: "main", remote: "origin" },
+      "/cwd",
+    );
+    expect(outputDir).toBe("/base/branch-origin-main");
+  });
+
+  it("sanitizes branch names for output path", () => {
+    const config: Config = {
+      outputDir: "/base",
+    };
+
+    const outputDir = getOutputDir(
+      config,
+      { branch: "feature/my-branch", remote: "origin" },
+      "/cwd",
+    );
+    expect(outputDir).toBe("/base/branch-origin-feature-my-branch");
   });
 });
 

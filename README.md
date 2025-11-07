@@ -48,6 +48,12 @@ gh-ci-artifacts 123
 # Download artifacts for a PR (from current repo)
 npx gh-ci-artifacts 123
 
+# Download artifacts for a branch (from current repo, uses origin remote)
+npx gh-ci-artifacts main
+
+# Download from a different remote
+npx gh-ci-artifacts main --remote upstream
+
 # Specify a different repository
 npx gh-ci-artifacts 123 --repo owner/repo
 
@@ -259,11 +265,15 @@ CLI arguments override config file values.
 
 ```
 .gh-ci-artifacts/
-└── <pr-number>/
-    ├── index.html            # Interactive HTML viewer
-    ├── summary.json          # Master summary with all metadata
-    ├── catalog.json          # Type detection results
-    ├── artifacts.json        # Download inventory
+├── pr-<number>/              # For PR mode (e.g., pr-123)
+│   ├── index.html
+│   ├── summary.json
+│   ├── catalog.json
+│   └── ...
+└── branch-<remote>-<name>/   # For branch mode (e.g., branch-origin-main)
+    ├── index.html
+    ├── summary.json
+    ├── catalog.json
     ├── raw/                  # Downloaded artifacts (original format)
     │   └── <run-id>/
     │       └── artifact-<artifact-id>/  # Each artifact in its own directory
@@ -284,7 +294,8 @@ CLI arguments override config file values.
 ```typescript
 {
   repo: string;
-  pr: number;
+  pr?: number;                // Present in PR mode only
+  branch?: string;            // Present in branch mode only
   headSha: string;
   analyzedAt: string;  // ISO 8601 timestamp
   status: "complete" | "partial" | "incomplete";
@@ -555,15 +566,16 @@ Validate that your CI workflows produce expected artifacts:
 ## CLI Options
 
 ```
-Usage: gh-ci-artifacts [options] <pr>
+Usage: gh-ci-artifacts [options] <ref>
 
 Arguments:
-  pr                           Pull request number
+  ref                          Pull request number or branch name
 
 Options:
   -V, --version                      output the version number
   -r, --repo <owner/repo>            Repository in owner/repo format (defaults to current repo)
   -o, --output-dir <dir>             Output directory
+  --remote <name>                    Git remote name for branch mode (default: origin)
   --max-retries <count>              Maximum retry attempts (default: 3)
   --retry-delay <seconds>            Retry delay in seconds (default: 5)
   --resume                           Resume incomplete/failed downloads
@@ -689,8 +701,10 @@ This reduces the need for HTML parsing and improves data quality.
 
 ## How It Works
 
+**PR Mode:**
+
 1. **Fetch PR metadata**: Get the latest commit SHA for the PR
-2. **Find workflow runs**: Query all runs for that commit
+2. **Find workflow runs**: Query all runs for that commit (filters to `pull_request` events)
 3. **Download artifacts**: Serially download artifacts (rate-limit friendly)
 4. **Extract logs**: For runs without artifacts, fetch job logs
 5. **Detect types**: Identify test frameworks and linters
@@ -698,12 +712,20 @@ This reduces the need for HTML parsing and improves data quality.
 7. **Extract linters**: Parse linter outputs from logs
 8. **Generate summary**: Combine everything into a master summary
 
+**Branch Mode:**
+
+1. **Fetch branch metadata**: Get the latest commit SHA for the branch head
+2. **Find workflow runs**: Query all runs for that commit (filters to `push` events only - see limitations)
+3. **Download artifacts**: Serially download artifacts (rate-limit friendly)
+4. **Extract logs**, **Detect types**, **Convert HTML**, **Extract linters**, **Generate summary**: Same as PR mode
+
 ## Limitations
 
 - Artifacts expire after 90 days (GitHub limitation) - tool gracefully handles this
 - Serial downloads to respect GitHub rate limits
 - `gh` CLI must be authenticated
 - Some HTML formats may not be parseable (cataloged as-is)
+- **Branch mode**: Only queries `push` event workflows - misses manually triggered (`workflow_dispatch`) or scheduled workflows running on that branch
 
 ## Contributing
 

@@ -25,12 +25,16 @@ program
     "Download and parse GitHub Actions CI artifacts and logs for LLM analysis",
   )
   .version("0.1.0")
-  .argument("<pr>", "Pull request number", parseInt)
+  .argument("<ref>", "Pull request number or branch name")
   .option(
     "-r, --repo <owner/repo>",
     "Repository in owner/repo format (defaults to current repo)",
   )
   .option("-o, --output-dir <dir>", "Output directory")
+  .option(
+    "--remote <name>",
+    "Git remote name for branch mode (default: origin)",
+  )
   .option("--max-retries <count>", "Maximum retry attempts", parseInt)
   .option("--retry-delay <seconds>", "Retry delay in seconds", parseInt)
   .option(
@@ -58,12 +62,18 @@ program
   .option("--open", "Open the generated HTML viewer in default browser")
   .option("--debug", "Enable debug logging")
   .option("--dry-run", "Show what would be downloaded without downloading")
-  .action(async (pr: number, options) => {
+  .action(async (ref: string, options) => {
     const logger = new Logger(options.debug);
 
     try {
       logger.info("Validating GitHub CLI setup...");
       validateGhSetup();
+
+      // Detect if ref is a PR number (all digits) or branch name
+      const isPR = /^\d+$/.test(ref);
+      const prNumber = isPR ? parseInt(ref) : undefined;
+      const branchName = !isPR ? ref : undefined;
+      const remoteName = options.remote || "origin";
 
       // Use current repo if not specified
       const targetRepo = options.repo || getCurrentRepo();
@@ -77,7 +87,12 @@ program
         maxWaitTime: options.maxWaitTime,
       });
 
-      const outputDir = getOutputDir(config, pr);
+      // Build ref object for output directory naming
+      const refObj = isPR
+        ? { pr: prNumber }
+        : { branch: branchName, remote: remoteName };
+
+      const outputDir = getOutputDir(config, refObj);
 
       // Handle existing directory
       if (existsSync(outputDir) && !options.resume && !options.dryRun) {
@@ -89,13 +104,19 @@ program
           .split(".")[0];
         const backupDir = `${outputDir}-${timestamp}`;
 
-        logger.info(`Found existing artifacts for PR #${pr}`);
+        const refDisplay = isPR ? `PR #${prNumber}` : `branch '${branchName}'`;
+        logger.info(`Found existing artifacts for ${refDisplay}`);
         logger.info(`Backing up to: ${backupDir}`);
         renameSync(outputDir, backupDir);
       }
 
       logger.info(`Repository: ${targetRepo}`);
-      logger.info(`Pull Request: #${pr}`);
+      if (isPR) {
+        logger.info(`Pull Request: #${prNumber}`);
+      } else {
+        logger.info(`Branch: ${branchName}`);
+        logger.info(`Remote: ${remoteName}`);
+      }
       logger.info(`Output directory: ${outputDir}`);
       logger.info(`Max retries: ${config.maxRetries}`);
       logger.info(`Retry delay: ${config.retryDelay}s`);
@@ -116,7 +137,9 @@ program
       }
       const result = await downloadArtifacts(
         targetRepo,
-        pr,
+        isPR ? prNumber! : undefined,
+        branchName,
+        remoteName,
         outputDir,
         config,
         logger,
@@ -226,7 +249,8 @@ program
         const summary = generateSummary(
           {
             repo: targetRepo,
-            pr,
+            pr: prNumber,
+            branch: branchName,
             headSha: result.headSha,
             inventory: result.inventory,
             runStates: result.runStates,

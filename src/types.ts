@@ -31,6 +31,22 @@ export type DownloadStatus = "success" | "expired" | "failed" | "skipped";
 export type ExtractionStatus = "success" | "failed";
 export type SummaryStatus = "complete" | "partial" | "incomplete";
 
+// Reference types for PR vs branch mode
+export type RefType = "pr" | "branch";
+
+export interface PRRef {
+  type: "pr";
+  prNumber: number;
+}
+
+export interface BranchRef {
+  type: "branch";
+  branch: string;
+  remote: string;
+}
+
+export type Ref = PRRef | BranchRef;
+
 export interface ArtifactInventoryItem {
   runId: string;
   artifactName: string;
@@ -90,7 +106,8 @@ export interface RunSummary {
 
 export interface Summary {
   repo: string;
-  pr: number;
+  pr?: number; // Present in PR mode only
+  branch?: string; // Present in branch mode only
   headSha: string;
   analyzedAt: string;
   status: SummaryStatus;

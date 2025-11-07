@@ -115,11 +115,32 @@ export function mergeConfig(
   };
 }
 
+/**
+ * Sanitize branch name for use in filesystem paths.
+ * Replaces slashes and special characters with hyphens.
+ */
+function sanitizeBranchName(branch: string): string {
+  return branch.replace(/[\/\\:\*\?"<>\|]/g, "-").replace(/\s+/g, "-");
+}
+
 export function getOutputDir(
   config: Config,
-  prNumber: number,
+  ref: { pr?: number; branch?: string; remote?: string },
   cwd: string = process.cwd(),
 ): string {
   const baseDir = config.outputDir ?? join(cwd, ".gh-ci-artifacts");
-  return join(baseDir, String(prNumber));
+
+  // Generate directory name based on ref type
+  let dirName: string;
+  if (ref.pr !== undefined) {
+    dirName = `pr-${ref.pr}`;
+  } else if (ref.branch) {
+    const sanitized = sanitizeBranchName(ref.branch);
+    const remote = ref.remote || "origin";
+    dirName = `branch-${remote}-${sanitized}`;
+  } else {
+    throw new Error("Invalid ref: must provide either pr or branch");
+  }
+
+  return join(baseDir, dirName);
 }
