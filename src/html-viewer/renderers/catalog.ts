@@ -103,7 +103,12 @@ function renderCatalogTable(data: CatalogEntry[], outputDir?: string): string {
             : row.validation === false
               ? 'invalid'
               : '';
-        return `<span class="type-badge ${validClass}">${escapeHtml(val)} ${validIcon} ${ext}</span>`;
+
+        // Generate artifact card HTML for tooltip (will be shown on hover)
+        const cardHtml = row.artifact ? generateArtifactCardHtml(val, row.artifact) : '';
+        const tooltipAttr = cardHtml ? ` data-artifact-card="${escapeHtml(cardHtml)}"` : '';
+
+        return `<span class="type-badge ${validClass} artifact-type-trigger"${tooltipAttr}>${escapeHtml(val)} ${validIcon} ${ext}</span>`;
       },
     },
     { key: "originalFormat", label: "Format" },
@@ -179,4 +184,20 @@ function renderCatalogTable(data: CatalogEntry[], outputDir?: string): string {
     sortable: true,
     filterBy: ["detectedType", "originalFormat", "validation"],
   });
+}
+
+function generateArtifactCardHtml(type: string, artifact: any): string {
+  return `
+    <div class="artifact-card-popup">
+      <h4>${escapeHtml(type)}${artifact.fileExtension ? ` <span class="ext">.${artifact.fileExtension}</span>` : ''}</h4>
+      <p class="description">${escapeHtml(artifact.shortDescription)}</p>
+      ${artifact.normalizedFrom ? `<div class="meta"><strong>Normalized from:</strong> ${escapeHtml(artifact.normalizedFrom)}</div>` : ''}
+      ${artifact.toolUrl ? `<div class="meta"><strong>Tool:</strong> <a href="${escapeHtml(artifact.toolUrl)}" target="_blank">${escapeHtml(new URL(artifact.toolUrl).hostname)}</a></div>` : ''}
+      ${artifact.formatUrl ? `<div class="meta"><strong>Format:</strong> <a href="${escapeHtml(artifact.formatUrl)}" target="_blank">${escapeHtml(new URL(artifact.formatUrl).hostname)}</a></div>` : ''}
+      <details class="parsing-guide">
+        <summary>Parsing Guide</summary>
+        <pre>${escapeHtml(artifact.parsingGuide)}</pre>
+      </details>
+    </div>
+  `;
 }

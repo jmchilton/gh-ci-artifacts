@@ -8,6 +8,7 @@ ${getTabScripts()}
 ${getTreeScripts()}
 ${getPreviewScripts()}
 ${getTableScripts()}
+${getArtifactCardScripts()}
 ${getUtilityScripts()}
 `;
 }
@@ -434,6 +435,73 @@ function renderRunDetails(run) {
   html += '</div>';
   return html;
 }
+`;
+}
+
+function getArtifactCardScripts(): string {
+  return `
+// Artifact type card popup on mouseover
+let artifactPopup = null;
+
+document.addEventListener('mouseover', (e) => {
+  const trigger = e.target.closest('.artifact-type-trigger');
+  if (trigger && trigger.dataset.artifactCard) {
+    // Hide any existing popup
+    if (artifactPopup) {
+      artifactPopup.remove();
+    }
+
+    // Create and show popup
+    artifactPopup = document.createElement('div');
+    artifactPopup.className = 'artifact-card-tooltip';
+
+    // Decode the artifact card HTML
+    const cardHtml = trigger.dataset.artifactCard
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&amp;/g, '&');
+
+    artifactPopup.innerHTML = cardHtml;
+    document.body.appendChild(artifactPopup);
+
+    // Position popup near the trigger element
+    const rect = trigger.getBoundingClientRect();
+    artifactPopup.style.position = 'fixed';
+    artifactPopup.style.top = (rect.bottom + 5) + 'px';
+    artifactPopup.style.left = Math.max(10, rect.left) + 'px';
+    artifactPopup.style.maxWidth = '400px';
+    artifactPopup.style.zIndex = '10000';
+  }
+});
+
+document.addEventListener('mouseout', (e) => {
+  const trigger = e.target.closest('.artifact-type-trigger');
+  if (trigger && artifactPopup) {
+    // Check if we're moving to the popup itself
+    if (!e.relatedTarget || !e.relatedTarget.closest('.artifact-card-tooltip')) {
+      artifactPopup.remove();
+      artifactPopup = null;
+    }
+  }
+});
+
+// Keep popup visible when hovering over it
+document.addEventListener('mouseenter', (e) => {
+  const popup = e.target.closest('.artifact-card-tooltip');
+  if (popup && artifactPopup === popup) {
+    // Keep it alive
+  }
+}, true);
+
+document.addEventListener('mouseleave', (e) => {
+  const popup = e.target.closest('.artifact-card-tooltip');
+  if (popup && artifactPopup === popup) {
+    artifactPopup.remove();
+    artifactPopup = null;
+  }
+}, true);
 `;
 }
 
