@@ -233,6 +233,20 @@ CLI arguments override config file values.
       detectedType?: string;
       filePath?: string;
       converted?: boolean;
+      artifact?: {  // ArtifactDescriptor with parsingGuide for AI consumption
+        artifactType: string;
+        shortDescription: string;
+        parsingGuide: string;  // AI-optimized instructions for analyzing this artifact
+        toolUrl?: string;
+        formatUrl?: string;
+        fileExtension?: string;
+        isJSON: boolean;
+        normalizedFrom?: string;
+      };
+      validation?: {
+        valid: boolean;
+        error?: string;
+      };
     }>;
     logs: Array<{
       jobName: string;
@@ -241,6 +255,16 @@ CLI arguments override config file values.
       linterOutputs?: Array<{
         detectedType: string;
         filePath: string;
+        artifact?: {  // ArtifactDescriptor with parsingGuide for extracted linter output
+          artifactType: string;
+          shortDescription: string;
+          parsingGuide: string;  // AI-optimized instructions for this linter format
+          fileExtension?: string;
+        };
+        validation?: {
+          valid: boolean;
+          error?: string;
+        };
       }>;
     }>;
     validationResult?: {  // Present if expectations configured and violations found
@@ -275,6 +299,9 @@ CLI arguments override config file values.
     artifactsFailed: number;
     logsExtracted: number;
     htmlConverted: number;
+    artifactsValidated: number;  // Artifacts that were validated
+    artifactsInvalid: number;    // Artifacts that failed validation
+    linterOutputsExtracted: number;  // Total linter outputs extracted from logs
   };
 }
 ```
@@ -299,6 +326,22 @@ Array<{
   filePath: string;
   converted?: boolean; // True if HTML was converted to JSON
   skipped?: boolean; // True for binary files
+  artifact?: {
+    // ArtifactDescriptor with metadata optimized for AI consumption
+    artifactType: string;
+    fileExtension?: string;
+    shortDescription: string; // Human-readable description
+    toolUrl?: string; // Link to tool documentation
+    formatUrl?: string; // Link to format specification
+    parsingGuide: string; // AI-optimized parsing instructions for this artifact type
+    isJSON: boolean;
+    normalizedFrom?: string; // If artifact was normalized (e.g., pytest-html → pytest-json)
+  };
+  validation?: {
+    // Validation result for the artifact
+    valid: boolean;
+    error?: string; // Validation error message if invalid
+  };
 }>;
 ```
 
@@ -482,7 +525,7 @@ When analyzing CI failures from gh-ci-artifacts, the tool downloads and organize
 ### Key Files (in priority order)
 
 1. **`summary.json`** - Master overview with all metadata, download status, validation results, and statistics
-2. **`catalog.json`** - Type detection results for all artifacts (playwright-json, jest-json, pytest-json, junit-xml, eslint-txt, etc.)
+2. **`catalog.json`** - Type detection results for all artifacts with `artifact.parsingGuide` containing AI-optimized parsing instructions for each artifact type
 3. **`artifacts.json`** - Download inventory with artifact metadata
 
 ### Directory Structure
@@ -504,10 +547,17 @@ When analyzing CI failures from gh-ci-artifacts, the tool downloads and organize
 ### Analyzing Failures
 
 1. Start with `summary.json` to understand which workflows/jobs failed
-2. Check `catalog.json` to find detected test framework types
+2. Check `catalog.json` to find detected test framework types and **read the `artifact.parsingGuide` for AI-optimized instructions on how to consume each artifact type**
 3. Look in `converted/` for structured JSON reports (preferred)
 4. Check `linting/` for linter/compiler errors
-5. Fall back to `raw/` only if converted versions unavailable
+5. Validate artifact integrity using `artifact.validation` status in `catalog.json`
+6. Fall back to `raw/` only if converted versions unavailable
+
+**Pro Tip:** When analyzing an artifact, include the `parsingGuide` from `catalog.json` in your Claude prompt. The parsing guide is specifically written for AI agents and contains:
+- How to interpret the artifact structure
+- Key fields to focus on for failure analysis
+- Caveats and edge cases
+- Best practices for consumption
 
 ### Common Patterns
 
