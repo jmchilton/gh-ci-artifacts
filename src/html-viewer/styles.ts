@@ -1169,6 +1169,61 @@ function getArtifactStyles(): string {
 .artifact-card-popup {
   width: 100%;
 }
+
+.validation-tooltip,
+.conversion-tooltip,
+.header-tooltip {
+  width: 100%;
+}
+
+.validation-tooltip p,
+.conversion-tooltip p,
+.header-tooltip p {
+  margin: 8px 0;
+  line-height: 1.5;
+  color: #495057;
+}
+
+.validation-tooltip p:first-child,
+.conversion-tooltip p:first-child,
+.header-tooltip p:first-child {
+  margin-top: 0;
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 1em;
+}
+
+.validation-tooltip .tooltip-desc,
+.conversion-tooltip .tooltip-desc,
+.header-tooltip p {
+  color: #6c757d;
+  font-size: 0.95em;
+  margin-bottom: 4px;
+}
+
+.validation-tooltip .tooltip-error {
+  color: #c62828;
+  background: #ffcdd2;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin: 8px 0;
+}
+
+.validation-tooltip .tooltip-error strong {
+  color: #991b1b;
+}
+
+.conversion-tooltip .tooltip-info {
+  margin: 6px 0;
+  padding: 4px 8px;
+  background: #f0f7ff;
+  border-left: 3px solid #007bff;
+  font-size: 0.95em;
+}
+
+.conversion-tooltip .tooltip-info strong {
+  color: #003d82;
+}
 `;
 }
 

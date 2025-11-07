@@ -45,6 +45,7 @@ export interface TableColumn {
   label: string;
   sortable?: boolean;
   render?: (value: any, row: any) => string;
+  headerTooltip?: string;
 }
 
 export interface TableOptions {
@@ -107,7 +108,10 @@ export function renderTable(
   columns.forEach((col) => {
     const sortable = col.sortable !== false && options?.sortable !== false;
     const sortClass = sortable ? "sortable" : "";
-    html += `<th class="${sortClass}" data-key="${col.key}">${escapeHtml(col.label)}</th>`;
+    const tooltipAttr = col.headerTooltip
+      ? ` class="column-header-trigger ${sortClass}" data-key="${col.key}" data-header-tooltip="${escapeHtml(col.headerTooltip)}"`
+      : ` class="${sortClass}" data-key="${col.key}"`;
+    html += `<th${tooltipAttr}>${escapeHtml(col.label)}</th>`;
   });
   html += "</tr></thead>";
 

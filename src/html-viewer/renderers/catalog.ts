@@ -81,11 +81,12 @@ function getTypeBreakdown(data: CatalogEntry[]): Record<string, number> {
 
 function renderCatalogTable(data: CatalogEntry[], outputDir?: string): string {
   const columns: TableColumn[] = [
-    { key: "artifactName", label: "Artifact Name" },
-    { key: "runId", label: "Run ID" },
+    { key: "artifactName", label: "Artifact Name", headerTooltip: "Name of the downloaded artifact file" },
+    { key: "runId", label: "Run ID", headerTooltip: "GitHub Actions workflow run ID" },
     {
       key: "detectedType",
       label: "Type",
+      headerTooltip: "Detected artifact type (test framework, linter, etc.)",
       render: (val, row) => {
         const validIcon =
           row.validation === true
@@ -111,10 +112,11 @@ function renderCatalogTable(data: CatalogEntry[], outputDir?: string): string {
         return `<span class="type-badge ${validClass} artifact-type-trigger"${tooltipAttr}>${escapeHtml(val)} ${validIcon} ${ext}</span>`;
       },
     },
-    { key: "originalFormat", label: "Format" },
+    { key: "originalFormat", label: "Format", headerTooltip: "Original file format before conversion" },
     {
       key: "artifact",
       label: "Description",
+      headerTooltip: "Short description of the artifact's purpose and content",
       render: (val, row) => {
         if (!row.artifact?.shortDescription) return "-";
         return `<span title="${escapeHtml(row.artifact.shortDescription)}">${escapeHtml(row.artifact.shortDescription.substring(0, 50))}</span>`;
@@ -123,33 +125,54 @@ function renderCatalogTable(data: CatalogEntry[], outputDir?: string): string {
     {
       key: "validation",
       label: "Valid",
+      headerTooltip: "Validation status - whether artifact meets requirements for processing",
       render: (val, row) => {
-        if (!row.validation) return "-";
-        if (row.validation.valid) {
-          return '<span class="validation-badge valid">✓ Valid</span>';
+        const validationInfo = renderValidationTooltipContent(row);
+        const tooltipAttr = ` data-validation-info="${escapeHtml(validationInfo)}"`;
+
+        if (!row.validation) {
+          return `<span class="validation-trigger"${tooltipAttr}>-</span>`;
         }
-        return `<span class="validation-badge invalid" title="${escapeHtml(row.validation.error || 'Invalid')}">${row.validation.error ? '✗ ' + row.validation.error.substring(0, 30) : '✗ Invalid'}</span>`;
+
+        if (row.validation.valid) {
+          return `<span class="validation-badge valid validation-trigger" style="color: green; cursor: help;"${tooltipAttr}>✓</span>`;
+        }
+
+        return `<span class="validation-badge invalid validation-trigger" style="color: red; cursor: help;"${tooltipAttr}>✗</span>`;
       },
     },
     {
       key: "converted",
       label: "Converted",
-      render: (val) => (val ? "✓" : ""),
+      headerTooltip: "Whether artifact was converted from original format to normalized format",
+      render: (val, row) => {
+        const conversionInfo = renderConversionTooltipContent(row);
+        const tooltipAttr = ` data-conversion-info="${escapeHtml(conversionInfo)}"`;
+
+        if (val) {
+          return `<span class="conversion-trigger" style="color: green; cursor: help;"${tooltipAttr}>✓</span>`;
+        }
+
+        return `<span class="conversion-trigger"${tooltipAttr}></span>`;
+      },
     },
     {
       key: "skipped",
       label: "Skipped",
+      headerTooltip: "Whether artifact processing was skipped",
       render: (val) => (val ? "✓" : ""),
     },
     {
       key: "filePath",
       label: "Path",
+      headerTooltip: "File path to the artifact in the output directory",
       render: (val) => `<code class="file-path">${escapeHtml(val)}</code>`,
     },
     {
       key: "actions",
       label: "Actions",
       sortable: false,
+      headerTooltip: "Open or copy artifact file path",
       render: (val, row) => {
         if (!row.filePath) return "";
         // Extract relative path for Open link
@@ -200,4 +223,47 @@ function generateArtifactCardHtml(type: string, artifact: any): string {
       </details>
     </div>
   `;
+}
+
+function renderValidationTooltipContent(row: CatalogEntry): string {
+  let html = '<div class="validation-tooltip">';
+
+  if (!row.validation) {
+    html += '<p><strong>No validation performed</strong></p>';
+    html += '<p class="tooltip-desc">This artifact type does not require validation or was not validated during processing.</p>';
+  } else if (row.validation.valid) {
+    html += '<p><strong>✓ Valid</strong></p>';
+    html += '<p class="tooltip-desc">This artifact passed all validation checks and is ready for processing.</p>';
+    html += '<p class="tooltip-checks">Validation ensures the artifact contains required fields and has proper structure for LLM analysis.</p>';
+  } else {
+    html += '<p><strong>✗ Invalid</strong></p>';
+    if (row.validation.error) {
+      html += `<p class="tooltip-error"><strong>Error:</strong> ${escapeHtml(row.validation.error)}</p>`;
+    }
+    html += '<p class="tooltip-desc">This artifact failed validation and may not be suitable for processing.</p>';
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function renderConversionTooltipContent(row: CatalogEntry): string {
+  let html = '<div class="conversion-tooltip">';
+
+  if (row.converted) {
+    html += '<p><strong>✓ Converted</strong></p>';
+    html += `<p class="tooltip-info"><strong>From:</strong> ${escapeHtml(row.originalFormat || 'unknown')}</p>`;
+    html += `<p class="tooltip-info"><strong>To:</strong> ${escapeHtml(row.detectedType)}</p>`;
+    if (row.artifact?.normalizedFrom) {
+      html += `<p class="tooltip-info"><strong>Normalized from:</strong> ${escapeHtml(row.artifact.normalizedFrom)}</p>`;
+    }
+    html += '<p class="tooltip-desc">The artifact was converted from its original format to a normalized format for consistent processing.</p>';
+  } else {
+    html += '<p><strong>Not Converted</strong></p>';
+    html += `<p class="tooltip-info"><strong>Format:</strong> ${escapeHtml(row.originalFormat || 'unknown')}</p>`;
+    html += '<p class="tooltip-desc">This artifact was already in the target format or did not require conversion.</p>';
+  }
+
+  html += '</div>';
+  return html;
 }

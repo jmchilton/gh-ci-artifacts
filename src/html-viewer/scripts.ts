@@ -442,6 +442,29 @@ function getArtifactCardScripts(): string {
   return `
 // Artifact type card popup on mouseover
 let artifactPopup = null;
+let validationPopup = null;
+let conversionPopup = null;
+let headerPopup = null;
+
+// Helper function to decode HTML entities
+function decodeHtmlEntities(html) {
+  return html
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
+// Helper function to position popup near element
+function positionPopup(popup, trigger) {
+  const rect = trigger.getBoundingClientRect();
+  popup.style.position = 'fixed';
+  popup.style.top = (rect.bottom + 5) + 'px';
+  popup.style.left = Math.max(10, rect.left) + 'px';
+  popup.style.maxWidth = '400px';
+  popup.style.zIndex = '10000';
+}
 
 document.addEventListener('mouseover', (e) => {
   const trigger = e.target.closest('.artifact-type-trigger');
@@ -456,23 +479,12 @@ document.addEventListener('mouseover', (e) => {
     artifactPopup.className = 'artifact-card-tooltip';
 
     // Decode the artifact card HTML
-    const cardHtml = trigger.dataset.artifactCard
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&amp;/g, '&');
-
+    const cardHtml = decodeHtmlEntities(trigger.dataset.artifactCard);
     artifactPopup.innerHTML = cardHtml;
     document.body.appendChild(artifactPopup);
 
     // Position popup near the trigger element
-    const rect = trigger.getBoundingClientRect();
-    artifactPopup.style.position = 'fixed';
-    artifactPopup.style.top = (rect.bottom + 5) + 'px';
-    artifactPopup.style.left = Math.max(10, rect.left) + 'px';
-    artifactPopup.style.maxWidth = '400px';
-    artifactPopup.style.zIndex = '10000';
+    positionPopup(artifactPopup, trigger);
   }
 });
 
@@ -487,19 +499,124 @@ document.addEventListener('mouseout', (e) => {
   }
 });
 
+// Validation column tooltips
+document.addEventListener('mouseover', (e) => {
+  const trigger = e.target.closest('.validation-trigger');
+  if (trigger && trigger.dataset.validationInfo) {
+    // Hide any existing popup
+    if (validationPopup) {
+      validationPopup.remove();
+    }
+
+    // Create and show popup
+    validationPopup = document.createElement('div');
+    validationPopup.className = 'artifact-card-tooltip';
+
+    // Decode the validation info HTML
+    const infoHtml = decodeHtmlEntities(trigger.dataset.validationInfo);
+    validationPopup.innerHTML = infoHtml;
+    document.body.appendChild(validationPopup);
+
+    // Position popup near the trigger element
+    positionPopup(validationPopup, trigger);
+  }
+});
+
+document.addEventListener('mouseout', (e) => {
+  const trigger = e.target.closest('.validation-trigger');
+  if (trigger && validationPopup) {
+    // Check if we're moving to the popup itself
+    if (!e.relatedTarget || !e.relatedTarget.closest('.artifact-card-tooltip')) {
+      validationPopup.remove();
+      validationPopup = null;
+    }
+  }
+});
+
+// Conversion column tooltips
+document.addEventListener('mouseover', (e) => {
+  const trigger = e.target.closest('.conversion-trigger');
+  if (trigger && trigger.dataset.conversionInfo) {
+    // Hide any existing popup
+    if (conversionPopup) {
+      conversionPopup.remove();
+    }
+
+    // Create and show popup
+    conversionPopup = document.createElement('div');
+    conversionPopup.className = 'artifact-card-tooltip';
+
+    // Decode the conversion info HTML
+    const infoHtml = decodeHtmlEntities(trigger.dataset.conversionInfo);
+    conversionPopup.innerHTML = infoHtml;
+    document.body.appendChild(conversionPopup);
+
+    // Position popup near the trigger element
+    positionPopup(conversionPopup, trigger);
+  }
+});
+
+document.addEventListener('mouseout', (e) => {
+  const trigger = e.target.closest('.conversion-trigger');
+  if (trigger && conversionPopup) {
+    // Check if we're moving to the popup itself
+    if (!e.relatedTarget || !e.relatedTarget.closest('.artifact-card-tooltip')) {
+      conversionPopup.remove();
+      conversionPopup = null;
+    }
+  }
+});
+
+// Column header tooltips
+document.addEventListener('mouseover', (e) => {
+  const trigger = e.target.closest('.column-header-trigger');
+  if (trigger && trigger.dataset.headerTooltip) {
+    // Hide any existing popup
+    if (headerPopup) {
+      headerPopup.remove();
+    }
+
+    // Create and show popup
+    headerPopup = document.createElement('div');
+    headerPopup.className = 'artifact-card-tooltip';
+
+    // Create header tooltip content
+    const tooltipText = decodeHtmlEntities(trigger.dataset.headerTooltip);
+    headerPopup.innerHTML = '<div class="header-tooltip"><p>' + tooltipText + '</p></div>';
+    document.body.appendChild(headerPopup);
+
+    // Position popup near the trigger element
+    positionPopup(headerPopup, trigger);
+  }
+});
+
+document.addEventListener('mouseout', (e) => {
+  const trigger = e.target.closest('.column-header-trigger');
+  if (trigger && headerPopup) {
+    // Check if we're moving to the popup itself
+    if (!e.relatedTarget || !e.relatedTarget.closest('.artifact-card-tooltip')) {
+      headerPopup.remove();
+      headerPopup = null;
+    }
+  }
+});
+
 // Keep popup visible when hovering over it
 document.addEventListener('mouseenter', (e) => {
   const popup = e.target.closest('.artifact-card-tooltip');
-  if (popup && artifactPopup === popup) {
+  if (popup && (artifactPopup === popup || validationPopup === popup || conversionPopup === popup || headerPopup === popup)) {
     // Keep it alive
   }
 }, true);
 
 document.addEventListener('mouseleave', (e) => {
   const popup = e.target.closest('.artifact-card-tooltip');
-  if (popup && artifactPopup === popup) {
-    artifactPopup.remove();
-    artifactPopup = null;
+  if (popup && (artifactPopup === popup || validationPopup === popup || conversionPopup === popup || headerPopup === popup)) {
+    popup.remove();
+    if (artifactPopup === popup) artifactPopup = null;
+    if (validationPopup === popup) validationPopup = null;
+    if (conversionPopup === popup) conversionPopup = null;
+    if (headerPopup === popup) headerPopup = null;
   }
 }, true);
 `;
