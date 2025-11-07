@@ -106,7 +106,13 @@ function renderCatalogTable(data: CatalogEntry[], outputDir?: string): string {
               : '';
 
         // Generate artifact card HTML for tooltip (will be shown on hover)
-        const cardHtml = row.artifact ? generateArtifactCardHtml(val, row.artifact) : '';
+        let cardHtml = '';
+        if (val === 'unknown') {
+          // Show help text for unknown types
+          cardHtml = renderUnknownTypeHelpText();
+        } else if (row.artifact) {
+          cardHtml = generateArtifactCardHtml(val, row.artifact);
+        }
         const tooltipAttr = cardHtml ? ` data-artifact-card="${escapeHtml(cardHtml)}"` : '';
 
         return `<span class="type-badge ${validClass} artifact-type-trigger"${tooltipAttr}>${escapeHtml(val)} ${validIcon} ${ext}</span>`;
@@ -266,4 +272,25 @@ function renderConversionTooltipContent(row: CatalogEntry): string {
 
   html += '</div>';
   return html;
+}
+
+function renderUnknownTypeHelpText(): string {
+  return `
+    <div class="unknown-type-help">
+      <p><strong>Unknown Type</strong></p>
+      <p>This artifact couldn't be automatically detected by artifact-detective.</p>
+      <p class="tooltip-desc">You can register a custom type mapping in your <code>.gh-ci-artifacts.json</code> config:</p>
+      <pre class="config-example">{
+  "customArtifactTypes": [
+    {
+      "pattern": "my-report\\.json$",
+      "type": "jest-json",
+      "reason": "Custom test framework with jest-compatible format"
+    }
+  ]
+}</pre>
+      <p class="tooltip-desc"><strong>Use:</strong> Global level for repo-wide mappings, or per-workflow for workflow-specific types.</p>
+      <p class="tooltip-desc">Pattern is a regex matched against the filename.</p>
+    </div>
+  `;
 }

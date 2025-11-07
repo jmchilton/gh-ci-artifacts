@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { parse as parseYAML } from "yaml";
-import type { Config, SkipPattern } from "./types.js";
+import type { Config, SkipPattern, ArtifactTypeMapping } from "./types.js";
 
 const CONFIG_FILENAMES = [
   ".gh-ci-artifacts.json",
@@ -16,6 +16,21 @@ function validateSkipPatterns(patterns: SkipPattern[], context: string): void {
     } catch (error) {
       throw new Error(
         `Invalid regex pattern in ${context}: "${pattern.pattern}" - ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+}
+
+function validateCustomArtifactTypes(
+  mappings: ArtifactTypeMapping[],
+  context: string,
+): void {
+  for (const mapping of mappings) {
+    try {
+      new RegExp(mapping.pattern);
+    } catch (error) {
+      throw new Error(
+        `Invalid regex pattern in ${context}: "${mapping.pattern}" - ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
@@ -42,12 +57,27 @@ export function loadConfig(cwd: string = process.cwd()): Config {
         validateSkipPatterns(config.skipArtifacts, "global skipArtifacts");
       }
 
+      // Validate custom artifact type mappings
+      if (config.customArtifactTypes) {
+        validateCustomArtifactTypes(
+          config.customArtifactTypes,
+          "global customArtifactTypes",
+        );
+      }
+
       if (config.workflows) {
         for (const workflow of config.workflows) {
           if (workflow.skipArtifacts) {
             validateSkipPatterns(
               workflow.skipArtifacts,
               `workflow "${workflow.workflow}" skipArtifacts`,
+            );
+          }
+
+          if (workflow.customArtifactTypes) {
+            validateCustomArtifactTypes(
+              workflow.customArtifactTypes,
+              `workflow "${workflow.workflow}" customArtifactTypes`,
             );
           }
         }
@@ -76,6 +106,8 @@ export function mergeConfig(
     pollInterval: cliConfig.pollInterval ?? fileConfig.pollInterval ?? 1800, // 30 minutes
     maxWaitTime: cliConfig.maxWaitTime ?? fileConfig.maxWaitTime ?? 21600, // 6 hours
     skipArtifacts: cliConfig.skipArtifacts ?? fileConfig.skipArtifacts,
+    customArtifactTypes:
+      cliConfig.customArtifactTypes ?? fileConfig.customArtifactTypes,
     extractArtifactTypesFromLogs:
       cliConfig.extractArtifactTypesFromLogs ??
       fileConfig.extractArtifactTypesFromLogs,

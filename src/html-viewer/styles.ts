@@ -1224,6 +1224,37 @@ function getArtifactStyles(): string {
 .conversion-tooltip .tooltip-info strong {
   color: #003d82;
 }
+
+.unknown-type-help p {
+  margin: 8px 0;
+}
+
+.unknown-type-help p:first-child {
+  font-weight: 600;
+  color: #d97706;
+  font-size: 1em;
+  margin-bottom: 4px;
+}
+
+.unknown-type-help code {
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: monospace;
+  color: #dc2626;
+}
+
+.unknown-type-help .config-example {
+  background: #1f2937;
+  color: #f3f4f6;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.85em;
+  line-height: 1.4;
+  margin: 8px 0;
+  border: 1px solid #374151;
+}
 `;
 }
 

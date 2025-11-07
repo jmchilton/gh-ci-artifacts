@@ -6,6 +6,7 @@ import { extract } from "artifact-detective";
 
 export interface ArtifactCollectionResult {
   artifactOutputs: Map<string, LinterOutput[]>; // runId -> LinerOutput[]
+  foundArtifactTypes: Map<string, Set<string>>; // runId -> Set of found artifact types
 }
 
 export async function collectArtifactsFromLogs(
@@ -15,17 +16,19 @@ export async function collectArtifactsFromLogs(
   logger: Logger,
 ): Promise<ArtifactCollectionResult> {
   const artifactOutputs = new Map<string, LinterOutput[]>();
+  const foundArtifactTypes = new Map<string, Set<string>>();
 
   // If no types specified, skip extraction
   if (!extractionConfigs || extractionConfigs.length === 0) {
     logger.debug("No artifact types configured for extraction from logs");
-    return { artifactOutputs };
+    return { artifactOutputs, foundArtifactTypes };
   }
 
   for (const [runId, logs] of logsByRun.entries()) {
     logger.debug(`\nProcessing artifacts for run ${runId}...`);
 
     const runArtifactOutputs: LinterOutput[] = [];
+    const runFoundTypes = new Set<string>();
 
     for (const log of logs) {
       if (!log.logFile || log.extractionStatus !== "success") {
@@ -99,6 +102,9 @@ export async function collectArtifactsFromLogs(
 
             logger.debug(`    Saved artifact output to ${filePath}`);
 
+            // Track found artifact type
+            runFoundTypes.add(config.type);
+
             // Update job log with artifact outputs
             log.linterOutputs = log.linterOutputs || [];
             log.linterOutputs.push({
@@ -128,9 +134,13 @@ export async function collectArtifactsFromLogs(
     if (runArtifactOutputs.length > 0) {
       artifactOutputs.set(runId, runArtifactOutputs);
     }
+
+    if (runFoundTypes.size > 0) {
+      foundArtifactTypes.set(runId, runFoundTypes);
+    }
   }
 
-  return { artifactOutputs };
+  return { artifactOutputs, foundArtifactTypes };
 }
 
 function sanitizeJobName(name: string): string {

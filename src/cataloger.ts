@@ -1,7 +1,11 @@
 import { readdirSync, statSync, mkdirSync, writeFileSync } from "fs";
 import { join, basename, extname } from "path";
 import type { Logger } from "./utils/logger.js";
-import type { ArtifactInventoryItem, CatalogEntry } from "./types.js";
+import type {
+  ArtifactInventoryItem,
+  CatalogEntry,
+  ArtifactTypeMapping,
+} from "./types.js";
 import {
   canConvertToJSON,
   convertToJSON,
@@ -18,6 +22,7 @@ export async function catalogArtifacts(
   runIds: string[],
   inventory: ArtifactInventoryItem[],
   logger: Logger,
+  customArtifactTypes?: ArtifactTypeMapping[],
 ): Promise<CatalogResult> {
   const catalog: CatalogEntry[] = [];
   const rawDir = join(outputDir, "raw");
@@ -75,13 +80,20 @@ export async function catalogArtifacts(
       for (const filePath of files) {
         const detection = detectArtifactType(filePath, { validate: true });
 
+        // Apply custom artifact type mapping if detected type is unknown
+        const finalType = applyCustomArtifactType(
+          filePath,
+          detection.detectedType,
+          customArtifactTypes,
+        ) as typeof detection.detectedType;
+
         if (detection.isBinary) {
           // Skip binary files
           catalog.push({
             artifactName,
             artifactId,
             runId,
-            detectedType: detection.detectedType,
+            detectedType: finalType,
             originalFormat: detection.originalFormat,
             filePath,
             skipped: true,
@@ -137,7 +149,7 @@ export async function catalogArtifacts(
                 artifactName,
                 artifactId,
                 runId,
-                detectedType: detection.detectedType,
+                detectedType: finalType,
                 originalFormat: detection.originalFormat,
                 filePath: convertedFilePath,
                 converted: true,
@@ -153,7 +165,7 @@ export async function catalogArtifacts(
                 artifactName,
                 artifactId,
                 runId,
-                detectedType: detection.detectedType,
+                detectedType: finalType,
                 originalFormat: detection.originalFormat,
                 filePath,
                 artifact: detection.artifact,
@@ -168,7 +180,7 @@ export async function catalogArtifacts(
               artifactName,
               artifactId,
               runId,
-              detectedType: detection.detectedType,
+              detectedType: finalType,
               originalFormat: detection.originalFormat,
               filePath,
               artifact: detection.artifact,
@@ -181,7 +193,7 @@ export async function catalogArtifacts(
             artifactName,
             artifactId,
             runId,
-            detectedType: detection.detectedType,
+            detectedType: finalType,
             originalFormat: detection.originalFormat,
             filePath,
             artifact: detection.artifact,
@@ -216,4 +228,31 @@ function getAllFiles(dir: string): string[] {
   }
 
   return files;
+}
+
+function applyCustomArtifactType(
+  filePath: string,
+  detectedType: string,
+  customMappings?: ArtifactTypeMapping[],
+): string {
+  // If type is already known, don't override
+  if (detectedType !== "unknown" || !customMappings) {
+    return detectedType;
+  }
+
+  // Try to match filename against custom type patterns
+  const fileName = basename(filePath);
+  for (const mapping of customMappings) {
+    try {
+      const pattern = new RegExp(mapping.pattern);
+      if (pattern.test(fileName)) {
+        return mapping.type;
+      }
+    } catch {
+      // Invalid regex, skip
+      continue;
+    }
+  }
+
+  return detectedType;
 }

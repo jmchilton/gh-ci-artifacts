@@ -121,6 +121,12 @@ export interface ExpectPattern {
   reason?: string;
 }
 
+export interface ArtifactTypeMapping {
+  pattern: string; // Regex to match artifact filename
+  type: ArtifactType; // Expected artifact type when file matches
+  reason?: string; // Why this type mapping is needed
+}
+
 export interface ArtifactExtractionConfig {
   type: ArtifactType;
   toJson?: boolean; // If true, use extractArtifactToJson for normalized JSON output
@@ -129,12 +135,16 @@ export interface ArtifactExtractionConfig {
     endMarker?: string; // Regex pattern as string (will be compiled to RegExp)
     includeEndMarker?: boolean;
   };
+  required?: boolean; // If true, expect this type in logs; false = optional
+  matchJobName?: string; // Optional: only expect in jobs matching this regex
+  reason?: string; // Why this artifact type extraction is configured
 }
 
 export interface WorkflowConfig {
   workflow: string;
   skipArtifacts?: SkipPattern[];
   expectArtifacts?: ExpectPattern[];
+  customArtifactTypes?: ArtifactTypeMapping[]; // Per-workflow custom artifact type mappings
   extractArtifactTypesFromLogs?: ArtifactExtractionConfig[]; // Per-workflow artifact extraction
   skip?: boolean;
   description?: string;
@@ -148,6 +158,7 @@ export interface Config {
   pollInterval?: number; // Seconds between polls when waiting (default: 1800 = 30 min)
   maxWaitTime?: number; // Maximum seconds to wait for completion (default: 21600 = 6 hours)
   skipArtifacts?: SkipPattern[];
+  customArtifactTypes?: ArtifactTypeMapping[]; // Global custom artifact type mappings
   extractArtifactTypesFromLogs?: ArtifactExtractionConfig[]; // Default artifact extraction config
   workflows?: WorkflowConfig[];
 }

@@ -150,10 +150,28 @@ Create `.gh-ci-artifacts.json` in your project directory:
 - `skipArtifacts` (array): Global skip patterns applied to all workflows
   - `pattern` (string): Regex pattern to match artifact names
   - `reason` (string, optional): Documentation for why this is skipped
+- `customArtifactTypes` (array, optional): Map unknown artifact types to known types
+  - `pattern` (string): Regex pattern to match artifact filenames
+  - `type` (string): Artifact type to assign when pattern matches (e.g., "jest-json", "playwright-html")
+  - `reason` (string, optional): Why this type mapping is needed
+  - Useful when internal tools produce output in formats compatible with known types
+  - Patterns are only matched for artifacts detected as "unknown"
+- `extractArtifactTypesFromLogs` (array, optional): Extract artifacts from job logs
+  - `type` (string): Artifact type to extract (e.g., "jest-json", "eslint-json")
+  - `toJson` (boolean, optional): If true, normalize output to JSON format
+  - `required` (boolean, optional): If true, expect this type in logs; if false, optional
+  - `matchJobName` (string, optional): Regex to filter which jobs to search
+  - `reason` (string, optional): Documentation for why this extraction is configured
+  - `extractorConfig` (object, optional): Custom extraction patterns
+    - `startMarker` (string): Regex pattern for where output starts
+    - `endMarker` (string): Regex pattern for where output ends
+    - `includeEndMarker` (boolean): Include the end marker in extracted output
 - `workflows` (array): Per-workflow configuration
   - `workflow` (string): Workflow filename without extension (e.g., "ci" for `.github/workflows/ci.yml`)
   - `skip` (boolean, optional): Skip this entire workflow
   - `skipArtifacts` (array, optional): Skip patterns specific to this workflow
+  - `customArtifactTypes` (array, optional): Workflow-specific artifact type mappings (overrides global)
+  - `extractArtifactTypesFromLogs` (array, optional): Workflow-specific log extraction (merges with global)
   - `expectArtifacts` (array, optional): Expected artifacts for validation
     - `pattern` (string): Regex pattern that at least one artifact should match
     - `required` (boolean, optional): If true (default), error if not found; if false, just warn
@@ -167,6 +185,32 @@ Create `.gh-ci-artifacts.json` in your project directory:
 - First matching pattern determines the skip reason
 - Invalid regex patterns are caught at config load time
 
+**Custom Artifact Types:**
+
+When artifact-detective can't identify an artifact type (labeled as "unknown"), you can register custom type mappings to tell gh-ci-artifacts what type the file actually is:
+
+```json
+{
+  "customArtifactTypes": [
+    {
+      "pattern": "internal-test-report\\.json$",
+      "type": "jest-json",
+      "reason": "Internal test framework uses jest-compatible format"
+    },
+    {
+      "pattern": "custom-lint-.*\\.html$",
+      "type": "playwright-html",
+      "reason": "Custom linter output in HTML format"
+    }
+  ]
+}
+```
+
+- Patterns are regex-matched against artifact filenames
+- Mappings are applied only when artifact type is detected as "unknown"
+- Use at global level for repo-wide mappings or per-workflow for workflow-specific mappings
+- The UI will show help text for unknown artifacts suggesting this configuration
+
 **Artifact Expectations:**
 
 - Validate that expected artifacts are present after download
@@ -174,6 +218,34 @@ Create `.gh-ci-artifacts.json` in your project directory:
 - Optional expectations will log warnings if artifacts are missing
 - Validation results are included in `summary.json` for analysis
 - Useful for ensuring CI workflows produce expected outputs
+
+**Log Artifact Extraction:**
+
+Extract artifacts directly from job logs when they're not available as downloadable artifacts:
+
+```json
+{
+  "extractArtifactTypesFromLogs": [
+    {
+      "type": "jest-json",
+      "required": true,
+      "reason": "Tests should always be captured from logs"
+    },
+    {
+      "type": "eslint-json",
+      "matchJobName": "lint",
+      "required": false,
+      "reason": "Lint output from specific jobs"
+    }
+  ]
+}
+```
+
+- Configured at global level (all workflows) or per-workflow level (merges with global)
+- Supports optional regex filtering by job name (`matchJobName`)
+- Optional and required flags help track which extractions are critical
+- Uses pattern matching to find artifact content within logs
+- Customizable start/end markers for precise extraction
 
 **Workflow Matching:**
 

@@ -12,6 +12,25 @@
       "reason": "Video recordings too large"
     }
   ],
+  "customArtifactTypes": [
+    {
+      "pattern": "custom-report\\.json$",
+      "type": "jest-json",
+      "reason": "Custom internal test framework using jest-compatible format"
+    }
+  ],
+  "extractArtifactTypesFromLogs": [
+    {
+      "type": "jest-json",
+      "required": true,
+      "reason": "Tests should be extracted from logs if not available as artifacts"
+    },
+    {
+      "type": "eslint-json",
+      "required": false,
+      "reason": "Linting is optional but helpful"
+    }
+  ],
   "workflows": [
     {
       "workflow": "ci",
@@ -26,6 +45,13 @@
           "pattern": "coverage-.*",
           "required": false,
           "reason": "Coverage reports are optional but nice to have"
+        }
+      ],
+      "customArtifactTypes": [
+        {
+          "pattern": "internal-test-.*\\.html$",
+          "type": "playwright-html",
+          "reason": "Internal test framework uses playwright HTML format"
         }
       ]
     },
@@ -43,6 +69,14 @@
           "pattern": "playwright-report",
           "required": true,
           "reason": "E2E tests must produce playwright report"
+        }
+      ],
+      "extractArtifactTypesFromLogs": [
+        {
+          "type": "playwright-html",
+          "required": true,
+          "matchJobName": "e2e-tests",
+          "reason": "E2E tests should extract playwright results from logs"
         }
       ]
     },

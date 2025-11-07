@@ -14,6 +14,7 @@ import type {
   Config,
   JobLog,
   ArtifactExtractionConfig,
+  ArtifactTypeMapping,
 } from "./types.js";
 
 const program = new Command();
@@ -197,11 +198,13 @@ program
       if (!options.dryRun) {
         logger.info("\n=== Cataloging artifacts and converting HTML ===");
         const allRunIds = Array.from(result.runStates.keys());
+        const customTypes = getCustomArtifactTypes(config, result.workflowRuns);
         catalogResult = await catalogArtifacts(
           outputDir,
           allRunIds,
           result.inventory,
           logger,
+          customTypes.length > 0 ? customTypes : undefined,
         );
 
         const convertedCount = catalogResult.catalog.filter(
@@ -300,6 +303,36 @@ program
       process.exit(1);
     }
   });
+
+/**
+ * Get custom artifact type mappings, merging global and workflow-specific configs.
+ * Returns the combined mappings for all workflows being processed.
+ */
+function getCustomArtifactTypes(
+  config: Config,
+  workflowRuns: Map<
+    string,
+    { name: string; path: string; run_attempt: number; run_number: number }
+  >,
+): ArtifactTypeMapping[] {
+  const allMappings: ArtifactTypeMapping[] = [];
+
+  // Add global defaults first
+  if (config.customArtifactTypes) {
+    allMappings.push(...config.customArtifactTypes);
+  }
+
+  // Add workflow-specific mappings
+  if (config.workflows) {
+    for (const workflow of config.workflows) {
+      if (workflow.customArtifactTypes) {
+        allMappings.push(...workflow.customArtifactTypes);
+      }
+    }
+  }
+
+  return allMappings;
+}
 
 /**
  * Get artifact extraction configuration, merging global and workflow-specific configs.
