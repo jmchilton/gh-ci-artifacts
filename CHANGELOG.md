@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.10.0...v1.11.0) (2025-11-07)
+
+
+### Features
+
+* add custom artifact type mappings and improve unknown type handling ([fb3efec](https://github.com/jmchilton/gh-ci-artifacts/commit/fb3efec75ee6a645faa8a0c17ee7f139c96e2ded))
+
 # [1.10.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.9.0...v1.10.0) (2025-11-07)
 
 
