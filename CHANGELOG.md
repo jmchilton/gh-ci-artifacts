@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.6.0...v1.7.0) (2025-11-07)
+
+
+### Features
+
+* incorporate artifact-detective validation and metadata ([1160f82](https://github.com/jmchilton/gh-ci-artifacts/commit/1160f8216bc77bec0ab3159be92189c3190c7ca2))
+
 # [1.6.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.5.0...v1.6.0) (2025-11-07)
 
 
