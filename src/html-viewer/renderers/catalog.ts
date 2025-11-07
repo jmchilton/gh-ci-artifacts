@@ -40,12 +40,25 @@ export function renderCatalogJson(
   // Stats
   const convertedCount = data.filter((d) => d.converted).length;
   const skippedCount = data.filter((d) => d.skipped).length;
+  const validatedCount = data.filter((d) => d.validation !== undefined).length;
+  const invalidCount = data.filter((d) => d.validation && !d.validation.valid)
+    .length;
 
   html += '<div class="stats-grid">';
   html += renderStatsCards([
     { label: "Total", value: data.length },
     { label: "Converted", value: convertedCount },
     { label: "Skipped", value: skippedCount },
+    {
+      label: "✓ Validated",
+      value: validatedCount,
+      type: "success",
+    },
+    {
+      label: "✗ Invalid",
+      value: invalidCount,
+      type: invalidCount > 0 ? "warning" : "",
+    },
   ]);
   html += "</div>";
 
@@ -73,9 +86,46 @@ function renderCatalogTable(data: CatalogEntry[], outputDir?: string): string {
     {
       key: "detectedType",
       label: "Type",
-      render: (val) => `<span class="type-badge">${escapeHtml(val)}</span>`,
+      render: (val, row) => {
+        const validIcon =
+          row.validation === true
+            ? '✓'
+            : row.validation === false
+              ? '✗'
+              : '';
+        const ext =
+          row.artifact?.fileExtension && val
+            ? `<span class="ext">.${row.artifact.fileExtension}</span>`
+            : '';
+        const validClass =
+          row.validation === true
+            ? 'valid'
+            : row.validation === false
+              ? 'invalid'
+              : '';
+        return `<span class="type-badge ${validClass}">${escapeHtml(val)} ${validIcon} ${ext}</span>`;
+      },
     },
     { key: "originalFormat", label: "Format" },
+    {
+      key: "artifact",
+      label: "Description",
+      render: (val, row) => {
+        if (!row.artifact?.shortDescription) return "-";
+        return `<span title="${escapeHtml(row.artifact.shortDescription)}">${escapeHtml(row.artifact.shortDescription.substring(0, 50))}</span>`;
+      },
+    },
+    {
+      key: "validation",
+      label: "Valid",
+      render: (val, row) => {
+        if (!row.validation) return "-";
+        if (row.validation.valid) {
+          return '<span class="validation-badge valid">✓ Valid</span>';
+        }
+        return `<span class="validation-badge invalid" title="${escapeHtml(row.validation.error || 'Invalid')}">${row.validation.error ? '✗ ' + row.validation.error.substring(0, 30) : '✗ Invalid'}</span>`;
+      },
+    },
     {
       key: "converted",
       label: "Converted",
@@ -127,6 +177,6 @@ function renderCatalogTable(data: CatalogEntry[], outputDir?: string): string {
     id: "catalog-table",
     searchable: true,
     sortable: true,
-    filterBy: ["detectedType", "originalFormat"],
+    filterBy: ["detectedType", "originalFormat", "validation"],
   });
 }

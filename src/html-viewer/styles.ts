@@ -1026,6 +1026,53 @@ function getArtifactStyles(): string {
   background: #fff3cd;
   color: #856404;
 }
+
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.type-badge.valid {
+  background: #c8e6c9;
+  color: #2e7d32;
+}
+
+.type-badge.invalid {
+  background: #ffcdd2;
+  color: #c62828;
+}
+
+.type-badge .ext {
+  font-size: 0.85em;
+  color: #666;
+  font-weight: normal;
+}
+
+.validation-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.validation-badge.valid {
+  background: #c8e6c9;
+  color: #2e7d32;
+}
+
+.validation-badge.invalid {
+  background: #ffcdd2;
+  color: #c62828;
+}
 `;
 }
 

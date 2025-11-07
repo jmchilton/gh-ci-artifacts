@@ -1,0 +1,89 @@
+{
+  "name": "artifact-detective",
+  "version": "1.12.0",
+  "description": "Detect and parse CI artifact types for test frameworks and linters",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "artifact-detective": "./bin/artifact-detective"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "setup": "npm run build ; npm run permission ; npm link",
+    "permission": "chmod u+x bin/*",
+    "build": "tsc --listFiles 2>&1 | grep 'src/types.ts' || tsc && cp src/docs/artifact-descriptions.yml dist/docs/",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint . && tsc --noEmit",
+    "lint:fix": "eslint . --fix && prettier --write .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "docs:generate": "node scripts/generate-docs.js",
+    "docs:api": "typedoc --out docs/api/typedoc src/index.ts",
+    "docs:build": "npm run docs:generate && npm run docs:api",
+    "docs:dev": "npm run docs:generate && docsify serve docs",
+    "prepublishOnly": "npm run lint && npm test && npm run build"
+  },
+  "keywords": [
+    "ci",
+    "artifacts",
+    "testing",
+    "playwright",
+    "jest",
+    "pytest",
+    "junit",
+    "eslint",
+    "linter",
+    "parser"
+  ],
+  "author": "John Chilton",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmchilton/artifact-detective.git"
+  },
+  "homepage": "https://github.com/jmchilton/artifact-detective#readme",
+  "bugs": {
+    "url": "https://github.com/jmchilton/artifact-detective/issues"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.6",
+    "@types/eslint__js": "^8.42.3",
+    "@types/node": "^24.9.2",
+    "@vitest/coverage-v8": "^4.0.6",
+    "docsify-cli": "^4.4.4",
+    "eslint": "^9.39.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
+    "semantic-release": "^24.2.9",
+    "typedoc": "^0.26.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.2",
+    "vitest": "^4.0.6",
+    "yaml": "^2.8.1"
+  },
+  "dependencies": {
+    "cheerio": "^1.1.2",
+    "commander": "^14.0.2"
+  }
+}
