@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.8.0...v1.9.0) (2025-11-07)
+
+
+### Features
+
+* add artifact type reference tooltip on catalog table hover ([cb4a987](https://github.com/jmchilton/gh-ci-artifacts/commit/cb4a98795dc0968692c8146c0472788dbfc4a623))
+
 # [1.8.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.7.0...v1.8.0) (2025-11-07)
 
 
