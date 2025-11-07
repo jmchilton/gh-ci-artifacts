@@ -39,7 +39,38 @@ header {
 
 header h1 {
   font-size: 24px;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.github-links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+
+.github-links a {
+  display: inline-block;
+  padding: 8px 12px;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  text-decoration: none;
+  color: #0366d6;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.github-links a:hover {
+  background: #e8f0ff;
+  border-color: #0366d6;
+  color: #0256c7;
+}
+
+.github-links a::after {
+  content: ' ↗';
+  font-size: 11px;
 }
 
 .metadata {

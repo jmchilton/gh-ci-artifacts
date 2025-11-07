@@ -26,6 +26,7 @@ import {
 
 export interface DownloadResult {
   headSha: string;
+  prBranch?: string; // Source branch for PR mode only
   inventory: ArtifactInventoryItem[];
   runStates: Map<string, RunConclusion>;
   runsWithoutArtifacts: string[];
@@ -64,6 +65,7 @@ export async function downloadArtifacts(
 
     let headSha: string;
     let branch: string;
+    let prBranch: string | undefined; // PR source branch
 
     if (prNumber !== undefined) {
       // PR mode
@@ -71,6 +73,7 @@ export async function downloadArtifacts(
       const prInfo = getPRInfo(repo, prNumber);
       headSha = prInfo.headRefOid;
       branch = prInfo.headRefName;
+      prBranch = branch; // Store PR source branch
       logger.info(`Head SHA: ${headSha}`);
       logger.info(`Branch: ${branch}`);
     } else if (branchName) {
@@ -320,6 +323,7 @@ export async function downloadArtifacts(
       }
       return {
         headSha,
+        ...(prBranch && { prBranch }),
         inventory,
         runStates,
         runsWithoutArtifacts,
@@ -341,6 +345,7 @@ export async function downloadArtifacts(
       );
       return {
         headSha,
+        ...(prBranch && { prBranch }),
         inventory,
         runStates,
         runsWithoutArtifacts,

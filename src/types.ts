@@ -104,10 +104,9 @@ export interface RunSummary {
   validationResult?: ValidationResult;
 }
 
-export interface Summary {
+// Shared fields for both PR and branch summaries
+interface BaseSummary {
   repo: string;
-  pr?: number; // Present in PR mode only
-  branch?: string; // Present in branch mode only
   headSha: string;
   analyzedAt: string;
   status: SummaryStatus;
@@ -126,6 +125,19 @@ export interface Summary {
     linterOutputsExtracted: number;
   };
 }
+
+export interface PRSummary extends BaseSummary {
+  mode: "pr";
+  pr: number;
+  prBranch: string; // Source branch of the PR
+}
+
+export interface BranchSummary extends BaseSummary {
+  mode: "branch";
+  branch: string;
+}
+
+export type Summary = PRSummary | BranchSummary;
 
 export interface SkipPattern {
   pattern: string;

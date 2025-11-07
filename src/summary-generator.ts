@@ -15,6 +15,7 @@ import type {
 export interface SummaryInput {
   repo: string;
   pr?: number; // Present in PR mode
+  prBranch?: string; // Source branch for PR mode
   branch?: string; // Present in branch mode
   headSha: string;
   inventory: ArtifactInventoryItem[];
@@ -35,6 +36,7 @@ export function generateSummary(
   const {
     repo,
     pr,
+    prBranch,
     branch,
     headSha,
     inventory,
@@ -130,22 +132,42 @@ export function generateSummary(
     ),
   };
 
-  const summary: Summary = {
-    repo,
-    ...(pr !== undefined && { pr }),
-    ...(branch !== undefined && { branch }),
-    headSha,
-    analyzedAt: new Date().toISOString(),
-    status,
-    inProgressRuns: inProgressCount,
-    runs,
-    catalogFile: "./catalog.json",
-    validationResults:
-      validationResults && validationResults.length > 0
-        ? validationResults
-        : undefined,
-    stats,
-  };
+  // Build summary with discriminated union based on mode
+  const summary: Summary =
+    pr !== undefined
+      ? {
+          mode: "pr",
+          pr,
+          prBranch: prBranch || "", // Should always be present in PR mode
+          repo,
+          headSha,
+          analyzedAt: new Date().toISOString(),
+          status,
+          inProgressRuns: inProgressCount,
+          runs,
+          catalogFile: "./catalog.json",
+          validationResults:
+            validationResults && validationResults.length > 0
+              ? validationResults
+              : undefined,
+          stats,
+        }
+      : {
+          mode: "branch",
+          branch: branch || "", // Should always be present in branch mode
+          repo,
+          headSha,
+          analyzedAt: new Date().toISOString(),
+          status,
+          inProgressRuns: inProgressCount,
+          runs,
+          catalogFile: "./catalog.json",
+          validationResults:
+            validationResults && validationResults.length > 0
+              ? validationResults
+              : undefined,
+          stats,
+        };
 
   // Save summary
   const summaryPath = join(outputDir, "summary.json");

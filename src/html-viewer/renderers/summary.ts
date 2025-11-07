@@ -13,9 +13,13 @@ export function renderSummaryJson(data: Summary): string {
   let html = '<div class="rich-view summary-view">';
 
   // Header
+  const refDisplay =
+    data.mode === "pr"
+      ? `PR #${data.pr}`
+      : `Branch: ${data.branch}`;
   html += `
     <div class="rich-header">
-      <h2>Summary: ${escapeHtml(data.repo)} PR #${data.pr}</h2>
+      <h2>Summary: ${escapeHtml(data.repo)} ${refDisplay}</h2>
       <div class="metadata-row">
         ${renderStatusBadge(data.status, data.status.toUpperCase())}
         <span class="metadata-item">SHA: <code>${data.headSha.substring(0, 8)}</code></span>

@@ -250,6 +250,7 @@ program
           {
             repo: targetRepo,
             pr: prNumber,
+            prBranch: result.prBranch,
             branch: branchName,
             headSha: result.headSha,
             inventory: result.inventory,

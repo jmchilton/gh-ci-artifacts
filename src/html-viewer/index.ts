@@ -244,6 +244,42 @@ function shouldInlinePreview(size: number, path: string): boolean {
   return textExts.includes(ext);
 }
 
+function getGitHubLinks(summary: Summary): string {
+  const baseUrl = `https://github.com/${summary.repo}`;
+
+  if (summary.mode === "pr") {
+    return `
+      <nav class="github-links">
+        <a href="${baseUrl}/pull/${summary.pr}" target="_blank">Conversation</a>
+        <a href="${baseUrl}/pull/${summary.pr}/commits" target="_blank">Commits</a>
+        <a href="${baseUrl}/pull/${summary.pr}/checks" target="_blank">Checks</a>
+        <a href="${baseUrl}/pull/${summary.pr}/files" target="_blank">Review</a>
+      </nav>`;
+  } else {
+    return `
+      <nav class="github-links">
+        <a href="${baseUrl}/tree/${summary.branch}" target="_blank">Branch</a>
+        <a href="${baseUrl}/commit/${summary.headSha}" target="_blank">Commit</a>
+      </nav>`;
+  }
+}
+
+function getPageTitle(summary: Summary): string {
+  if (summary.mode === "pr") {
+    return `PR #${summary.pr} - ${summary.repo}`;
+  } else {
+    return `Branch: ${summary.branch} - ${summary.repo}`;
+  }
+}
+
+function getHeaderTitle(summary: Summary): string {
+  if (summary.mode === "pr") {
+    return `PR #${summary.pr} (${summary.prBranch}) - ${summary.repo}`;
+  } else {
+    return `Branch: ${summary.branch} - ${summary.repo}`;
+  }
+}
+
 function generateHtml(
   summary: Summary,
   tree: FileNode,
@@ -260,17 +296,22 @@ function generateHtml(
   const catalogRichHtml = renderCatalogJson(catalog, outputDir);
   const artifactsRichHtml = renderArtifactsJson(artifactsData, outputDir);
 
+  const pageTitle = getPageTitle(summary);
+  const headerTitle = getHeaderTitle(summary);
+  const githubLinks = getGitHubLinks(summary);
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PR #${summary.pr} - ${summary.repo}</title>
+  <title>${pageTitle}</title>
   <style>${getStyles()}</style>
 </head>
 <body>
   <header>
-    <h1>PR #${summary.pr} - ${summary.repo}</h1>
+    <h1>${headerTitle}</h1>
+    ${githubLinks}
     <div class="metadata">
       <span class="status-badge status-${summary.status}">Status: ${summary.status}</span>
       <span>SHA: ${summary.headSha.substring(0, 8)}</span>
