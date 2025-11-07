@@ -1,3 +1,11 @@
+# [1.6.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.5.0...v1.6.0) (2025-11-07)
+
+
+### Features
+
+* upgrade to artifact-detective v1.11.0 with unified extract() API ([6252cf0](https://github.com/jmchilton/gh-ci-artifacts/commit/6252cf0fd7de50a5e550114f390c467fea77b2b2))
+* upgrade to artifact-detective v1.12.1 with fileExtension support ([dc97fbe](https://github.com/jmchilton/gh-ci-artifacts/commit/dc97fbe703fde3ef298cc7a57d630de36f491a7b))
+
 # [1.5.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.4.1...v1.5.0) (2025-11-04)
 
 
