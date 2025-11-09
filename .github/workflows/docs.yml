@@ -1,0 +1,41 @@
+name: Generate Docs
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'docs/**'
+      - 'package.json'
+      - 'typedoc.json'
+      - '.github/workflows/docs.yml'
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build TypeScript documentation
+        run: npm run docs:build
+
+      - name: Commit generated docs if changed
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          if [[ -n $(git status -s docs/) ]]; then
+            git add docs/
+            git commit -m 'docs: regenerate TypeScript API documentation'
+            git push
+          fi

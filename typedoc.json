@@ -1,0 +1,15 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "docs/api/typedoc",
+  "theme": "default",
+  "mode": "library",
+  "includeVersion": true,
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "excludeExternals": false,
+  "readme": "none",
+  "hideGenerator": false,
+  "name": "gh-ci-artifacts API",
+  "html5": true,
+  "gaID": "UA-12345-67"
+}

@@ -24,6 +24,9 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "lint": "tsc --noEmit",
+    "docs:api": "typedoc --out docs/api/typedoc src/index.ts",
+    "docs:dev": "docsify serve docs",
+    "docs:build": "npm run docs:api",
     "prepublishOnly": "npm run build && npm test",
     "release": "semantic-release"
   },
@@ -56,9 +59,11 @@
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@vitest/coverage-v8": "^4.0.6",
+    "docsify-cli": "^4.4.4",
     "prettier": "3.6.2",
     "semantic-release": "^24.1.2",
     "tsx": "^4.20.6",
+    "typedoc": "^0.28.14",
     "vitest": "^4.0.6"
   },
   "dependencies": {

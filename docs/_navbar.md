@@ -1,0 +1,3 @@
+- [GitHub](https://github.com/jmchilton/gh-ci-artifacts)
+- [npm](https://www.npmjs.com/package/gh-ci-artifacts)
+- [artifact-detective](https://github.com/jmchilton/artifact-detective)
