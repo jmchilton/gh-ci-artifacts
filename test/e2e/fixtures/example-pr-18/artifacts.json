@@ -1,0 +1,42 @@
+[
+  {
+    "runId": "19210120509",
+    "artifactName": "blob-report-2",
+    "artifactId": 4512238783,
+    "sizeBytes": 11920,
+    "status": "failed",
+    "errorMessage": "Failed to download artifact \"blob-report-2\": Command failed: gh run download 19210120509 --name \"blob-report-2\" --dir \"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512238783\"\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\n"
+  },
+  {
+    "runId": "19210120509",
+    "artifactName": "blob-report-3",
+    "artifactId": 4512238999,
+    "sizeBytes": 11126,
+    "status": "failed",
+    "errorMessage": "Failed to download artifact \"blob-report-3\": Command failed: gh run download 19210120509 --name \"blob-report-3\" --dir \"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512238999\"\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\n"
+  },
+  {
+    "runId": "19210120509",
+    "artifactName": "blob-report-4",
+    "artifactId": 4512239674,
+    "sizeBytes": 13334,
+    "status": "failed",
+    "errorMessage": "Failed to download artifact \"blob-report-4\": Command failed: gh run download 19210120509 --name \"blob-report-4\" --dir \"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512239674\"\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\n"
+  },
+  {
+    "runId": "19210120509",
+    "artifactName": "blob-report-1",
+    "artifactId": 4512239754,
+    "sizeBytes": 127111,
+    "status": "failed",
+    "errorMessage": "Failed to download artifact \"blob-report-1\": Command failed: gh run download 19210120509 --name \"blob-report-1\" --dir \"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512239754\"\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\n"
+  },
+  {
+    "runId": "19210120509",
+    "artifactName": "html-report--attempt-1",
+    "artifactId": 4512240930,
+    "sizeBytes": 737953,
+    "status": "failed",
+    "errorMessage": "Failed to download artifact \"html-report--attempt-1\": Command failed: gh run download 19210120509 --name \"html-report--attempt-1\" --dir \"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512240930\"\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\n"
+  }
+]

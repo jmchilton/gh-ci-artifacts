@@ -1,0 +1,2163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PR #18 - jmchilton/gh-ci-artifacts-example-full-stack-fastapi</title>
+  <style>
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background: #f5f5f5;
+}
+
+header {
+  background: white;
+  padding: 20px;
+  border-bottom: 1px solid #ddd;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+header h1 {
+  font-size: 24px;
+  margin-bottom: 15px;
+}
+
+.github-links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+
+.github-links a {
+  display: inline-block;
+  padding: 8px 12px;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  text-decoration: none;
+  color: #0366d6;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.github-links a:hover {
+  background: #e8f0ff;
+  border-color: #0366d6;
+  color: #0256c7;
+}
+
+.github-links a::after {
+  content: ' ↗';
+  font-size: 11px;
+}
+
+.metadata {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  color: #666;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.status-complete {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-partial {
+  background: #fed7aa;
+  color: #92400e;
+}
+
+.status-incomplete {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.stats {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  background: white;
+  margin: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stat {
+  padding: 10px 15px;
+  border-radius: 6px;
+  background: #f9fafb;
+  font-weight: 500;
+}
+
+.stat-success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.stat-failure {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+code {
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 13px;
+}
+
+
+.tab-nav {
+  display: flex;
+  gap: 0;
+  background: white;
+  margin: 20px 20px 0;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 15px 20px;
+  background: #f9fafb;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  background: #f3f4f6;
+  color: #333;
+}
+
+.tab-btn.active {
+  background: white;
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+.tab-content {
+  display: none;
+  background: white;
+  margin: 0 20px 20px;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 20px;
+  max-height: calc(100vh - 400px);
+  overflow-y: auto;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+
+.tree {
+  /* No extra styling needed - now inside tab-content */
+}
+
+.tree-node {
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.tree-node:hover {
+  background: #f9fafb;
+}
+
+.tree-node .toggle {
+  cursor: pointer;
+  user-select: none;
+  width: 16px;
+  font-size: 12px;
+}
+
+.tree-node.file .toggle {
+  display: none;
+}
+
+.tree-node.file.clickable {
+  cursor: pointer;
+}
+
+.tree-node.file.clickable:hover {
+  background: #e5e7eb;
+}
+
+.tree-node .icon {
+  font-size: 16px;
+}
+
+.tree-node .name {
+  flex: 1;
+  font-size: 14px;
+  min-width: 150px;
+}
+
+.file-actions,
+.artifact-actions,
+.catalog-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.action-link {
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: #3b82f6;
+  text-decoration: none;
+  border: 1px solid #3b82f6;
+  transition: all 0.2s;
+}
+
+.action-link:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.copy-path-btn {
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  border: 1px solid #6b7280;
+  background: white;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copy-path-btn:hover {
+  background: #6b7280;
+  color: white;
+}
+
+.copy-path-btn.copied {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+.tree-node .children {
+  width: 100%;
+}
+
+.tree-node .children.hidden {
+  display: none;
+}
+
+.badge {
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-failure {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.badge-cancelled {
+  background: #fed7aa;
+  color: #92400e;
+}
+
+.badge-in_progress {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-skipped {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.badge-expired {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.type-badge {
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.size {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+
+.preview-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60vh;
+  background: white;
+  border-top: 2px solid #ddd;
+  box-shadow: 0 -4px 8px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+}
+
+.preview-panel.hidden {
+  display: none;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #ddd;
+  background: #f9fafb;
+}
+
+.preview-title {
+  font-weight: 500;
+  font-size: 14px;
+  flex: 1;
+}
+
+.preview-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.view-toggle-btn {
+  padding: 6px 12px;
+  background: white;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.view-toggle-btn:not(:last-child) {
+  border-right: 1px solid #d1d5db;
+}
+
+.view-toggle-btn:hover {
+  background: #f9fafb;
+}
+
+.view-toggle-btn.active {
+  background: #3b82f6;
+  color: white;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  margin-left: 10px;
+}
+
+.close-btn:hover {
+  background: #e5e7eb;
+}
+
+.preview-content {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+}
+
+.preview-content.raw-view {
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 0;
+}
+
+.preview-content pre {
+  margin: 0;
+  padding: 20px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+
+.rich-view {
+  /* No padding needed - parent tab-content has padding */
+}
+
+.rich-header {
+  margin-bottom: 20px;
+}
+
+.rich-header h2 {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.metadata-row {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 14px;
+}
+
+.metadata-item {
+  color: #666;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.type-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 15px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.type-card:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.type-name {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 5px;
+}
+
+.type-count {
+  font-size: 24px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.status-card {
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 15px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.status-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.status-card-success {
+  border-color: #10b981;
+}
+
+.status-card-failed {
+  border-color: #ef4444;
+}
+
+.status-card-expired {
+  border-color: #f59e0b;
+}
+
+.status-card-skipped {
+  border-color: #6b7280;
+}
+
+.status-icon {
+  font-size: 24px;
+  margin-bottom: 5px;
+}
+
+.status-label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 5px;
+}
+
+.status-count {
+  font-size: 24px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.section-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 30px 0;
+}
+
+.rich-view h3 {
+  font-size: 18px;
+  margin: 20px 0 15px 0;
+  color: #374151;
+}
+
+.rich-view h4 {
+  font-size: 16px;
+  margin: 15px 0 10px 0;
+  color: #374151;
+}
+
+.expandable-section {
+  margin: 20px 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.section-header {
+  padding: 12px 15px;
+  background: #f9fafb;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.section-header:hover {
+  background: #f3f4f6;
+}
+
+.section-header .toggle {
+  font-size: 12px;
+}
+
+.section-title {
+  font-weight: 500;
+  color: #374151;
+}
+
+.section-content {
+  padding: 15px;
+}
+
+.section-content.hidden {
+  display: none;
+}
+
+.validation-summary {
+  margin-top: 10px;
+}
+
+.validation-error {
+  padding: 10px;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.validation-warning {
+  padding: 10px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.validation-details {
+  margin-top: 15px;
+}
+
+.validation-workflow {
+  margin-bottom: 20px;
+}
+
+.validation-list {
+  list-style: none;
+  margin-top: 10px;
+}
+
+.validation-list li {
+  padding: 8px 12px;
+  margin: 5px 0;
+  border-radius: 4px;
+}
+
+.validation-item-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border-left: 3px solid #dc2626;
+}
+
+.validation-item-warning {
+  background: #fef3c7;
+  color: #92400e;
+  border-left: 3px solid #f59e0b;
+}
+
+.validation-badge-error {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.validation-badge-warning {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.text-muted {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.error-text {
+  color: #dc2626;
+  font-size: 13px;
+}
+
+.run-details {
+  padding: 15px;
+  background: #f9fafb;
+  border-radius: 6px;
+  margin-top: 10px;
+}
+
+.detail-table {
+  width: 100%;
+  margin: 10px 0;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.detail-table th {
+  text-align: left;
+  padding: 8px;
+  background: #f3f4f6;
+  border-bottom: 2px solid #e5e7eb;
+  font-weight: 600;
+  color: #374151;
+}
+
+.detail-table td {
+  padding: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.detail-table tbody tr:hover {
+  background: white;
+}
+
+.file-path {
+  font-size: 11px;
+  word-break: break-all;
+}
+
+
+.table-container {
+  margin: 20px 0;
+}
+
+.table-controls {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.table-search {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 14px;
+  min-width: 250px;
+}
+
+.table-search:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.table-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.table-filter {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+}
+
+.table-filter:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.data-table thead {
+  background: #f9fafb;
+}
+
+.data-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e5e7eb;
+  font-size: 13px;
+}
+
+.data-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.data-table th.sortable:hover {
+  background: #f3f4f6;
+}
+
+.data-table th.sorted-asc::after {
+  content: " ▲";
+  font-size: 10px;
+  color: #3b82f6;
+}
+
+.data-table th.sorted-desc::after {
+  content: " ▼";
+  font-size: 10px;
+  color: #3b82f6;
+}
+
+.data-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+.data-table tbody tr {
+  transition: background 0.2s;
+}
+
+.data-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.data-table tbody tr.filtered-out {
+  display: none;
+}
+
+.expanded-row {
+  background: #f9fafb !important;
+}
+
+.expanded-row td {
+  padding: 0 !important;
+}
+
+.row-toggle {
+  cursor: pointer;
+  user-select: none;
+  color: #3b82f6;
+  font-size: 12px;
+}
+
+
+.validation-icon {
+  margin-left: 4px;
+  font-size: 0.9em;
+  display: inline-block;
+}
+
+.validation-icon.valid {
+  color: #28a745;
+}
+
+.validation-icon.invalid {
+  color: #dc3545;
+}
+
+.artifact-details {
+  margin-top: 8px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.artifact-details .detail-row {
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.artifact-details .parsing-guide {
+  margin-top: 12px;
+}
+
+.artifact-details .parsing-guide summary {
+  cursor: pointer;
+  font-weight: 500;
+  color: #007bff;
+  margin-bottom: 8px;
+}
+
+.artifact-details .parsing-guide pre {
+  background: white;
+  padding: 8px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.85em;
+  border: 1px solid #dee2e6;
+}
+
+.artifact-details a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.artifact-details a:hover {
+  text-decoration: underline;
+}
+
+#artifact-reference {
+  margin-top: 40px;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+#artifact-reference h2 {
+  margin-bottom: 20px;
+  color: #1f2937;
+  font-size: 20px;
+}
+
+.artifact-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.artifact-type-card {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 16px;
+  background: white;
+  transition: box-shadow 0.2s;
+}
+
+.artifact-type-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.artifact-type-card h3 {
+  margin: 0 0 8px 0;
+  color: #495057;
+  font-size: 1.1em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.artifact-type-card h3 .ext {
+  color: #6c757d;
+  font-size: 0.9em;
+  font-weight: normal;
+}
+
+.artifact-type-card .description {
+  color: #6c757d;
+  margin: 8px 0 12px 0;
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+
+.artifact-type-card .meta-row {
+  margin: 8px 0;
+  font-size: 0.9em;
+  padding: 6px 0;
+}
+
+.artifact-type-card .meta-row strong {
+  color: #495057;
+  margin-right: 8px;
+}
+
+.artifact-type-card .meta-row a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.artifact-type-card .meta-row a:hover {
+  text-decoration: underline;
+}
+
+.artifact-type-card .parsing-guide {
+  margin-top: 12px;
+  border-top: 1px solid #dee2e6;
+  padding-top: 12px;
+}
+
+.artifact-type-card .parsing-guide summary {
+  cursor: pointer;
+  color: #007bff;
+  font-weight: 500;
+  font-size: 0.95em;
+  padding: 6px 0;
+}
+
+.artifact-type-card .parsing-guide summary:hover {
+  text-decoration: underline;
+}
+
+.artifact-type-card .parsing-guide pre {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.8em;
+  margin-top: 8px;
+  border: 1px solid #dee2e6;
+  line-height: 1.4;
+}
+
+.stat-info {
+  background: #cfe2ff;
+  color: #084298;
+}
+
+.stat-warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.type-badge.valid {
+  background: #c8e6c9;
+  color: #2e7d32;
+}
+
+.type-badge.invalid {
+  background: #ffcdd2;
+  color: #c62828;
+}
+
+.type-badge .ext {
+  font-size: 0.85em;
+  color: #666;
+  font-weight: normal;
+}
+
+.validation-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.validation-badge.valid {
+  background: #c8e6c9;
+  color: #2e7d32;
+}
+
+.validation-badge.invalid {
+  background: #ffcdd2;
+  color: #c62828;
+}
+
+.artifact-card-tooltip {
+  background: white;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  font-size: 0.95em;
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.artifact-card-tooltip h4 {
+  margin: 0 0 8px 0;
+  color: #1f2937;
+  font-size: 1.1em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.artifact-card-tooltip .ext {
+  font-size: 0.85em;
+  color: #6c757d;
+  font-weight: normal;
+}
+
+.artifact-card-tooltip .description {
+  color: #6c757d;
+  margin: 8px 0 12px 0;
+  line-height: 1.5;
+}
+
+.artifact-card-tooltip .meta {
+  margin: 8px 0;
+  font-size: 0.9em;
+  padding: 6px 0;
+}
+
+.artifact-card-tooltip .meta strong {
+  color: #495057;
+  margin-right: 6px;
+}
+
+.artifact-card-tooltip .meta a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.artifact-card-tooltip .meta a:hover {
+  text-decoration: underline;
+}
+
+.artifact-card-tooltip .parsing-guide {
+  margin-top: 12px;
+  border-top: 1px solid #dee2e6;
+  padding-top: 12px;
+}
+
+.artifact-card-tooltip .parsing-guide summary {
+  cursor: pointer;
+  color: #007bff;
+  font-weight: 500;
+  font-size: 0.95em;
+}
+
+.artifact-card-tooltip .parsing-guide summary:hover {
+  text-decoration: underline;
+}
+
+.artifact-card-tooltip .parsing-guide pre {
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.8em;
+  margin-top: 8px;
+  border: 1px solid #dee2e6;
+  line-height: 1.4;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.artifact-card-popup {
+  width: 100%;
+}
+
+.validation-tooltip,
+.conversion-tooltip,
+.header-tooltip {
+  width: 100%;
+}
+
+.validation-tooltip p,
+.conversion-tooltip p,
+.header-tooltip p {
+  margin: 8px 0;
+  line-height: 1.5;
+  color: #495057;
+}
+
+.validation-tooltip p:first-child,
+.conversion-tooltip p:first-child,
+.header-tooltip p:first-child {
+  margin-top: 0;
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 1em;
+}
+
+.validation-tooltip .tooltip-desc,
+.conversion-tooltip .tooltip-desc,
+.header-tooltip p {
+  color: #6c757d;
+  font-size: 0.95em;
+  margin-bottom: 4px;
+}
+
+.validation-tooltip .tooltip-error {
+  color: #c62828;
+  background: #ffcdd2;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin: 8px 0;
+}
+
+.validation-tooltip .tooltip-error strong {
+  color: #991b1b;
+}
+
+.conversion-tooltip .tooltip-info {
+  margin: 6px 0;
+  padding: 4px 8px;
+  background: #f0f7ff;
+  border-left: 3px solid #007bff;
+  font-size: 0.95em;
+}
+
+.conversion-tooltip .tooltip-info strong {
+  color: #003d82;
+}
+
+.unknown-type-help p {
+  margin: 8px 0;
+}
+
+.unknown-type-help p:first-child {
+  font-weight: 600;
+  color: #d97706;
+  font-size: 1em;
+  margin-bottom: 4px;
+}
+
+.unknown-type-help code {
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: monospace;
+  color: #dc2626;
+}
+
+.unknown-type-help .config-example {
+  background: #1f2937;
+  color: #f3f4f6;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.85em;
+  line-height: 1.4;
+  margin: 8px 0;
+  border: 1px solid #374151;
+}
+
+
+/* Simple JSON syntax highlighting */
+.json-key {
+  color: #0066cc;
+}
+
+.json-string {
+  color: #067d17;
+}
+
+.json-number {
+  color: #ff6600;
+}
+
+.json-boolean {
+  color: #cc0066;
+}
+
+.json-null {
+  color: #999999;
+}
+
+.json-punctuation {
+  color: #666666;
+}
+
+</style>
+</head>
+<body>
+  <header>
+    <h1>PR #18 (feat/showcase-with-artifacts) - jmchilton/gh-ci-artifacts-example-full-stack-fastapi</h1>
+    
+      <nav class="github-links">
+        <a href="https://github.com/jmchilton/gh-ci-artifacts-example-full-stack-fastapi/pull/18" target="_blank">Conversation</a>
+        <a href="https://github.com/jmchilton/gh-ci-artifacts-example-full-stack-fastapi/pull/18/commits" target="_blank">Commits</a>
+        <a href="https://github.com/jmchilton/gh-ci-artifacts-example-full-stack-fastapi/pull/18/checks" target="_blank">Checks</a>
+        <a href="https://github.com/jmchilton/gh-ci-artifacts-example-full-stack-fastapi/pull/18/files" target="_blank">Review</a>
+      </nav>
+    <div class="metadata">
+      <span class="status-badge status-partial">Status: partial</span>
+      <span>SHA: f995e02a</span>
+      <span>4 runs</span>
+      <span>0 artifacts</span>
+    </div>
+  </header>
+
+  <section class="stats">
+    <div class="stat stat-success">✓ 1 Passed</div>
+    <div class="stat stat-failure">✗ 3 Failed</div>
+    <div class="stat">📦 0 Artifacts</div>
+    <div class="stat">📄 2 Logs</div>
+  </section>
+
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="catalog">Catalog</button>
+    <button class="tab-btn" data-tab="summary">Summary</button>
+    <button class="tab-btn" data-tab="files">Files</button>
+  </nav>
+
+  <section class="tab-content active" data-tab-content="catalog">
+    <div class="rich-view catalog-view">
+    <div class="rich-header">
+      <h2>Artifact Catalog</h2>
+      <div class="metadata-row">
+        <span class="metadata-item">Total Artifacts: 0</span>
+      </div>
+    </div>
+  <h3>Artifact Types</h3><div class="type-grid"></div><div class="stats-grid"><div class="stat ">Total: 0</div>
+<div class="stat ">Converted: 0</div>
+<div class="stat ">Skipped: 0</div>
+<div class="stat stat-success">✓ Validated: 0</div>
+<div class="stat ">✗ Invalid: 0</div></div><div class="section-divider"></div><h3>All Artifacts</h3><div class="table-container"><div class="table-controls">
+        <input 
+          type="text" 
+          class="table-search" 
+          data-table="catalog-table"
+          placeholder="Search..."
+        />
+      <div class="table-filters"></div></div><table class="data-table" id="catalog-table"><thead><tr><th class="column-header-trigger sortable" data-key="artifactName" data-header-tooltip="Name of the downloaded artifact file">Artifact Name</th><th class="column-header-trigger sortable" data-key="runId" data-header-tooltip="GitHub Actions workflow run ID">Run ID</th><th class="column-header-trigger sortable" data-key="detectedType" data-header-tooltip="Detected artifact type (test framework, linter, etc.)">Type</th><th class="column-header-trigger sortable" data-key="originalFormat" data-header-tooltip="Original file format before conversion">Format</th><th class="column-header-trigger sortable" data-key="artifact" data-header-tooltip="Short description of the artifact&#039;s purpose and content">Description</th><th class="column-header-trigger sortable" data-key="validation" data-header-tooltip="Validation status - whether artifact meets requirements for processing">Valid</th><th class="column-header-trigger sortable" data-key="converted" data-header-tooltip="Whether artifact was converted from original format to normalized format">Converted</th><th class="column-header-trigger sortable" data-key="skipped" data-header-tooltip="Whether artifact processing was skipped">Skipped</th><th class="column-header-trigger sortable" data-key="filePath" data-header-tooltip="File path to the artifact in the output directory">Path</th><th class="column-header-trigger " data-key="actions" data-header-tooltip="Open or copy artifact file path">Actions</th></tr></thead><tbody></tbody></table></div></div>
+  </section>
+
+  <section class="tab-content" data-tab-content="summary">
+    <div class="rich-view summary-view">
+    <div class="rich-header">
+      <h2>Summary: jmchilton/gh-ci-artifacts-example-full-stack-fastapi PR #18</h2>
+      <div class="metadata-row">
+        <span class="badge badge-partial">PARTIAL</span>
+        <span class="metadata-item">SHA: <code>f995e02a</code></span>
+        <span class="metadata-item">Analyzed: 11/9/2025, 9:56:44 AM</span>
+      </div>
+    </div>
+  <div class="stats-grid"><div class="stat ">Total Runs: 4</div>
+<div class="stat stat-success">✓ Downloaded: 0</div>
+<div class="stat stat-failure">✗ Failed: 5</div>
+<div class="stat ">📄 Logs: 2</div>
+<div class="stat ">🔄 Converted: 0</div>
+<div class="stat stat-success">✓ Validated: 0</div>
+<div class="stat ">✗ Invalid: 0</div>
+<div class="stat stat-info">🔍 Linters: 0</div></div><div class="section-divider"></div><h3>Workflow Runs</h3><div class="table-container"><table class="data-table" id="runs-table"><thead><tr><th class="" data-key="expand"></th><th class="sortable" data-key="workflowName">Workflow</th><th class="sortable" data-key="runId">Run ID</th><th class="sortable" data-key="conclusion">Status</th><th class="sortable" data-key="artifactCount">Artifacts</th><th class="sortable" data-key="logCount">Logs</th><th class="sortable" data-key="hasValidation">Validation</th></tr></thead><tbody><tr data-row='{&quot;workflowName&quot;:&quot;Lint Backend&quot;,&quot;runId&quot;:&quot;19210120508&quot;,&quot;conclusion&quot;:&quot;failure&quot;,&quot;artifactCount&quot;:0,&quot;logCount&quot;:1,&quot;hasValidation&quot;:&quot;no&quot;,&quot;artifacts&quot;:[],&quot;logs&quot;:[{&quot;jobName&quot;:&quot;lint-backend&quot;,&quot;jobId&quot;:&quot;54911089998&quot;,&quot;extractionStatus&quot;:&quot;success&quot;,&quot;logFile&quot;:&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120508/lint-backend.log&quot;}],&quot;repo&quot;:&quot;jmchilton/gh-ci-artifacts-example-full-stack-fastapi&quot;}'><td><span class="row-toggle">▶</span></td><td>Lint Backend</td><td><a href="https://github.com/jmchilton/gh-ci-artifacts-example-full-stack-fastapi/actions/runs/19210120508" target="_blank" rel="noopener noreferrer">19210120508</a></td><td><span class="badge badge-failure">failure</span></td><td></td><td>1</td><td></td></tr><tr data-row='{&quot;workflowName&quot;:&quot;Test Backend&quot;,&quot;runId&quot;:&quot;19210120498&quot;,&quot;conclusion&quot;:&quot;failure&quot;,&quot;artifactCount&quot;:0,&quot;logCount&quot;:1,&quot;hasValidation&quot;:&quot;no&quot;,&quot;artifacts&quot;:[],&quot;logs&quot;:[{&quot;jobName&quot;:&quot;test-backend&quot;,&quot;jobId&quot;:&quot;54911089975&quot;,&quot;extractionStatus&quot;:&quot;success&quot;,&quot;logFile&quot;:&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120498/test-backend.log&quot;}],&quot;repo&quot;:&quot;jmchilton/gh-ci-artifacts-example-full-stack-fastapi&quot;}'><td><span class="row-toggle">▶</span></td><td>Test Backend</td><td><a href="https://github.com/jmchilton/gh-ci-artifacts-example-full-stack-fastapi/actions/runs/19210120498" target="_blank" rel="noopener noreferrer">19210120498</a></td><td><span class="badge badge-failure">failure</span></td><td></td><td>1</td><td></td></tr><tr data-row='{&quot;workflowName&quot;:&quot;Test Docker Compose&quot;,&quot;runId&quot;:&quot;19210120503&quot;,&quot;conclusion&quot;:&quot;success&quot;,&quot;artifactCount&quot;:0,&quot;logCount&quot;:0,&quot;hasValidation&quot;:&quot;no&quot;,&quot;artifacts&quot;:[],&quot;logs&quot;:[],&quot;repo&quot;:&quot;jmchilton/gh-ci-artifacts-example-full-stack-fastapi&quot;}'><td><span class="row-toggle">▶</span></td><td>Test Docker Compose</td><td><a href="https://github.com/jmchilton/gh-ci-artifacts-example-full-stack-fastapi/actions/runs/19210120503" target="_blank" rel="noopener noreferrer">19210120503</a></td><td><span class="badge badge-success">success</span></td><td></td><td></td><td></td></tr><tr data-row='{&quot;workflowName&quot;:&quot;Playwright Tests&quot;,&quot;runId&quot;:&quot;19210120509&quot;,&quot;conclusion&quot;:&quot;failure&quot;,&quot;artifactCount&quot;:5,&quot;logCount&quot;:0,&quot;hasValidation&quot;:&quot;no&quot;,&quot;artifacts&quot;:[{&quot;name&quot;:&quot;blob-report-2&quot;,&quot;sizeBytes&quot;:11920,&quot;downloadStatus&quot;:&quot;failed&quot;,&quot;errorMessage&quot;:&quot;Failed to download artifact \&quot;blob-report-2\&quot;: Command failed: gh run download 19210120509 --name \&quot;blob-report-2\&quot; --dir \&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512238783\&quot;\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\n&quot;},{&quot;name&quot;:&quot;blob-report-3&quot;,&quot;sizeBytes&quot;:11126,&quot;downloadStatus&quot;:&quot;failed&quot;,&quot;errorMessage&quot;:&quot;Failed to download artifact \&quot;blob-report-3\&quot;: Command failed: gh run download 19210120509 --name \&quot;blob-report-3\&quot; --dir \&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512238999\&quot;\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\n&quot;},{&quot;name&quot;:&quot;blob-report-4&quot;,&quot;sizeBytes&quot;:13334,&quot;downloadStatus&quot;:&quot;failed&quot;,&quot;errorMessage&quot;:&quot;Failed to download artifact \&quot;blob-report-4\&quot;: Command failed: gh run download 19210120509 --name \&quot;blob-report-4\&quot; --dir \&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512239674\&quot;\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\n&quot;},{&quot;name&quot;:&quot;blob-report-1&quot;,&quot;sizeBytes&quot;:127111,&quot;downloadStatus&quot;:&quot;failed&quot;,&quot;errorMessage&quot;:&quot;Failed to download artifact \&quot;blob-report-1\&quot;: Command failed: gh run download 19210120509 --name \&quot;blob-report-1\&quot; --dir \&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512239754\&quot;\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\n&quot;},{&quot;name&quot;:&quot;html-report--attempt-1&quot;,&quot;sizeBytes&quot;:737953,&quot;downloadStatus&quot;:&quot;failed&quot;,&quot;errorMessage&quot;:&quot;Failed to download artifact \&quot;html-report--attempt-1\&quot;: Command failed: gh run download 19210120509 --name \&quot;html-report--attempt-1\&quot; --dir \&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512240930\&quot;\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\n&quot;}],&quot;logs&quot;:[],&quot;repo&quot;:&quot;jmchilton/gh-ci-artifacts-example-full-stack-fastapi&quot;}'><td><span class="row-toggle">▶</span></td><td>Playwright Tests</td><td><a href="https://github.com/jmchilton/gh-ci-artifacts-example-full-stack-fastapi/actions/runs/19210120509" target="_blank" rel="noopener noreferrer">19210120509</a></td><td><span class="badge badge-failure">failure</span></td><td>5</td><td></td><td></td></tr></tbody></table></div></div>
+  </section>
+
+  <section class="tab-content" data-tab-content="files">
+    <div class="tree">
+      
+    <div class="tree-node directory" style="padding-left: 0px">
+      <span class="toggle">▶</span>
+      <span class="icon">📁</span>
+      <span class="name">raw</span>
+      
+      <div class="children hidden">
+        
+    <div class="tree-node directory" style="padding-left: 20px">
+      <span class="toggle">▶</span>
+      <span class="icon">📁</span>
+      <span class="name">19210120498</span>
+      <span class="badge badge-failure">FAILURE</span>
+      <div class="children hidden">
+        
+    <div class="tree-node file clickable" style="padding-left: 40px" data-path="/tmp/example-pr-18-artifacts/pr-18/raw/19210120498/test-backend.log">
+      <span class="icon">📄</span>
+      <span class="name">test-backend.log</span>
+      
+      <span class="size">58.0 KB</span>
+      <div class="file-actions">
+        <a href="raw/19210120498/test-backend.log" target="_blank" class="action-link" title="Open raw file">Open</a>
+        <button class="copy-path-btn" data-path="/tmp/example-pr-18-artifacts/pr-18/raw/19210120498/test-backend.log" title="Copy file path">Copy Path</button>
+      </div>
+    </div>
+      </div>
+    </div>
+    <div class="tree-node directory" style="padding-left: 20px">
+      <span class="toggle">▶</span>
+      <span class="icon">📁</span>
+      <span class="name">19210120508</span>
+      <span class="badge badge-failure">FAILURE</span>
+      <div class="children hidden">
+        
+    <div class="tree-node file clickable" style="padding-left: 40px" data-path="/tmp/example-pr-18-artifacts/pr-18/raw/19210120508/lint-backend.log">
+      <span class="icon">📄</span>
+      <span class="name">lint-backend.log</span>
+      
+      <span class="size">18.4 KB</span>
+      <div class="file-actions">
+        <a href="raw/19210120508/lint-backend.log" target="_blank" class="action-link" title="Open raw file">Open</a>
+        <button class="copy-path-btn" data-path="/tmp/example-pr-18-artifacts/pr-18/raw/19210120508/lint-backend.log" title="Copy file path">Copy Path</button>
+      </div>
+    </div>
+      </div>
+    </div>
+    <div class="tree-node directory" style="padding-left: 20px">
+      <span class="toggle">▶</span>
+      <span class="icon">📁</span>
+      <span class="name">19210120509</span>
+      <span class="badge badge-failure">FAILURE</span>
+      <div class="children hidden">
+        
+    <div class="tree-node directory" style="padding-left: 40px">
+      <span class="toggle">▶</span>
+      <span class="icon">📁</span>
+      <span class="name">artifact-4512238783</span>
+      
+      <div class="children hidden">
+        
+      </div>
+    </div>
+    <div class="tree-node directory" style="padding-left: 40px">
+      <span class="toggle">▶</span>
+      <span class="icon">📁</span>
+      <span class="name">artifact-4512238999</span>
+      
+      <div class="children hidden">
+        
+      </div>
+    </div>
+    <div class="tree-node directory" style="padding-left: 40px">
+      <span class="toggle">▶</span>
+      <span class="icon">📁</span>
+      <span class="name">artifact-4512239674</span>
+      
+      <div class="children hidden">
+        
+      </div>
+    </div>
+    <div class="tree-node directory" style="padding-left: 40px">
+      <span class="toggle">▶</span>
+      <span class="icon">📁</span>
+      <span class="name">artifact-4512239754</span>
+      
+      <div class="children hidden">
+        
+      </div>
+    </div>
+    <div class="tree-node directory" style="padding-left: 40px">
+      <span class="toggle">▶</span>
+      <span class="icon">📁</span>
+      <span class="name">artifact-4512240930</span>
+      
+      <div class="children hidden">
+        
+      </div>
+    </div>
+      </div>
+    </div>
+      </div>
+    </div>
+    <div class="tree-node file clickable" style="padding-left: 0px" data-path="/tmp/example-pr-18-artifacts/pr-18/summary.json">
+      <span class="icon">📄</span>
+      <span class="name">summary.json</span>
+      <span class="type-badge">json</span>
+      <span class="size">4.5 KB</span>
+      <div class="file-actions">
+        <a href="summary.json" target="_blank" class="action-link" title="Open raw file">Open</a>
+        <button class="copy-path-btn" data-path="/tmp/example-pr-18-artifacts/pr-18/summary.json" title="Copy file path">Copy Path</button>
+      </div>
+    </div>
+    <div class="tree-node file clickable" style="padding-left: 0px" data-path="/tmp/example-pr-18-artifacts/pr-18/catalog.json">
+      <span class="icon">📄</span>
+      <span class="name">catalog.json</span>
+      <span class="type-badge">json</span>
+      <span class="size">2.0 B</span>
+      <div class="file-actions">
+        <a href="catalog.json" target="_blank" class="action-link" title="Open raw file">Open</a>
+        <button class="copy-path-btn" data-path="/tmp/example-pr-18-artifacts/pr-18/catalog.json" title="Copy file path">Copy Path</button>
+      </div>
+    </div>
+    <div class="tree-node file clickable" style="padding-left: 0px" data-path="/tmp/example-pr-18-artifacts/pr-18/artifacts.json">
+      <span class="icon">📄</span>
+      <span class="name">artifacts.json</span>
+      <span class="type-badge">json</span>
+      <span class="size">2.6 KB</span>
+      <div class="file-actions">
+        <a href="artifacts.json" target="_blank" class="action-link" title="Open raw file">Open</a>
+        <button class="copy-path-btn" data-path="/tmp/example-pr-18-artifacts/pr-18/artifacts.json" title="Copy file path">Copy Path</button>
+      </div>
+    </div>
+    </div>
+  </section>
+
+  
+
+  <section class="preview-panel hidden">
+    <div class="preview-header">
+      <span class="preview-title"></span>
+      <button class="close-btn">✕</button>
+    </div>
+    <div class="preview-content"></div>
+  </section>
+
+  <script>
+    window.fileData = {"/tmp/example-pr-18-artifacts/pr-18/raw/19210120508/lint-backend.log":"﻿2025-11-09T14:49:23.8239846Z Current runner version: '2.329.0'\n2025-11-09T14:49:23.8265065Z ##[group]Runner Image Provisioner\n2025-11-09T14:49:23.8265952Z Hosted Compute Agent\n2025-11-09T14:49:23.8266536Z Version: 20251016.436\n2025-11-09T14:49:23.8267113Z Commit: 8ab8ac8bfd662a3739dab9fe09456aba92132568\n2025-11-09T14:49:23.8267859Z Build Date: 2025-10-15T20:44:12Z\n2025-11-09T14:49:23.8268425Z ##[endgroup]\n2025-11-09T14:49:23.8268973Z ##[group]Operating System\n2025-11-09T14:49:23.8269474Z Ubuntu\n2025-11-09T14:49:23.8270000Z 24.04.3\n2025-11-09T14:49:23.8270417Z LTS\n2025-11-09T14:49:23.8270850Z ##[endgroup]\n2025-11-09T14:49:23.8271424Z ##[group]Runner Image\n2025-11-09T14:49:23.8272107Z Image: ubuntu-24.04\n2025-11-09T14:49:23.8272608Z Version: 20251102.99.1\n2025-11-09T14:49:23.8273670Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251102.99/images/ubuntu/Ubuntu2404-Readme.md\n2025-11-09T14:49:23.8275259Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251102.99\n2025-11-09T14:49:23.8276323Z ##[endgroup]\n2025-11-09T14:49:23.8277357Z ##[group]GITHUB_TOKEN Permissions\n2025-11-09T14:49:23.8279330Z Contents: read\n2025-11-09T14:49:23.8279850Z Metadata: read\n2025-11-09T14:49:23.8280345Z Packages: read\n2025-11-09T14:49:23.8280854Z ##[endgroup]\n2025-11-09T14:49:23.8283126Z Secret source: Actions\n2025-11-09T14:49:23.8283827Z Prepare workflow directory\n2025-11-09T14:49:23.8601278Z Prepare all required actions\n2025-11-09T14:49:23.8640201Z Getting action download info\n2025-11-09T14:49:24.3449392Z Download action repository 'actions/checkout@v5' (SHA:08c6903cd8c0fde910a37f88322edcfb5dd907a8)\n2025-11-09T14:49:24.5225216Z Download action repository 'actions/setup-python@v6' (SHA:e797f83bcb11b83ae66e0230d6156d7c80228e7c)\n2025-11-09T14:49:24.6516939Z Download action repository 'astral-sh/setup-uv@v7' (SHA:85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41)\n2025-11-09T14:49:25.3164477Z Complete job name: lint-backend\n2025-11-09T14:49:25.3853721Z ##[group]Run actions/checkout@v5\n2025-11-09T14:49:25.3854609Z with:\n2025-11-09T14:49:25.3855235Z   repository: jmchilton/gh-ci-artifacts-example-full-stack-fastapi\n2025-11-09T14:49:25.3856115Z   token: ***\n2025-11-09T14:49:25.3856539Z   ssh-strict: true\n2025-11-09T14:49:25.3856959Z   ssh-user: git\n2025-11-09T14:49:25.3857380Z   persist-credentials: true\n2025-11-09T14:49:25.3857864Z   clean: true\n2025-11-09T14:49:25.3858290Z   sparse-checkout-cone-mode: true\n2025-11-09T14:49:25.3858791Z   fetch-depth: 1\n2025-11-09T14:49:25.3859202Z   fetch-tags: false\n2025-11-09T14:49:25.3859636Z   show-progress: true\n2025-11-09T14:49:25.3860051Z   lfs: false\n2025-11-09T14:49:25.3860429Z   submodules: false\n2025-11-09T14:49:25.3860854Z   set-safe-directory: true\n2025-11-09T14:49:25.3861526Z ##[endgroup]\n2025-11-09T14:49:25.4769547Z Syncing repository: jmchilton/gh-ci-artifacts-example-full-stack-fastapi\n2025-11-09T14:49:25.4771826Z ##[group]Getting Git version info\n2025-11-09T14:49:25.4773285Z Working directory is '/home/runner/work/gh-ci-artifacts-example-full-stack-fastapi/gh-ci-artifacts-example-full-stack-fastapi'\n2025-11-09T14:49:25.4774791Z [command]/usr/bin/git version\n2025-11-09T14:49:25.4828481Z git version 2.51.2\n2025-11-09T14:49:25.4880117Z ##[endgroup]\n2025-11-09T14:49:25.4894582Z Temporarily overriding HOME='/home/runner/work/_temp/b28daeab-75c9-4437-aa0a-ce21669ba50c' before making global git config changes\n2025-11-09T14:49:25.4896891Z Adding repository directory to the temporary git global config as a safe directory\n2025-11-09T14:49:25.4899725Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/gh-ci-artifacts-example-full-stack-fastapi/gh-ci-artifacts-example-full-stack-fastapi\n2025-11-09T14:49:25.4936538Z Deleting the contents of '/home/runner/work/gh-ci-artifacts-example-full-stack-fastapi/gh-ci-artifacts-example-full-stack-fastapi'\n2025-11-09T14:49:25.4939235Z ##[group]Initializing the repository\n2025-11-09T14:49:25.4944246Z [command]/usr/bin/git init /home/runner/work/gh-ci-artifacts-example-full-stack-fastapi/gh-ci-artifacts-example-full-stack-fastapi\n2025-11-09T14:49:25.5049973Z hint: Using 'master' as the name for the initial branch. This default branch name\n2025-11-09T14:49:25.5052172Z hint: is subject to change. To configure the initial branch name to use in all\n2025-11-09T14:49:25.5053378Z hint: of your new repositories, which will suppress this warning, call:\n2025-11-09T14:49:25.5054062Z hint:\n2025-11-09T14:49:25.5054671Z hint: \tgit config --global init.defaultBranch <name>\n2025-11-09T14:49:25.5055737Z hint:\n2025-11-09T14:49:25.5056524Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and\n2025-11-09T14:49:25.5058011Z hint: 'development'. The just-created branch can be renamed via this command:\n2025-11-09T14:49:25.5058821Z hint:\n2025-11-09T14:49:25.5059224Z hint: \tgit branch -m <name>\n2025-11-09T14:49:25.5059685Z hint:\n2025-11-09T14:49:25.5060309Z hint: Disable this message with \"git config set advice.defaultBranchName false\"\n2025-11-09T14:49:25.5062475Z Initialized empty Git repository in /home/runner/work/gh-ci-artifacts-example-full-stack-fastapi/gh-ci-artifacts-example-full-stack-fastapi/.git/\n2025-11-09T14:49:25.5066560Z [command]/usr/bin/git remote add origin https://github.com/jmchilton/gh-ci-artifacts-example-full-stack-fastapi\n2025-11-09T14:49:25.5099755Z ##[endgroup]\n2025-11-09T14:49:25.5100533Z ##[group]Disabling automatic garbage collection\n2025-11-09T14:49:25.5103328Z [command]/usr/bin/git config --local gc.auto 0\n2025-11-09T14:49:25.5130676Z ##[endgroup]\n2025-11-09T14:49:25.5131449Z ##[group]Setting up auth\n2025-11-09T14:49:25.5137617Z [command]/usr/bin/git config --local --name-only --get-regexp core\\.sshCommand\n2025-11-09T14:49:25.5168604Z [command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'core\\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\"\n2025-11-09T14:49:25.5533641Z [command]/usr/bin/git config --local --name-only --get-regexp http\\.https\\:\\/\\/github\\.com\\/\\.extraheader\n2025-11-09T14:49:25.5563194Z [command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'http\\.https\\:\\/\\/github\\.com\\/\\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\"\n2025-11-09T14:49:25.5780517Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***\n2025-11-09T14:49:25.5813255Z ##[endgroup]\n2025-11-09T14:49:25.5814252Z ##[group]Fetching the repository\n2025-11-09T14:49:25.5823536Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +6c7a803a88341093d343b6c2cba916bfc774eebe:refs/remotes/pull/18/merge\n2025-11-09T14:49:26.0311269Z From https://github.com/jmchilton/gh-ci-artifacts-example-full-stack-fastapi\n2025-11-09T14:49:26.0312665Z  * [new ref]         6c7a803a88341093d343b6c2cba916bfc774eebe -> pull/18/merge\n2025-11-09T14:49:26.0342571Z ##[endgroup]\n2025-11-09T14:49:26.0344032Z ##[group]Determining the checkout info\n2025-11-09T14:49:26.0345760Z ##[endgroup]\n2025-11-09T14:49:26.0350553Z [command]/usr/bin/git sparse-checkout disable\n2025-11-09T14:49:26.0392054Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig\n2025-11-09T14:49:26.0417457Z ##[group]Checking out the ref\n2025-11-09T14:49:26.0421255Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/18/merge\n2025-11-09T14:49:26.0589643Z Note: switching to 'refs/remotes/pull/18/merge'.\n2025-11-09T14:49:26.0590305Z \n2025-11-09T14:49:26.0590778Z You are in 'detached HEAD' state. You can look around, make experimental\n2025-11-09T14:49:26.0592117Z changes and commit them, and you can discard any commits you make in this\n2025-11-09T14:49:26.0593357Z state without impacting any branches by switching back to a branch.\n2025-11-09T14:49:26.0594678Z \n2025-11-09T14:49:26.0595589Z If you want to create a new branch to retain commits you create, you may\n2025-11-09T14:49:26.0597651Z do so (now or later) by using -c with the switch command. Example:\n2025-11-09T14:49:26.0598885Z \n2025-11-09T14:49:26.0599388Z   git switch -c <new-branch-name>\n2025-11-09T14:49:26.0600494Z \n2025-11-09T14:49:26.0600863Z Or undo this operation with:\n2025-11-09T14:49:26.0601468Z \n2025-11-09T14:49:26.0602029Z   git switch -\n2025-11-09T14:49:26.0602498Z \n2025-11-09T14:49:26.0603219Z Turn off this advice by setting config variable advice.detachedHead to false\n2025-11-09T14:49:26.0604333Z \n2025-11-09T14:49:26.0605654Z HEAD is now at 6c7a803 Merge f995e02ae2c9f1d05fda2786283fe3487dc5eee3 into 5a2b204060226d7ca0971a7e93cb45fecec6fc7e\n2025-11-09T14:49:26.0609171Z ##[endgroup]\n2025-11-09T14:49:26.0638479Z [command]/usr/bin/git log -1 --format=%H\n2025-11-09T14:49:26.0660512Z 6c7a803a88341093d343b6c2cba916bfc774eebe\n2025-11-09T14:49:26.0923489Z ##[group]Run actions/setup-python@v6\n2025-11-09T14:49:26.0924082Z with:\n2025-11-09T14:49:26.0924467Z   python-version: 3.10\n2025-11-09T14:49:26.0924913Z   check-latest: false\n2025-11-09T14:49:26.0925507Z   token: ***\n2025-11-09T14:49:26.0925913Z   update-environment: true\n2025-11-09T14:49:26.0926389Z   allow-prereleases: false\n2025-11-09T14:49:26.0926864Z   freethreaded: false\n2025-11-09T14:49:26.0927292Z ##[endgroup]\n2025-11-09T14:49:26.2175957Z ##[group]Installed versions\n2025-11-09T14:49:26.2284814Z (node:2055) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.\n2025-11-09T14:49:26.2287296Z (Use `node --trace-deprecation ...` to show where the warning was created)\n2025-11-09T14:49:26.2288699Z Successfully set up CPython (3.10.19)\n2025-11-09T14:49:26.2290114Z ##[endgroup]\n2025-11-09T14:49:26.2556572Z ##[group]Run astral-sh/setup-uv@v7\n2025-11-09T14:49:26.2557160Z with:\n2025-11-09T14:49:26.2557536Z   version: 0.4.15\n2025-11-09T14:49:26.2557952Z   enable-cache: true\n2025-11-09T14:49:26.2558399Z   activate-environment: false\n2025-11-09T14:49:26.2559493Z   working-directory: /home/runner/work/gh-ci-artifacts-example-full-stack-fastapi/gh-ci-artifacts-example-full-stack-fastapi\n2025-11-09T14:49:26.2560839Z   github-token: ***\n2025-11-09T14:49:26.2562058Z   cache-dependency-glob: **/*requirements*.txt\n**/*requirements*.in\n**/*constraints*.txt\n**/*constraints*.in\n**/pyproject.toml\n**/uv.lock\n**/*.py.lock\n\n2025-11-09T14:49:26.2563237Z   restore-cache: true\n2025-11-09T14:49:26.2563670Z   save-cache: true\n2025-11-09T14:49:26.2564082Z   prune-cache: true\n2025-11-09T14:49:26.2564510Z   cache-python: false\n2025-11-09T14:49:26.2564967Z   ignore-nothing-to-cache: false\n2025-11-09T14:49:26.2565483Z   ignore-empty-workdir: false\n2025-11-09T14:49:26.2565984Z   add-problem-matchers: true\n2025-11-09T14:49:26.2566515Z   resolution-strategy: highest\n2025-11-09T14:49:26.2566993Z env:\n2025-11-09T14:49:26.2567497Z   pythonLocation: /opt/hostedtoolcache/Python/3.10.19/x64\n2025-11-09T14:49:26.2568344Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.10.19/x64/lib/pkgconfig\n2025-11-09T14:49:26.2569174Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64\n2025-11-09T14:49:26.2569927Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64\n2025-11-09T14:49:26.2570675Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64\n2025-11-09T14:49:26.2571433Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.10.19/x64/lib\n2025-11-09T14:49:26.2572187Z ##[endgroup]\n2025-11-09T14:49:26.4373192Z (node:2062) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.\n2025-11-09T14:49:26.4374843Z (Use `node --trace-deprecation ...` to show where the warning was created)\n2025-11-09T14:49:26.4514139Z manifest-file not provided, reading from local file.\n2025-11-09T14:49:26.4553158Z Downloading uv from \"https://github.com/astral-sh/uv/releases/download/0.4.15/uv-x86_64-unknown-linux-gnu.tar.gz\" ...\n2025-11-09T14:49:26.8171770Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/7f66938f-4a6c-49d7-aa5d-ee27641d5ef7 -f /home/runner/work/_temp/44065a32-8087-4a2b-ba79-9c3f86ee56bd\n2025-11-09T14:49:27.0618855Z Added /home/runner/.local/bin to the path\n2025-11-09T14:49:27.0623738Z Added /opt/hostedtoolcache/uv/0.4.15/x86_64 to the path\n2025-11-09T14:49:27.0626588Z Set UV_PYTHON_INSTALL_DIR to /home/runner/work/_temp/uv-python-dir\n2025-11-09T14:49:27.0628932Z Added /home/runner/work/_temp/uv-python-dir to the path\n2025-11-09T14:49:27.0641343Z Set UV_CACHE_DIR to /home/runner/work/_temp/setup-uv-cache\n2025-11-09T14:49:27.0643531Z Successfully installed uv version 0.4.15\n2025-11-09T14:49:27.0669518Z Searching files using cache dependency glob: /home/runner/work/gh-ci-artifacts-example-full-stack-fastapi/gh-ci-artifacts-example-full-stack-fastapi/**/*requirements*.txt,/home/runner/work/gh-ci-artifacts-example-full-stack-fastapi/gh-ci-artifacts-example-full-stack-fastapi/**/*requirements*.in,/home/runner/work/gh-ci-artifacts-example-full-stack-fastapi/gh-ci-artifacts-example-full-stack-fastapi/**/*constraints*.txt,/home/runner/work/gh-ci-artifacts-example-full-stack-fastapi/gh-ci-artifacts-example-full-stack-fastapi/**/*constraints*.in,/home/runner/work/gh-ci-artifacts-example-full-stack-fastapi/gh-ci-artifacts-example-full-stack-fastapi/**/pyproject.toml,/home/runner/work/gh-ci-artifacts-example-full-stack-fastapi/gh-ci-artifacts-example-full-stack-fastapi/**/uv.lock,/home/runner/work/gh-ci-artifacts-example-full-stack-fastapi/gh-ci-artifacts-example-full-stack-fastapi/**/*.py.lock\n2025-11-09T14:49:27.0920582Z /home/runner/work/gh-ci-artifacts-example-full-stack-fastapi/gh-ci-artifacts-example-full-stack-fastapi/backend/pyproject.toml\n2025-11-09T14:49:27.0973677Z /home/runner/work/gh-ci-artifacts-example-full-stack-fastapi/gh-ci-artifacts-example-full-stack-fastapi/backend/uv.lock\n2025-11-09T14:49:27.1170830Z Found 2 files to hash.\n2025-11-09T14:49:28.4440584Z Trying to restore uv cache from GitHub Actions cache with key: setup-uv-1-x86_64-unknown-linux-gnu-3.10.19-pruned-4aa1b05daffe0b63fac8547944cedb7f290bb564f7cceebc63b35b79e4443ff1\n2025-11-09T14:49:28.6749111Z No GitHub Actions cache found for key: setup-uv-1-x86_64-unknown-linux-gnu-3.10.19-pruned-4aa1b05daffe0b63fac8547944cedb7f290bb564f7cceebc63b35b79e4443ff1\n2025-11-09T14:49:28.6907021Z ##[group]Run uv run bash scripts/lint.sh\n2025-11-09T14:49:28.6907408Z \u001b[36;1muv run bash scripts/lint.sh\u001b[0m\n2025-11-09T14:49:28.6946273Z shell: /usr/bin/bash -e {0}\n2025-11-09T14:49:28.6946553Z env:\n2025-11-09T14:49:28.6946819Z   pythonLocation: /opt/hostedtoolcache/Python/3.10.19/x64\n2025-11-09T14:49:28.6947260Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.10.19/x64/lib/pkgconfig\n2025-11-09T14:49:28.6947682Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64\n2025-11-09T14:49:28.6948050Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64\n2025-11-09T14:49:28.6948429Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64\n2025-11-09T14:49:28.6948800Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.10.19/x64/lib\n2025-11-09T14:49:28.6949190Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir\n2025-11-09T14:49:28.6949557Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache\n2025-11-09T14:49:28.6949857Z ##[endgroup]\n2025-11-09T14:49:28.7106307Z Using Python 3.10.19 interpreter at: /opt/hostedtoolcache/Python/3.10.19/x64/bin/python3\n2025-11-09T14:49:28.7107231Z Creating virtual environment at: .venv\n2025-11-09T14:49:29.9302596Z Installed 80 packages in 55ms\n2025-11-09T14:49:29.9345811Z + mypy app\n2025-11-09T14:49:48.9166654Z Success: no issues found in 21 source files\n2025-11-09T14:49:48.9523357Z + ruff check app\n2025-11-09T14:49:48.9618596Z app/utils.py:2:8: F401 [*] `os` imported but unused\n2025-11-09T14:49:48.9619178Z   |\n2025-11-09T14:49:48.9619471Z 1 | import logging\n2025-11-09T14:49:48.9619823Z 2 | import os\n2025-11-09T14:49:48.9620122Z   |        ^^ F401\n2025-11-09T14:49:48.9620499Z 3 | from dataclasses import dataclass\n2025-11-09T14:49:48.9621017Z 4 | from datetime import datetime, timedelta, timezone\n2025-11-09T14:49:48.9621549Z   |\n2025-11-09T14:49:48.9622223Z   = help: Remove unused import: `os`\n2025-11-09T14:49:48.9622595Z \n2025-11-09T14:49:48.9623003Z app/utils.py:41:5: F841 Local variable `unused_var` is assigned to but never used\n2025-11-09T14:49:48.9624025Z    |\n2025-11-09T14:49:48.9624343Z 39 | ) -> None:\n2025-11-09T14:49:48.9624945Z 40 |     assert settings.emails_enabled, \"no provided configuration for email variables\"\n2025-11-09T14:49:48.9625725Z 41 |     unused_var = \"this should trigger a linter warning\"\n2025-11-09T14:49:48.9626298Z    |     ^^^^^^^^^^ F841\n2025-11-09T14:49:48.9626670Z 42 |     message = emails.Message(\n2025-11-09T14:49:48.9627070Z 43 |         subject=subject,\n2025-11-09T14:49:48.9627422Z    |\n2025-11-09T14:49:48.9627802Z    = help: Remove assignment to unused variable `unused_var`\n2025-11-09T14:49:48.9628191Z \n2025-11-09T14:49:48.9628317Z Found 2 errors.\n2025-11-09T14:49:48.9628908Z [*] 1 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).\n2025-11-09T14:49:48.9696995Z ##[error]Process completed with exit code 1.\n2025-11-09T14:49:48.9795273Z Post job cleanup.\n2025-11-09T14:49:49.0589908Z [command]/usr/bin/git version\n2025-11-09T14:49:49.0626001Z git version 2.51.2\n2025-11-09T14:49:49.0663981Z Temporarily overriding HOME='/home/runner/work/_temp/55286d43-62db-4b19-816f-94322bfbedae' before making global git config changes\n2025-11-09T14:49:49.0665377Z Adding repository directory to the temporary git global config as a safe directory\n2025-11-09T14:49:49.0670463Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/gh-ci-artifacts-example-full-stack-fastapi/gh-ci-artifacts-example-full-stack-fastapi\n2025-11-09T14:49:49.0705577Z [command]/usr/bin/git config --local --name-only --get-regexp core\\.sshCommand\n2025-11-09T14:49:49.0736767Z [command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'core\\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\"\n2025-11-09T14:49:49.0963759Z [command]/usr/bin/git config --local --name-only --get-regexp http\\.https\\:\\/\\/github\\.com\\/\\.extraheader\n2025-11-09T14:49:49.0986587Z http.https://github.com/.extraheader\n2025-11-09T14:49:49.0996676Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader\n2025-11-09T14:49:49.1028020Z [command]/usr/bin/git submodule foreach --recursive sh -c \"git config --local --name-only --get-regexp 'http\\.https\\:\\/\\/github\\.com\\/\\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\"\n2025-11-09T14:49:49.1360885Z Cleaning up orphan processes\n","/tmp/example-pr-18-artifacts/pr-18/summary.json":"{\n  \"mode\": \"pr\",\n  \"pr\": 18,\n  \"prBranch\": \"feat/showcase-with-artifacts\",\n  \"repo\": \"jmchilton/gh-ci-artifacts-example-full-stack-fastapi\",\n  \"headSha\": \"f995e02ae2c9f1d05fda2786283fe3487dc5eee3\",\n  \"analyzedAt\": \"2025-11-09T14:56:44.063Z\",\n  \"status\": \"partial\",\n  \"inProgressRuns\": 0,\n  \"runs\": [\n    {\n      \"runId\": \"19210120508\",\n      \"workflowName\": \"Lint Backend\",\n      \"workflowPath\": \".github/workflows/lint-backend.yml\",\n      \"runAttempt\": 1,\n      \"runNumber\": 19,\n      \"conclusion\": \"failure\",\n      \"artifacts\": [],\n      \"logs\": [\n        {\n          \"jobName\": \"lint-backend\",\n          \"jobId\": \"54911089998\",\n          \"extractionStatus\": \"success\",\n          \"logFile\": \"/tmp/example-pr-18-artifacts/pr-18/raw/19210120508/lint-backend.log\"\n        }\n      ]\n    },\n    {\n      \"runId\": \"19210120498\",\n      \"workflowName\": \"Test Backend\",\n      \"workflowPath\": \".github/workflows/test-backend.yml\",\n      \"runAttempt\": 1,\n      \"runNumber\": 19,\n      \"conclusion\": \"failure\",\n      \"artifacts\": [],\n      \"logs\": [\n        {\n          \"jobName\": \"test-backend\",\n          \"jobId\": \"54911089975\",\n          \"extractionStatus\": \"success\",\n          \"logFile\": \"/tmp/example-pr-18-artifacts/pr-18/raw/19210120498/test-backend.log\"\n        }\n      ]\n    },\n    {\n      \"runId\": \"19210120503\",\n      \"workflowName\": \"Test Docker Compose\",\n      \"workflowPath\": \".github/workflows/test-docker-compose.yml\",\n      \"runAttempt\": 1,\n      \"runNumber\": 19,\n      \"conclusion\": \"success\",\n      \"artifacts\": [],\n      \"logs\": []\n    },\n    {\n      \"runId\": \"19210120509\",\n      \"workflowName\": \"Playwright Tests\",\n      \"workflowPath\": \".github/workflows/playwright.yml\",\n      \"runAttempt\": 1,\n      \"runNumber\": 19,\n      \"conclusion\": \"failure\",\n      \"artifacts\": [\n        {\n          \"name\": \"blob-report-2\",\n          \"sizeBytes\": 11920,\n          \"downloadStatus\": \"failed\",\n          \"errorMessage\": \"Failed to download artifact \\\"blob-report-2\\\": Command failed: gh run download 19210120509 --name \\\"blob-report-2\\\" --dir \\\"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512238783\\\"\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n\"\n        },\n        {\n          \"name\": \"blob-report-3\",\n          \"sizeBytes\": 11126,\n          \"downloadStatus\": \"failed\",\n          \"errorMessage\": \"Failed to download artifact \\\"blob-report-3\\\": Command failed: gh run download 19210120509 --name \\\"blob-report-3\\\" --dir \\\"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512238999\\\"\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n\"\n        },\n        {\n          \"name\": \"blob-report-4\",\n          \"sizeBytes\": 13334,\n          \"downloadStatus\": \"failed\",\n          \"errorMessage\": \"Failed to download artifact \\\"blob-report-4\\\": Command failed: gh run download 19210120509 --name \\\"blob-report-4\\\" --dir \\\"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512239674\\\"\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n\"\n        },\n        {\n          \"name\": \"blob-report-1\",\n          \"sizeBytes\": 127111,\n          \"downloadStatus\": \"failed\",\n          \"errorMessage\": \"Failed to download artifact \\\"blob-report-1\\\": Command failed: gh run download 19210120509 --name \\\"blob-report-1\\\" --dir \\\"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512239754\\\"\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n\"\n        },\n        {\n          \"name\": \"html-report--attempt-1\",\n          \"sizeBytes\": 737953,\n          \"downloadStatus\": \"failed\",\n          \"errorMessage\": \"Failed to download artifact \\\"html-report--attempt-1\\\": Command failed: gh run download 19210120509 --name \\\"html-report--attempt-1\\\" --dir \\\"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512240930\\\"\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n\"\n        }\n      ],\n      \"logs\": []\n    }\n  ],\n  \"catalogFile\": \"./catalog.json\",\n  \"stats\": {\n    \"totalRuns\": 4,\n    \"artifactsDownloaded\": 0,\n    \"artifactsFailed\": 5,\n    \"logsExtracted\": 2,\n    \"htmlConverted\": 0,\n    \"artifactsValidated\": 0,\n    \"artifactsInvalid\": 0,\n    \"linterOutputsExtracted\": 0\n  }\n}","/tmp/example-pr-18-artifacts/pr-18/catalog.json":"[]","/tmp/example-pr-18-artifacts/pr-18/artifacts.json":"[\n  {\n    \"runId\": \"19210120509\",\n    \"artifactName\": \"blob-report-2\",\n    \"artifactId\": 4512238783,\n    \"sizeBytes\": 11920,\n    \"status\": \"failed\",\n    \"errorMessage\": \"Failed to download artifact \\\"blob-report-2\\\": Command failed: gh run download 19210120509 --name \\\"blob-report-2\\\" --dir \\\"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512238783\\\"\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n\"\n  },\n  {\n    \"runId\": \"19210120509\",\n    \"artifactName\": \"blob-report-3\",\n    \"artifactId\": 4512238999,\n    \"sizeBytes\": 11126,\n    \"status\": \"failed\",\n    \"errorMessage\": \"Failed to download artifact \\\"blob-report-3\\\": Command failed: gh run download 19210120509 --name \\\"blob-report-3\\\" --dir \\\"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512238999\\\"\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n\"\n  },\n  {\n    \"runId\": \"19210120509\",\n    \"artifactName\": \"blob-report-4\",\n    \"artifactId\": 4512239674,\n    \"sizeBytes\": 13334,\n    \"status\": \"failed\",\n    \"errorMessage\": \"Failed to download artifact \\\"blob-report-4\\\": Command failed: gh run download 19210120509 --name \\\"blob-report-4\\\" --dir \\\"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512239674\\\"\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n\"\n  },\n  {\n    \"runId\": \"19210120509\",\n    \"artifactName\": \"blob-report-1\",\n    \"artifactId\": 4512239754,\n    \"sizeBytes\": 127111,\n    \"status\": \"failed\",\n    \"errorMessage\": \"Failed to download artifact \\\"blob-report-1\\\": Command failed: gh run download 19210120509 --name \\\"blob-report-1\\\" --dir \\\"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512239754\\\"\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n\"\n  },\n  {\n    \"runId\": \"19210120509\",\n    \"artifactName\": \"html-report--attempt-1\",\n    \"artifactId\": 4512240930,\n    \"sizeBytes\": 737953,\n    \"status\": \"failed\",\n    \"errorMessage\": \"Failed to download artifact \\\"html-report--attempt-1\\\": Command failed: gh run download 19210120509 --name \\\"html-report--attempt-1\\\" --dir \\\"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512240930\\\"\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n\"\n  }\n]"};
+
+    // Embed pre-rendered rich views
+    window.__summaryRenderer = "<div class=\"rich-view summary-view\">\n    <div class=\"rich-header\">\n      <h2>Summary: jmchilton/gh-ci-artifacts-example-full-stack-fastapi PR #18</h2>\n      <div class=\"metadata-row\">\n        <span class=\"badge badge-partial\">PARTIAL</span>\n        <span class=\"metadata-item\">SHA: <code>f995e02a</code></span>\n        <span class=\"metadata-item\">Analyzed: 11/9/2025, 9:56:44 AM</span>\n      </div>\n    </div>\n  <div class=\"stats-grid\"><div class=\"stat \">Total Runs: 4</div>\n<div class=\"stat stat-success\">✓ Downloaded: 0</div>\n<div class=\"stat stat-failure\">✗ Failed: 5</div>\n<div class=\"stat \">📄 Logs: 2</div>\n<div class=\"stat \">🔄 Converted: 0</div>\n<div class=\"stat stat-success\">✓ Validated: 0</div>\n<div class=\"stat \">✗ Invalid: 0</div>\n<div class=\"stat stat-info\">🔍 Linters: 0</div></div><div class=\"section-divider\"></div><h3>Workflow Runs</h3><div class=\"table-container\"><table class=\"data-table\" id=\"runs-table\"><thead><tr><th class=\"\" data-key=\"expand\"></th><th class=\"sortable\" data-key=\"workflowName\">Workflow</th><th class=\"sortable\" data-key=\"runId\">Run ID</th><th class=\"sortable\" data-key=\"conclusion\">Status</th><th class=\"sortable\" data-key=\"artifactCount\">Artifacts</th><th class=\"sortable\" data-key=\"logCount\">Logs</th><th class=\"sortable\" data-key=\"hasValidation\">Validation</th></tr></thead><tbody><tr data-row='{&quot;workflowName&quot;:&quot;Lint Backend&quot;,&quot;runId&quot;:&quot;19210120508&quot;,&quot;conclusion&quot;:&quot;failure&quot;,&quot;artifactCount&quot;:0,&quot;logCount&quot;:1,&quot;hasValidation&quot;:&quot;no&quot;,&quot;artifacts&quot;:[],&quot;logs&quot;:[{&quot;jobName&quot;:&quot;lint-backend&quot;,&quot;jobId&quot;:&quot;54911089998&quot;,&quot;extractionStatus&quot;:&quot;success&quot;,&quot;logFile&quot;:&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120508/lint-backend.log&quot;}],&quot;repo&quot;:&quot;jmchilton/gh-ci-artifacts-example-full-stack-fastapi&quot;}'><td><span class=\"row-toggle\">▶</span></td><td>Lint Backend</td><td><a href=\"https://github.com/jmchilton/gh-ci-artifacts-example-full-stack-fastapi/actions/runs/19210120508\" target=\"_blank\" rel=\"noopener noreferrer\">19210120508</a></td><td><span class=\"badge badge-failure\">failure</span></td><td></td><td>1</td><td></td></tr><tr data-row='{&quot;workflowName&quot;:&quot;Test Backend&quot;,&quot;runId&quot;:&quot;19210120498&quot;,&quot;conclusion&quot;:&quot;failure&quot;,&quot;artifactCount&quot;:0,&quot;logCount&quot;:1,&quot;hasValidation&quot;:&quot;no&quot;,&quot;artifacts&quot;:[],&quot;logs&quot;:[{&quot;jobName&quot;:&quot;test-backend&quot;,&quot;jobId&quot;:&quot;54911089975&quot;,&quot;extractionStatus&quot;:&quot;success&quot;,&quot;logFile&quot;:&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120498/test-backend.log&quot;}],&quot;repo&quot;:&quot;jmchilton/gh-ci-artifacts-example-full-stack-fastapi&quot;}'><td><span class=\"row-toggle\">▶</span></td><td>Test Backend</td><td><a href=\"https://github.com/jmchilton/gh-ci-artifacts-example-full-stack-fastapi/actions/runs/19210120498\" target=\"_blank\" rel=\"noopener noreferrer\">19210120498</a></td><td><span class=\"badge badge-failure\">failure</span></td><td></td><td>1</td><td></td></tr><tr data-row='{&quot;workflowName&quot;:&quot;Test Docker Compose&quot;,&quot;runId&quot;:&quot;19210120503&quot;,&quot;conclusion&quot;:&quot;success&quot;,&quot;artifactCount&quot;:0,&quot;logCount&quot;:0,&quot;hasValidation&quot;:&quot;no&quot;,&quot;artifacts&quot;:[],&quot;logs&quot;:[],&quot;repo&quot;:&quot;jmchilton/gh-ci-artifacts-example-full-stack-fastapi&quot;}'><td><span class=\"row-toggle\">▶</span></td><td>Test Docker Compose</td><td><a href=\"https://github.com/jmchilton/gh-ci-artifacts-example-full-stack-fastapi/actions/runs/19210120503\" target=\"_blank\" rel=\"noopener noreferrer\">19210120503</a></td><td><span class=\"badge badge-success\">success</span></td><td></td><td></td><td></td></tr><tr data-row='{&quot;workflowName&quot;:&quot;Playwright Tests&quot;,&quot;runId&quot;:&quot;19210120509&quot;,&quot;conclusion&quot;:&quot;failure&quot;,&quot;artifactCount&quot;:5,&quot;logCount&quot;:0,&quot;hasValidation&quot;:&quot;no&quot;,&quot;artifacts&quot;:[{&quot;name&quot;:&quot;blob-report-2&quot;,&quot;sizeBytes&quot;:11920,&quot;downloadStatus&quot;:&quot;failed&quot;,&quot;errorMessage&quot;:&quot;Failed to download artifact \\&quot;blob-report-2\\&quot;: Command failed: gh run download 19210120509 --name \\&quot;blob-report-2\\&quot; --dir \\&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512238783\\&quot;\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n&quot;},{&quot;name&quot;:&quot;blob-report-3&quot;,&quot;sizeBytes&quot;:11126,&quot;downloadStatus&quot;:&quot;failed&quot;,&quot;errorMessage&quot;:&quot;Failed to download artifact \\&quot;blob-report-3\\&quot;: Command failed: gh run download 19210120509 --name \\&quot;blob-report-3\\&quot; --dir \\&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512238999\\&quot;\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n&quot;},{&quot;name&quot;:&quot;blob-report-4&quot;,&quot;sizeBytes&quot;:13334,&quot;downloadStatus&quot;:&quot;failed&quot;,&quot;errorMessage&quot;:&quot;Failed to download artifact \\&quot;blob-report-4\\&quot;: Command failed: gh run download 19210120509 --name \\&quot;blob-report-4\\&quot; --dir \\&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512239674\\&quot;\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n&quot;},{&quot;name&quot;:&quot;blob-report-1&quot;,&quot;sizeBytes&quot;:127111,&quot;downloadStatus&quot;:&quot;failed&quot;,&quot;errorMessage&quot;:&quot;Failed to download artifact \\&quot;blob-report-1\\&quot;: Command failed: gh run download 19210120509 --name \\&quot;blob-report-1\\&quot; --dir \\&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512239754\\&quot;\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n&quot;},{&quot;name&quot;:&quot;html-report--attempt-1&quot;,&quot;sizeBytes&quot;:737953,&quot;downloadStatus&quot;:&quot;failed&quot;,&quot;errorMessage&quot;:&quot;Failed to download artifact \\&quot;html-report--attempt-1\\&quot;: Command failed: gh run download 19210120509 --name \\&quot;html-report--attempt-1\\&quot; --dir \\&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512240930\\&quot;\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n&quot;}],&quot;logs&quot;:[],&quot;repo&quot;:&quot;jmchilton/gh-ci-artifacts-example-full-stack-fastapi&quot;}'><td><span class=\"row-toggle\">▶</span></td><td>Playwright Tests</td><td><a href=\"https://github.com/jmchilton/gh-ci-artifacts-example-full-stack-fastapi/actions/runs/19210120509\" target=\"_blank\" rel=\"noopener noreferrer\">19210120509</a></td><td><span class=\"badge badge-failure\">failure</span></td><td>5</td><td></td><td></td></tr></tbody></table></div></div>";
+    window.__catalogRenderer = "<div class=\"rich-view catalog-view\">\n    <div class=\"rich-header\">\n      <h2>Artifact Catalog</h2>\n      <div class=\"metadata-row\">\n        <span class=\"metadata-item\">Total Artifacts: 0</span>\n      </div>\n    </div>\n  <h3>Artifact Types</h3><div class=\"type-grid\"></div><div class=\"stats-grid\"><div class=\"stat \">Total: 0</div>\n<div class=\"stat \">Converted: 0</div>\n<div class=\"stat \">Skipped: 0</div>\n<div class=\"stat stat-success\">✓ Validated: 0</div>\n<div class=\"stat \">✗ Invalid: 0</div></div><div class=\"section-divider\"></div><h3>All Artifacts</h3><div class=\"table-container\"><div class=\"table-controls\">\n        <input \n          type=\"text\" \n          class=\"table-search\" \n          data-table=\"catalog-table\"\n          placeholder=\"Search...\"\n        />\n      <div class=\"table-filters\"></div></div><table class=\"data-table\" id=\"catalog-table\"><thead><tr><th class=\"column-header-trigger sortable\" data-key=\"artifactName\" data-header-tooltip=\"Name of the downloaded artifact file\">Artifact Name</th><th class=\"column-header-trigger sortable\" data-key=\"runId\" data-header-tooltip=\"GitHub Actions workflow run ID\">Run ID</th><th class=\"column-header-trigger sortable\" data-key=\"detectedType\" data-header-tooltip=\"Detected artifact type (test framework, linter, etc.)\">Type</th><th class=\"column-header-trigger sortable\" data-key=\"originalFormat\" data-header-tooltip=\"Original file format before conversion\">Format</th><th class=\"column-header-trigger sortable\" data-key=\"artifact\" data-header-tooltip=\"Short description of the artifact&#039;s purpose and content\">Description</th><th class=\"column-header-trigger sortable\" data-key=\"validation\" data-header-tooltip=\"Validation status - whether artifact meets requirements for processing\">Valid</th><th class=\"column-header-trigger sortable\" data-key=\"converted\" data-header-tooltip=\"Whether artifact was converted from original format to normalized format\">Converted</th><th class=\"column-header-trigger sortable\" data-key=\"skipped\" data-header-tooltip=\"Whether artifact processing was skipped\">Skipped</th><th class=\"column-header-trigger sortable\" data-key=\"filePath\" data-header-tooltip=\"File path to the artifact in the output directory\">Path</th><th class=\"column-header-trigger \" data-key=\"actions\" data-header-tooltip=\"Open or copy artifact file path\">Actions</th></tr></thead><tbody></tbody></table></div></div>";
+    window.__artifactsRenderer = "<div class=\"rich-view artifacts-view\">\n    <div class=\"rich-header\">\n      <h2>Artifact Inventory</h2>\n      <div class=\"metadata-row\">\n        <span class=\"metadata-item\">Total Artifacts: 5</span>\n      </div>\n    </div>\n  <h3>Download Status</h3><div class=\"status-grid\">\n      <div class=\"status-card status-card-success\" data-status=\"success\">\n        <div class=\"status-icon\">✓</div>\n        <div class=\"status-label\">Success</div>\n        <div class=\"status-count\">0</div>\n      </div>\n    \n      <div class=\"status-card status-card-failed\" data-status=\"failed\">\n        <div class=\"status-icon\">✗</div>\n        <div class=\"status-label\">Failed</div>\n        <div class=\"status-count\">5</div>\n      </div>\n    \n      <div class=\"status-card status-card-expired\" data-status=\"expired\">\n        <div class=\"status-icon\">⏰</div>\n        <div class=\"status-label\">Expired</div>\n        <div class=\"status-count\">0</div>\n      </div>\n    \n      <div class=\"status-card status-card-skipped\" data-status=\"skipped\">\n        <div class=\"status-icon\">⊘</div>\n        <div class=\"status-label\">Skipped</div>\n        <div class=\"status-count\">0</div>\n      </div>\n    </div><div class=\"stats-grid\"><div class=\"stat \">Total: 5</div>\n<div class=\"stat \">Success Rate: 0.0%</div></div><div class=\"section-divider\"></div><h3>All Artifacts</h3><div class=\"table-container\"><div class=\"table-controls\">\n        <input \n          type=\"text\" \n          class=\"table-search\" \n          data-table=\"artifacts-table\"\n          placeholder=\"Search...\"\n        />\n      <div class=\"table-filters\">\n            <select class=\"table-filter\" data-table=\"artifacts-table\" data-filter=\"status\">\n              <option value=\"\">All status</option>\n              <option value=\"failed\">failed</option>\n            </select>\n          \n            <select class=\"table-filter\" data-table=\"artifacts-table\" data-filter=\"runId\">\n              <option value=\"\">All runId</option>\n              <option value=\"19210120509\">19210120509</option>\n            </select>\n          </div></div><table class=\"data-table\" id=\"artifacts-table\"><thead><tr><th class=\"sortable\" data-key=\"runId\">Run ID</th><th class=\"sortable\" data-key=\"artifactName\">Artifact Name</th><th class=\"sortable\" data-key=\"sizeBytes\">Size</th><th class=\"sortable\" data-key=\"status\">Status</th><th class=\"sortable\" data-key=\"errorMessage\">Message</th><th class=\"\" data-key=\"actions\">Actions</th></tr></thead><tbody><tr data-row='{&quot;runId&quot;:&quot;19210120509&quot;,&quot;artifactName&quot;:&quot;blob-report-2&quot;,&quot;artifactId&quot;:4512238783,&quot;sizeBytes&quot;:11920,&quot;status&quot;:&quot;failed&quot;,&quot;errorMessage&quot;:&quot;Failed to download artifact \\&quot;blob-report-2\\&quot;: Command failed: gh run download 19210120509 --name \\&quot;blob-report-2\\&quot; --dir \\&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512238783\\&quot;\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n&quot;}'><td>19210120509</td><td>blob-report-2</td><td>11.6 KB</td><td><span class=\"badge badge-failed\">failed</span></td><td><span class=\"error-text\">Failed to download artifact &quot;blob-report-2&quot;: Command failed: gh run download 19210120509 --name &quot;blob-report-2&quot; --dir &quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512238783&quot;\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\n</span></td><td>\n          <div class=\"artifact-actions\">\n            <button class=\"copy-path-btn\" data-path=\"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512238783\" title=\"Copy artifact path\">Copy Path</button>\n          </div>\n        </td></tr><tr data-row='{&quot;runId&quot;:&quot;19210120509&quot;,&quot;artifactName&quot;:&quot;blob-report-3&quot;,&quot;artifactId&quot;:4512238999,&quot;sizeBytes&quot;:11126,&quot;status&quot;:&quot;failed&quot;,&quot;errorMessage&quot;:&quot;Failed to download artifact \\&quot;blob-report-3\\&quot;: Command failed: gh run download 19210120509 --name \\&quot;blob-report-3\\&quot; --dir \\&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512238999\\&quot;\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n&quot;}'><td>19210120509</td><td>blob-report-3</td><td>10.9 KB</td><td><span class=\"badge badge-failed\">failed</span></td><td><span class=\"error-text\">Failed to download artifact &quot;blob-report-3&quot;: Command failed: gh run download 19210120509 --name &quot;blob-report-3&quot; --dir &quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512238999&quot;\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\n</span></td><td>\n          <div class=\"artifact-actions\">\n            <button class=\"copy-path-btn\" data-path=\"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512238999\" title=\"Copy artifact path\">Copy Path</button>\n          </div>\n        </td></tr><tr data-row='{&quot;runId&quot;:&quot;19210120509&quot;,&quot;artifactName&quot;:&quot;blob-report-4&quot;,&quot;artifactId&quot;:4512239674,&quot;sizeBytes&quot;:13334,&quot;status&quot;:&quot;failed&quot;,&quot;errorMessage&quot;:&quot;Failed to download artifact \\&quot;blob-report-4\\&quot;: Command failed: gh run download 19210120509 --name \\&quot;blob-report-4\\&quot; --dir \\&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512239674\\&quot;\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n&quot;}'><td>19210120509</td><td>blob-report-4</td><td>13.0 KB</td><td><span class=\"badge badge-failed\">failed</span></td><td><span class=\"error-text\">Failed to download artifact &quot;blob-report-4&quot;: Command failed: gh run download 19210120509 --name &quot;blob-report-4&quot; --dir &quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512239674&quot;\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\n</span></td><td>\n          <div class=\"artifact-actions\">\n            <button class=\"copy-path-btn\" data-path=\"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512239674\" title=\"Copy artifact path\">Copy Path</button>\n          </div>\n        </td></tr><tr data-row='{&quot;runId&quot;:&quot;19210120509&quot;,&quot;artifactName&quot;:&quot;blob-report-1&quot;,&quot;artifactId&quot;:4512239754,&quot;sizeBytes&quot;:127111,&quot;status&quot;:&quot;failed&quot;,&quot;errorMessage&quot;:&quot;Failed to download artifact \\&quot;blob-report-1\\&quot;: Command failed: gh run download 19210120509 --name \\&quot;blob-report-1\\&quot; --dir \\&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512239754\\&quot;\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n&quot;}'><td>19210120509</td><td>blob-report-1</td><td>124.1 KB</td><td><span class=\"badge badge-failed\">failed</span></td><td><span class=\"error-text\">Failed to download artifact &quot;blob-report-1&quot;: Command failed: gh run download 19210120509 --name &quot;blob-report-1&quot; --dir &quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512239754&quot;\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\n</span></td><td>\n          <div class=\"artifact-actions\">\n            <button class=\"copy-path-btn\" data-path=\"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512239754\" title=\"Copy artifact path\">Copy Path</button>\n          </div>\n        </td></tr><tr data-row='{&quot;runId&quot;:&quot;19210120509&quot;,&quot;artifactName&quot;:&quot;html-report--attempt-1&quot;,&quot;artifactId&quot;:4512240930,&quot;sizeBytes&quot;:737953,&quot;status&quot;:&quot;failed&quot;,&quot;errorMessage&quot;:&quot;Failed to download artifact \\&quot;html-report--attempt-1\\&quot;: Command failed: gh run download 19210120509 --name \\&quot;html-report--attempt-1\\&quot; --dir \\&quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512240930\\&quot;\\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\\n&quot;}'><td>19210120509</td><td>html-report--attempt-1</td><td>720.7 KB</td><td><span class=\"badge badge-failed\">failed</span></td><td><span class=\"error-text\">Failed to download artifact &quot;html-report--attempt-1&quot;: Command failed: gh run download 19210120509 --name &quot;html-report--attempt-1&quot; --dir &quot;/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512240930&quot;\nerror fetching artifacts: HTTP 404: Not Found (https://api.github.com/repos/jmchilton/gh-ci-artifacts/actions/runs/19210120509/artifacts?per_page=100)\n</span></td><td>\n          <div class=\"artifact-actions\">\n            <button class=\"copy-path-btn\" data-path=\"/tmp/example-pr-18-artifacts/pr-18/raw/19210120509/artifact-4512240930\" title=\"Copy artifact path\">Copy Path</button>\n          </div>\n        </td></tr></tbody></table></div></div>";
+
+    
+
+// Tab switching
+document.addEventListener('click', (e) => {
+  const tabBtn = e.target.closest('.tab-btn');
+  if (tabBtn) {
+    const tabName = tabBtn.dataset.tab;
+
+    // Update button states
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tabName);
+    });
+
+    // Update content visibility
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.classList.toggle('active', content.dataset.tabContent === tabName);
+    });
+  }
+});
+
+
+// Toggle directory expansion
+document.addEventListener('click', (e) => {
+  const toggle = e.target.closest('.toggle');
+  if (toggle && toggle.closest('.tree-node.directory')) {
+    const node = toggle.closest('.tree-node');
+    const children = node.querySelector('.children');
+    if (children) {
+      children.classList.toggle('hidden');
+      toggle.textContent = children.classList.contains('hidden') ? '▶' : '▼';
+    }
+  }
+});
+
+
+let currentView = 'rich'; // 'rich' or 'raw'
+let currentFilePath = null;
+let currentFileContent = null;
+
+// Preview file - click on file row
+document.addEventListener('click', (e) => {
+  const fileNode = e.target.closest('.tree-node.file.clickable');
+  if (fileNode) {
+    const path = fileNode.dataset.path;
+    const content = window.fileData[path];
+    const filename = path.split('/').pop();
+    
+    currentFilePath = path;
+    currentFileContent = content;
+    
+    showPreview(filename, path, content);
+  }
+});
+
+function showPreview(filename, path, content) {
+  const panel = document.querySelector('.preview-panel');
+  const title = document.querySelector('.preview-title');
+  const contentDiv = document.querySelector('.preview-content');
+  
+  title.textContent = filename;
+  
+  // Check if this is a special JSON file
+  const isSpecialJson = ['summary.json', 'catalog.json', 'artifacts.json'].includes(filename);
+  
+  // Add/update view toggle buttons
+  let controls = document.querySelector('.preview-controls');
+  if (!controls) {
+    controls = document.createElement('div');
+    controls.className = 'preview-controls';
+    document.querySelector('.preview-header').insertBefore(
+      controls,
+      document.querySelector('.close-btn')
+    );
+  }
+  
+  if (isSpecialJson) {
+    controls.innerHTML = `
+      <div class="view-toggle">
+        <button class="view-toggle-btn ${currentView === 'rich' ? 'active' : ''}" data-view="rich">Rich View</button>
+        <button class="view-toggle-btn ${currentView === 'raw' ? 'active' : ''}" data-view="raw">Raw JSON</button>
+      </div>
+    `;
+  } else {
+    controls.innerHTML = '';
+    currentView = 'raw'; // Always show raw for non-special files
+  }
+  
+  renderPreviewContent(filename, path, content, isSpecialJson);
+  panel.classList.remove('hidden');
+}
+
+function renderPreviewContent(filename, path, content, isSpecialJson) {
+  const contentDiv = document.querySelector('.preview-content');
+  
+  if (!content) {
+    contentDiv.className = 'preview-content';
+    contentDiv.innerHTML = '<p>Preview not available. File too large or not embedded.</p>';
+    return;
+  }
+  
+  if (isSpecialJson && currentView === 'rich') {
+    contentDiv.className = 'preview-content';
+    try {
+      const data = JSON.parse(content);
+      contentDiv.innerHTML = renderSpecialJson(filename, data);
+    } catch (e) {
+      contentDiv.className = 'preview-content raw-view';
+      contentDiv.innerHTML = '<pre>Error parsing JSON: ' + e.message + '</pre>';
+    }
+  } else {
+    // Raw view
+    contentDiv.className = 'preview-content raw-view';
+    if (path.endsWith('.json')) {
+      try {
+        const parsed = JSON.parse(content);
+        const formatted = JSON.stringify(parsed, null, 2);
+        contentDiv.innerHTML = '<pre>' + syntaxHighlightJson(formatted) + '</pre>';
+      } catch (e) {
+        contentDiv.innerHTML = '<pre>' + escapeHtml(content) + '</pre>';
+      }
+    } else {
+      contentDiv.innerHTML = '<pre>' + escapeHtml(content) + '</pre>';
+    }
+  }
+}
+
+function renderSpecialJson(filename, data) {
+  if (filename === 'summary.json') {
+    return renderSummaryRich(data);
+  } else if (filename === 'catalog.json') {
+    return renderCatalogRich(data);
+  } else if (filename === 'artifacts.json') {
+    return renderArtifactsRich(data);
+  }
+  return '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+}
+
+// View toggle handler
+document.addEventListener('click', (e) => {
+  const toggleBtn = e.target.closest('.view-toggle-btn');
+  if (toggleBtn) {
+    const view = toggleBtn.dataset.view;
+    currentView = view;
+    
+    // Update button states
+    document.querySelectorAll('.view-toggle-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.view === view);
+    });
+    
+    // Re-render content
+    const filename = currentFilePath.split('/').pop();
+    const isSpecialJson = ['summary.json', 'catalog.json', 'artifacts.json'].includes(filename);
+    renderPreviewContent(filename, currentFilePath, currentFileContent, isSpecialJson);
+  }
+});
+
+// Close preview
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.close-btn')) {
+    document.querySelector('.preview-panel').classList.add('hidden');
+    currentFilePath = null;
+    currentFileContent = null;
+    currentView = 'rich';
+  }
+});
+
+// Prevent action buttons from triggering file preview
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.file-actions')) {
+    e.stopPropagation();
+  }
+});
+
+// Copy path to clipboard
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.copy-path-btn');
+  if (btn) {
+    const path = btn.dataset.path;
+    navigator.clipboard.writeText(path).then(() => {
+      const originalText = btn.textContent;
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+});
+
+// Expandable sections
+document.addEventListener('click', (e) => {
+  const header = e.target.closest('.section-header');
+  if (header) {
+    const sectionId = header.dataset.section;
+    const content = document.querySelector(`[data-section-content="${sectionId}"]`);
+    const toggle = header.querySelector('.toggle');
+    
+    if (content) {
+      content.classList.toggle('hidden');
+      toggle.textContent = content.classList.contains('hidden') ? '▶' : '▼';
+    }
+  }
+});
+
+
+// Table sorting
+document.addEventListener('click', (e) => {
+  const th = e.target.closest('th.sortable');
+  if (th) {
+    const table = th.closest('table');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr:not(.expanded-row)'));
+    const key = th.dataset.key;
+    const currentSort = th.classList.contains('sorted-asc') ? 'asc' : 
+                        th.classList.contains('sorted-desc') ? 'desc' : 'none';
+    
+    // Clear other column sorts
+    table.querySelectorAll('th').forEach(h => {
+      h.classList.remove('sorted-asc', 'sorted-desc');
+    });
+    
+    // Determine new sort direction
+    const newSort = currentSort === 'none' ? 'asc' : 
+                    currentSort === 'asc' ? 'desc' : 'asc';
+    th.classList.add('sorted-' + newSort);
+    
+    // Sort rows
+    rows.sort((a, b) => {
+      const aData = JSON.parse(a.dataset.row);
+      const bData = JSON.parse(b.dataset.row);
+      const aVal = aData[key];
+      const bVal = bData[key];
+      
+      let comparison = 0;
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        comparison = aVal - bVal;
+      } else {
+        comparison = String(aVal || '').localeCompare(String(bVal || ''));
+      }
+      
+      return newSort === 'asc' ? comparison : -comparison;
+    });
+    
+    // Re-append rows
+    rows.forEach(row => tbody.appendChild(row));
+  }
+});
+
+// Table search
+document.addEventListener('input', (e) => {
+  const search = e.target.closest('.table-search');
+  if (search) {
+    const tableId = search.dataset.table;
+    const table = document.getElementById(tableId);
+    const query = search.value.toLowerCase();
+    
+    const rows = table.querySelectorAll('tbody tr:not(.expanded-row)');
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      if (text.includes(query)) {
+        row.classList.remove('filtered-out');
+      } else {
+        row.classList.add('filtered-out');
+        // Close expanded row if open
+        const next = row.nextElementSibling;
+        if (next && next.classList.contains('expanded-row')) {
+          next.remove();
+          row.querySelector('.row-toggle').textContent = '▶';
+        }
+      }
+    });
+  }
+});
+
+// Table filtering
+document.addEventListener('change', (e) => {
+  const filter = e.target.closest('.table-filter');
+  if (filter) {
+    const tableId = filter.dataset.table;
+    const filterKey = filter.dataset.filter;
+    const filterValue = filter.value;
+    const table = document.getElementById(tableId);
+    
+    const rows = table.querySelectorAll('tbody tr:not(.expanded-row)');
+    rows.forEach(row => {
+      const rowData = JSON.parse(row.dataset.row);
+      const cellValue = rowData[filterKey];
+      
+      if (!filterValue || String(cellValue) === filterValue) {
+        row.classList.remove('filtered-out');
+      } else {
+        row.classList.add('filtered-out');
+        // Close expanded row if open
+        const next = row.nextElementSibling;
+        if (next && next.classList.contains('expanded-row')) {
+          next.remove();
+          row.querySelector('.row-toggle').textContent = '▶';
+        }
+      }
+    });
+  }
+});
+
+// Type card filtering (catalog view)
+document.addEventListener('click', (e) => {
+  const typeCard = e.target.closest('.type-card');
+  if (typeCard) {
+    const type = typeCard.dataset.type;
+    const table = document.getElementById('catalog-table');
+    const filter = table.closest('.table-container').querySelector('.table-filter[data-filter="detectedType"]');
+    
+    if (filter) {
+      filter.value = type;
+      filter.dispatchEvent(new Event('change'));
+    }
+  }
+});
+
+// Status card filtering (artifacts view)
+document.addEventListener('click', (e) => {
+  const statusCard = e.target.closest('.status-card');
+  if (statusCard) {
+    const status = statusCard.dataset.status;
+    const table = document.getElementById('artifacts-table');
+    const filter = table.closest('.table-container').querySelector('.table-filter[data-filter="status"]');
+    
+    if (filter) {
+      filter.value = status;
+      filter.dispatchEvent(new Event('change'));
+    }
+  }
+});
+
+// Row toggle for summary runs table (inside rich view)
+document.addEventListener('click', (e) => {
+  const toggle = e.target.closest('.row-toggle');
+  if (toggle) {
+    const row = toggle.closest('tr');
+    const nextRow = row.nextElementSibling;
+    
+    if (nextRow && nextRow.classList.contains('expanded-row')) {
+      // Collapse
+      nextRow.remove();
+      toggle.textContent = '▶';
+    } else {
+      // Expand
+      const rowData = JSON.parse(row.dataset.row);
+      const detailRow = document.createElement('tr');
+      detailRow.className = 'expanded-row';
+      detailRow.innerHTML = '<td colspan="7">' + renderRunDetails(rowData) + '</td>';
+      row.after(detailRow);
+      toggle.textContent = '▼';
+    }
+  }
+});
+
+function renderRunDetails(run) {
+  let html = '<div class="run-details">';
+  
+  // Artifacts
+  if (run.artifacts && run.artifacts.length > 0) {
+    html += '<h4>Artifacts</h4>';
+    html += '<table class="detail-table"><thead><tr>';
+    html += '<th>Name</th><th>Status</th><th>Size</th><th>Type</th></tr></thead><tbody>';
+    run.artifacts.forEach(a => {
+      const statusBadge = '<span class="badge badge-' + a.downloadStatus + '">' + a.downloadStatus + '</span>';
+      const size = a.sizeBytes ? formatBytes(a.sizeBytes) : '';
+      const type = a.detectedType || '';
+      html += '<tr><td>' + a.name + '</td><td>' + statusBadge + '</td><td>' + size + '</td><td>' + type + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+  
+  // Logs
+  if (run.logs && run.logs.length > 0) {
+    html += '<h4>Logs</h4>';
+    html += '<table class="detail-table"><thead><tr>';
+    html += '<th>Job Name</th><th>Status</th><th>Linter Outputs</th><th>GitHub Actions</th></tr></thead><tbody>';
+    run.logs.forEach(l => {
+      const statusBadge = '<span class="badge badge-' + l.extractionStatus + '">' + l.extractionStatus + '</span>';
+      const linters = l.linterOutputs ? l.linterOutputs.length : 0;
+      let jobLink = '';
+      if (l.jobId && run.repo && run.runId) {
+        const jobUrl = 'https://github.com/' + run.repo + '/actions/runs/' + run.runId + '/job/' + l.jobId;
+        jobLink = '<a href="' + jobUrl + '" target="_blank" rel="noopener noreferrer">View Logs</a>';
+      }
+      html += '<tr><td>' + l.jobName + '</td><td>' + statusBadge + '</td><td>' + linters + '</td><td>' + jobLink + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+  
+  // Validation
+  if (run.validationResult) {
+    html += '<h4>Validation Issues</h4>';
+    const vr = run.validationResult;
+    html += '<ul class="validation-list">';
+    vr.missingRequired.forEach(v => {
+      html += '<li class="validation-item-error"><code>' + v.pattern + '</code> (required)';
+      if (v.reason) html += ' - ' + v.reason;
+      html += '</li>';
+    });
+    vr.missingOptional.forEach(v => {
+      html += '<li class="validation-item-warning"><code>' + v.pattern + '</code> (optional)';
+      if (v.reason) html += ' - ' + v.reason;
+      html += '</li>';
+    });
+    html += '</ul>';
+  }
+  
+  html += '</div>';
+  return html;
+}
+
+
+// Artifact type card popup on mouseover
+let artifactPopup = null;
+let validationPopup = null;
+let conversionPopup = null;
+let headerPopup = null;
+
+// Helper function to decode HTML entities
+function decodeHtmlEntities(html) {
+  return html
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
+// Helper function to position popup near element
+function positionPopup(popup, trigger) {
+  const rect = trigger.getBoundingClientRect();
+  popup.style.position = 'fixed';
+  popup.style.top = (rect.bottom + 5) + 'px';
+  popup.style.left = Math.max(10, rect.left) + 'px';
+  popup.style.maxWidth = '400px';
+  popup.style.zIndex = '10000';
+}
+
+document.addEventListener('mouseover', (e) => {
+  const trigger = e.target.closest('.artifact-type-trigger');
+  if (trigger && trigger.dataset.artifactCard) {
+    // Hide any existing popup
+    if (artifactPopup) {
+      artifactPopup.remove();
+    }
+
+    // Create and show popup
+    artifactPopup = document.createElement('div');
+    artifactPopup.className = 'artifact-card-tooltip';
+
+    // Decode the artifact card HTML
+    const cardHtml = decodeHtmlEntities(trigger.dataset.artifactCard);
+    artifactPopup.innerHTML = cardHtml;
+    document.body.appendChild(artifactPopup);
+
+    // Position popup near the trigger element
+    positionPopup(artifactPopup, trigger);
+  }
+});
+
+document.addEventListener('mouseout', (e) => {
+  const trigger = e.target.closest('.artifact-type-trigger');
+  if (trigger && artifactPopup) {
+    // Check if we're moving to the popup itself
+    if (!e.relatedTarget || !e.relatedTarget.closest('.artifact-card-tooltip')) {
+      artifactPopup.remove();
+      artifactPopup = null;
+    }
+  }
+});
+
+// Validation column tooltips
+document.addEventListener('mouseover', (e) => {
+  const trigger = e.target.closest('.validation-trigger');
+  if (trigger && trigger.dataset.validationInfo) {
+    // Hide any existing popup
+    if (validationPopup) {
+      validationPopup.remove();
+    }
+
+    // Create and show popup
+    validationPopup = document.createElement('div');
+    validationPopup.className = 'artifact-card-tooltip';
+
+    // Decode the validation info HTML
+    const infoHtml = decodeHtmlEntities(trigger.dataset.validationInfo);
+    validationPopup.innerHTML = infoHtml;
+    document.body.appendChild(validationPopup);
+
+    // Position popup near the trigger element
+    positionPopup(validationPopup, trigger);
+  }
+});
+
+document.addEventListener('mouseout', (e) => {
+  const trigger = e.target.closest('.validation-trigger');
+  if (trigger && validationPopup) {
+    // Check if we're moving to the popup itself
+    if (!e.relatedTarget || !e.relatedTarget.closest('.artifact-card-tooltip')) {
+      validationPopup.remove();
+      validationPopup = null;
+    }
+  }
+});
+
+// Conversion column tooltips
+document.addEventListener('mouseover', (e) => {
+  const trigger = e.target.closest('.conversion-trigger');
+  if (trigger && trigger.dataset.conversionInfo) {
+    // Hide any existing popup
+    if (conversionPopup) {
+      conversionPopup.remove();
+    }
+
+    // Create and show popup
+    conversionPopup = document.createElement('div');
+    conversionPopup.className = 'artifact-card-tooltip';
+
+    // Decode the conversion info HTML
+    const infoHtml = decodeHtmlEntities(trigger.dataset.conversionInfo);
+    conversionPopup.innerHTML = infoHtml;
+    document.body.appendChild(conversionPopup);
+
+    // Position popup near the trigger element
+    positionPopup(conversionPopup, trigger);
+  }
+});
+
+document.addEventListener('mouseout', (e) => {
+  const trigger = e.target.closest('.conversion-trigger');
+  if (trigger && conversionPopup) {
+    // Check if we're moving to the popup itself
+    if (!e.relatedTarget || !e.relatedTarget.closest('.artifact-card-tooltip')) {
+      conversionPopup.remove();
+      conversionPopup = null;
+    }
+  }
+});
+
+// Column header tooltips
+document.addEventListener('mouseover', (e) => {
+  const trigger = e.target.closest('.column-header-trigger');
+  if (trigger && trigger.dataset.headerTooltip) {
+    // Hide any existing popup
+    if (headerPopup) {
+      headerPopup.remove();
+    }
+
+    // Create and show popup
+    headerPopup = document.createElement('div');
+    headerPopup.className = 'artifact-card-tooltip';
+
+    // Create header tooltip content
+    const tooltipText = decodeHtmlEntities(trigger.dataset.headerTooltip);
+    headerPopup.innerHTML = '<div class="header-tooltip"><p>' + tooltipText + '</p></div>';
+    document.body.appendChild(headerPopup);
+
+    // Position popup near the trigger element
+    positionPopup(headerPopup, trigger);
+  }
+});
+
+document.addEventListener('mouseout', (e) => {
+  const trigger = e.target.closest('.column-header-trigger');
+  if (trigger && headerPopup) {
+    // Check if we're moving to the popup itself
+    if (!e.relatedTarget || !e.relatedTarget.closest('.artifact-card-tooltip')) {
+      headerPopup.remove();
+      headerPopup = null;
+    }
+  }
+});
+
+// Keep popup visible when hovering over it
+document.addEventListener('mouseenter', (e) => {
+  const popup = e.target.closest('.artifact-card-tooltip');
+  if (popup && (artifactPopup === popup || validationPopup === popup || conversionPopup === popup || headerPopup === popup)) {
+    // Keep it alive
+  }
+}, true);
+
+document.addEventListener('mouseleave', (e) => {
+  const popup = e.target.closest('.artifact-card-tooltip');
+  if (popup && (artifactPopup === popup || validationPopup === popup || conversionPopup === popup || headerPopup === popup)) {
+    popup.remove();
+    if (artifactPopup === popup) artifactPopup = null;
+    if (validationPopup === popup) validationPopup = null;
+    if (conversionPopup === popup) conversionPopup = null;
+    if (headerPopup === popup) headerPopup = null;
+  }
+}, true);
+
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function formatBytes(bytes) {
+  if (!bytes || bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return (bytes / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i];
+}
+
+function syntaxHighlightJson(json) {
+  json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return json.replace(
+    /(\s*"[^"]+"):/g,
+    '<span class="json-key">$1</span>:'
+  ).replace(
+    /: ("[^"]*")/g,
+    ': <span class="json-string">$1</span>'
+  ).replace(
+    /: (-?\d+\.?\d*)/g,
+    ': <span class="json-number">$1</span>'
+  ).replace(
+    /: (true|false)/g,
+    ': <span class="json-boolean">$1</span>'
+  ).replace(
+    /: (null)/g,
+    ': <span class="json-null">$1</span>'
+  );
+}
+
+// Rich renderers just return the pre-rendered HTML
+function renderSummaryRich(data) {
+  return window.__summaryRenderer;
+}
+
+function renderCatalogRich(data) {
+  return window.__catalogRenderer;
+}
+
+function renderArtifactsRich(data) {
+  return window.__artifactsRenderer;
+}
+
+
+  </script>
+</body>
+</html>
