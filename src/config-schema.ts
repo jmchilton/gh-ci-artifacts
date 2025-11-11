@@ -1,35 +1,14 @@
 import { z } from "zod";
+import { ARTIFACT_TYPE_REGISTRY } from "artifact-detective";
 import type { ArtifactType } from "./types.js";
 
-// Known artifact types from artifact-detective (for validation)
-// This list should be kept in sync with artifact-detective's ArtifactType union
-const KNOWN_ARTIFACT_TYPES = [
-  "playwright-json",
-  "jest-json",
-  "jest-html",
-  "pytest-json",
-  "pytest-html",
-  "junit-xml",
-  "checkstyle-xml",
-  "checkstyle-sarif-json",
-  "spotbugs-xml",
-  "surefire-html",
-  "eslint-json",
-  "mypy-ndjson",
-  "mypy-json",
-  "eslint-txt",
-  "tsc-txt",
-  "ruff-txt",
-  "mypy-txt",
-  "flake8-txt",
-  "cargo-test-txt",
-  "clippy-ndjson",
-  "clippy-json",
-  "clippy-txt",
-  "rustfmt-txt",
-  "gofmt-txt",
-  "go-test-ndjson",
-] as const;
+// Get valid artifact types dynamically from artifact-detective's registry
+// Filter out "binary" and "unknown" as they're not valid configuration types
+const VALID_ARTIFACT_TYPES = Object.keys(ARTIFACT_TYPE_REGISTRY).filter(
+  (type): type is ArtifactType => {
+    return type !== "binary" && type !== "unknown";
+  },
+) as ArtifactType[];
 
 // Schema for regex pattern validation
 const regexPatternSchema = z
@@ -46,15 +25,15 @@ const regexPatternSchema = z
     { message: "Must be a valid regex pattern" },
   );
 
-// Schema for artifact type (validates against known types)
+// Schema for artifact type (validates against known types from artifact-detective)
 const artifactTypeSchema = z
   .string()
   .refine(
     (type): type is ArtifactType => {
-      return KNOWN_ARTIFACT_TYPES.includes(type as any);
+      return VALID_ARTIFACT_TYPES.includes(type as ArtifactType);
     },
     {
-      message: `Must be one of: ${KNOWN_ARTIFACT_TYPES.join(", ")}`,
+      message: `Must be one of: ${VALID_ARTIFACT_TYPES.join(", ")}`,
     },
   );
 
