@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.14.0...v1.15.0) (2025-11-11)
+
+
+### Features
+
+* export configSchema for programmatic validation ([721c285](https://github.com/jmchilton/gh-ci-artifacts/commit/721c2854c4c2d9c0263d81f41f3bede90c0f7dc7))
+
 # [1.14.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.13.0...v1.14.0) (2025-11-09)
 
 
