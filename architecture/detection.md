@@ -117,7 +117,7 @@ This allows users to handle:
 
 ```typescript
 // For each file in artifact directory
-const detection = [`detectArtifactType()`](https://jmchilton.github.io/artifact-detective/#/api/functions/detectArtifactType)(filePath, { validate: true });
+const detection = detectArtifactType(filePath, { validate: true });
 
 // Apply custom mapping if unknown
 const finalType = applyCustomArtifactType(

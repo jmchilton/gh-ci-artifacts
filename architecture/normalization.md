@@ -216,7 +216,7 @@ src/file2.py:5: error: Missing return type
 Normalization uses [`ARTIFACT_TYPE_REGISTRY`](https://jmchilton.github.io/artifact-detective/#/api/variables/ARTIFACT_TYPE_REGISTRY) from artifact-detective:
 
 ```typescript
-const registryEntry = [`ARTIFACT_TYPE_REGISTRY`](https://jmchilton.github.io/artifact-detective/#/api/variables/ARTIFACT_TYPE_REGISTRY)[detectedType];
+const registryEntry = ARTIFACT_TYPE_REGISTRY[detectedType];
 if (registryEntry?.normalize) {
   // Type supports normalization
   const jsonData = registryEntry.normalize(fileContent);
@@ -256,7 +256,7 @@ The registry is dynamically loaded, so:
 **Code:**
 ```typescript
 try {
-  const jsonData = [`convertToJSON()`](https://jmchilton.github.io/artifact-detective/#/api/functions/convertToJSON)(detection, filePath);
+  const jsonData = convertToJSON(detection, filePath);
   if (jsonData) {
     // Save normalized JSON
   } else {

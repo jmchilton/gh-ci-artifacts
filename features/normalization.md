@@ -55,8 +55,8 @@ The tool automatically detects which artifacts can be normalized:
 
 ```typescript
 // Simplified process
-if (!isJSON(detection) && [`canConvertToJSON()`](https://jmchilton.github.io/artifact-detective/#/api/functions/canConvertToJSON)(detection)) {
-  const jsonData = [`convertToJSON()`](https://jmchilton.github.io/artifact-detective/#/api/functions/convertToJSON)(detection, filePath);
+if (!isJSON(detection) && canConvertToJSON(detection)) {
+  const jsonData = convertToJSON(detection, filePath);
   // Save normalized JSON to converted/ directory
 }
 ```

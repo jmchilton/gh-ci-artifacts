@@ -24,7 +24,7 @@ The tool uses [`detectArtifactType()`](https://jmchilton.github.io/artifact-dete
 - **Validates content** - When `validate: true` is used, verifies content matches expected format
 
 ```typescript
-const detection = [`detectArtifactType()`](https://jmchilton.github.io/artifact-detective/#/api/functions/detectArtifactType)(filePath, { validate: true });
+const detection = detectArtifactType(filePath, { validate: true });
 // Returns:
 // {
 //   detectedType: "jest-json" | "playwright-html" | "eslint-txt" | "unknown" | ...
