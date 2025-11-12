@@ -1,5 +1,5 @@
 import { readFileSync, existsSync } from "fs";
-import { join } from "path";
+import { join, isAbsolute } from "path";
 import { parse as parseYAML } from "yaml";
 import type { Config, SkipPattern, ArtifactTypeMapping } from "./types.js";
 
@@ -36,53 +36,54 @@ function validateCustomArtifactTypes(
   }
 }
 
-export function loadConfig(cwd: string = process.cwd()): Config {
+export function loadConfig(
+  cwd: string = process.cwd(),
+  configPath?: string,
+): Config {
+  // If explicit path provided, use it (absolute or relative to cwd)
+  if (configPath) {
+    const absolutePath = isAbsolute(configPath) ? configPath : join(cwd, configPath);
+
+    if (!existsSync(absolutePath)) {
+      throw new Error(`Config file not found: ${configPath}`);
+    }
+
+    try {
+      const configContent = readFileSync(absolutePath, "utf-8");
+      const isYAML =
+        configPath.endsWith(".yml") || configPath.endsWith(".yaml");
+      const config = isYAML
+        ? (parseYAML(configContent) as Config)
+        : (JSON.parse(configContent) as Config);
+
+      validateConfig(config);
+      return config;
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith("Config file")) {
+        throw error;
+      }
+      throw new Error(
+        `Failed to parse ${configPath}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
   // Check for config files in order of preference
   for (const filename of CONFIG_FILENAMES) {
-    const configPath = join(cwd, filename);
+    const filepath = join(cwd, filename);
 
-    if (!existsSync(configPath)) {
+    if (!existsSync(filepath)) {
       continue;
     }
 
     try {
-      const configContent = readFileSync(configPath, "utf-8");
+      const configContent = readFileSync(filepath, "utf-8");
       const isYAML = filename.endsWith(".yml") || filename.endsWith(".yaml");
       const config = isYAML
         ? (parseYAML(configContent) as Config)
         : (JSON.parse(configContent) as Config);
 
-      // Validate skip patterns
-      if (config.skipArtifacts) {
-        validateSkipPatterns(config.skipArtifacts, "global skipArtifacts");
-      }
-
-      // Validate custom artifact type mappings
-      if (config.customArtifactTypes) {
-        validateCustomArtifactTypes(
-          config.customArtifactTypes,
-          "global customArtifactTypes",
-        );
-      }
-
-      if (config.workflows) {
-        for (const workflow of config.workflows) {
-          if (workflow.skipArtifacts) {
-            validateSkipPatterns(
-              workflow.skipArtifacts,
-              `workflow "${workflow.workflow}" skipArtifacts`,
-            );
-          }
-
-          if (workflow.customArtifactTypes) {
-            validateCustomArtifactTypes(
-              workflow.customArtifactTypes,
-              `workflow "${workflow.workflow}" customArtifactTypes`,
-            );
-          }
-        }
-      }
-
+      validateConfig(config);
       return config;
     } catch (error) {
       throw new Error(
@@ -92,6 +93,39 @@ export function loadConfig(cwd: string = process.cwd()): Config {
   }
 
   return {};
+}
+
+function validateConfig(config: Config): void {
+  // Validate skip patterns
+  if (config.skipArtifacts) {
+    validateSkipPatterns(config.skipArtifacts, "global skipArtifacts");
+  }
+
+  // Validate custom artifact type mappings
+  if (config.customArtifactTypes) {
+    validateCustomArtifactTypes(
+      config.customArtifactTypes,
+      "global customArtifactTypes",
+    );
+  }
+
+  if (config.workflows) {
+    for (const workflow of config.workflows) {
+      if (workflow.skipArtifacts) {
+        validateSkipPatterns(
+          workflow.skipArtifacts,
+          `workflow "${workflow.workflow}" skipArtifacts`,
+        );
+      }
+
+      if (workflow.customArtifactTypes) {
+        validateCustomArtifactTypes(
+          workflow.customArtifactTypes,
+          `workflow "${workflow.workflow}" customArtifactTypes`,
+        );
+      }
+    }
+  }
 }
 
 export function mergeConfig(

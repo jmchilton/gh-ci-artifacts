@@ -32,6 +32,10 @@ program
   )
   .option("-o, --output-dir <dir>", "Output directory")
   .option(
+    "-c, --config <path>",
+    "Path to config file (absolute or relative to cwd)",
+  )
+  .option(
     "--remote <name>",
     "Git remote name for branch mode (default: origin)",
   )
@@ -78,7 +82,7 @@ program
       // Use current repo if not specified
       const targetRepo = options.repo || getCurrentRepo();
 
-      const fileConfig = loadConfig();
+      const fileConfig = loadConfig(process.cwd(), options.config);
       const config = mergeConfig(fileConfig, {
         outputDir: options.outputDir,
         maxRetries: options.maxRetries,

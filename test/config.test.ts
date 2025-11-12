@@ -385,3 +385,96 @@ describe("loadConfig with expectArtifacts", () => {
     expect(config.workflows![0].expectArtifacts).toHaveLength(1);
   });
 });
+
+describe("loadConfig with explicit path", () => {
+  const testDir = join(process.cwd(), "test-tmp-config-explicit");
+  const configPath = join(testDir, "custom-config.json");
+  const subdir = join(testDir, "subdir");
+  const subdirConfigPath = join(subdir, "nested.json");
+
+  beforeEach(() => {
+    if (existsSync(testDir)) {
+      rmSync(testDir, { recursive: true });
+    }
+    mkdirSync(testDir, { recursive: true });
+    mkdirSync(subdir, { recursive: true });
+  });
+
+  afterEach(() => {
+    if (existsSync(testDir)) {
+      rmSync(testDir, { recursive: true });
+    }
+  });
+
+  it("loads config from explicit absolute path", () => {
+    const config: Config = { outputDir: "/explicit/output" };
+    writeFileSync(configPath, JSON.stringify(config));
+
+    const loaded = loadConfig(testDir, configPath);
+    expect(loaded.outputDir).toBe("/explicit/output");
+  });
+
+  it("loads config from explicit relative path", () => {
+    const config: Config = { maxRetries: 7 };
+    writeFileSync(configPath, JSON.stringify(config));
+
+    const loaded = loadConfig(testDir, "custom-config.json");
+    expect(loaded.maxRetries).toBe(7);
+  });
+
+  it("loads config from nested relative path", () => {
+    const config: Config = { defaultRepo: "test/repo" };
+    writeFileSync(subdirConfigPath, JSON.stringify(config));
+
+    const loaded = loadConfig(testDir, "subdir/nested.json");
+    expect(loaded.defaultRepo).toBe("test/repo");
+  });
+
+  it("loads YAML from explicit path", () => {
+    const yamlConfigPath = join(testDir, "custom.yml");
+    writeFileSync(yamlConfigPath, "outputDir: /yaml/output\nmaxRetries: 9");
+
+    const loaded = loadConfig(testDir, "custom.yml");
+    expect(loaded.outputDir).toBe("/yaml/output");
+    expect(loaded.maxRetries).toBe(9);
+  });
+
+  it("throws when explicit path does not exist", () => {
+    expect(() => loadConfig(testDir, "nonexistent.json")).toThrow(
+      "Config file not found: nonexistent.json",
+    );
+  });
+
+  it("throws when explicit path has invalid JSON", () => {
+    writeFileSync(configPath, "{ invalid json }");
+
+    expect(() => loadConfig(testDir, "custom-config.json")).toThrow(
+      "Failed to parse custom-config.json",
+    );
+  });
+
+  it("explicit path takes precedence over default names", () => {
+    const customConfig: Config = { outputDir: "/custom" };
+    const defaultConfig: Config = { outputDir: "/default" };
+
+    writeFileSync(configPath, JSON.stringify(customConfig));
+    writeFileSync(
+      join(testDir, ".gh-ci-artifacts.json"),
+      JSON.stringify(defaultConfig),
+    );
+
+    const loaded = loadConfig(testDir, "custom-config.json");
+    expect(loaded.outputDir).toBe("/custom");
+  });
+
+  it("validates patterns in explicitly loaded config", () => {
+    const configWithBadPattern: Config = {
+      skipArtifacts: [{ pattern: "[invalid(regex" }],
+    };
+    writeFileSync(configPath, JSON.stringify(configWithBadPattern));
+
+    expect(() => loadConfig(testDir, "custom-config.json")).toThrow(
+      "Invalid regex pattern",
+    );
+  });
+});
