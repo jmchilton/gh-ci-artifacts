@@ -16,7 +16,7 @@ The `gh-ci-artifacts` tool generates a structured directory with JSON files, HTM
 │   │   │   ├── artifact-name.zip
 │   │   │   └── job-name.log
 │   │   └── 1234568/
-│   └── converted/              # Converted artifacts (HTML → JSON)
+│   └── converted/              # Normalized artifacts (HTML/NDJSON/TXT → JSON)
 │       ├── pytest-report.json
 │       └── playwright-report.json
 ```

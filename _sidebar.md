@@ -11,7 +11,7 @@
 
 - **Features**
   - [Artifact Detection](features/artifact-detection.md)
-  - [HTML Conversion](features/html-conversion.md)
+  - [Normalization](features/normalization.md)
   - [Log Extraction](features/log-extraction.md)
   - [Artifact Extraction from Logs](features/artifact-extraction-from-logs.md)
   - [Resume Mode](features/resume-mode.md)
