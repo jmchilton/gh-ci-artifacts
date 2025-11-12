@@ -4,4 +4,5 @@ export { configSchema } from "./config-schema.js";
 export { validateGhSetup } from "./utils/gh.js";
 export { Logger } from "./utils/logger.js";
 export { generateHtmlViewer } from "./html-viewer/index.js";
-export { downloadArtifacts } from "./downloader.js";
+export { runAction } from "./action.js";
+export type { ActionOptions, ActionResult } from "./action.js";

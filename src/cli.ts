@@ -7,17 +7,8 @@ import { join, dirname } from "path";
 import { loadConfig, mergeConfig, getOutputDir } from "./config.js";
 import { validateGhSetup, getCurrentRepo } from "./utils/gh.js";
 import { Logger } from "./utils/logger.js";
-import { downloadArtifacts } from "./downloader.js";
-import { extractLogs } from "./log-extractor.js";
-import { catalogArtifacts } from "./cataloger.js";
-import { collectArtifactsFromLogs } from "./linter-collector.js";
-import { generateSummary, determineExitCode } from "./summary-generator.js";
-import type {
-  Config,
-  JobLog,
-  ArtifactExtractionConfig,
-  ArtifactTypeMapping,
-} from "./types.js";
+import { runAction } from "./action.js";
+import type { Config } from "./types.js";
 
 // Read version from package.json
 const __filename = fileURLToPath(import.meta.url);
@@ -143,13 +134,7 @@ program
         logger.info("Dry-run mode: No files will be downloaded");
       }
 
-      logger.info("\n=== Downloading artifacts ===");
-      if (!options.includeSuccesses) {
-        logger.info(
-          "Skipping successful runs (use --include-successes to download all)",
-        );
-      }
-      const result = await downloadArtifacts(
+      const { summary, exitCode } = await runAction(
         targetRepo,
         isPR ? prNumber! : undefined,
         branchName,
@@ -157,153 +142,16 @@ program
         outputDir,
         config,
         logger,
-        options.resume,
-        options.dryRun,
-        options.includeSuccesses,
-        options.wait,
-        !!options.repo,
+        {
+          resume: options.resume,
+          dryRun: options.dryRun,
+          includeSuccesses: options.includeSuccesses,
+          wait: options.wait,
+          repoExplicitlyProvided: !!options.repo,
+        },
       );
 
-      logger.info("\n=== Download complete ===");
-      logger.info(`Head SHA: ${result.headSha}`);
-      logger.info(`Total artifacts processed: ${result.inventory.length}`);
-
-      const successCount = result.inventory.filter(
-        (a) => a.status === "success",
-      ).length;
-      const expiredCount = result.inventory.filter(
-        (a) => a.status === "expired",
-      ).length;
-      const failedCount = result.inventory.filter(
-        (a) => a.status === "failed",
-      ).length;
-
-      logger.info(`  Success: ${successCount}`);
-      logger.info(`  Expired: ${expiredCount}`);
-      logger.info(`  Failed: ${failedCount}`);
-
-      // Extract logs for runs without artifacts
-      let logResult;
-      if (result.runsWithoutArtifacts.length > 0 && !options.dryRun) {
-        logger.info(
-          `\n=== Extracting logs for ${result.runsWithoutArtifacts.length} runs without artifacts ===`,
-        );
-        logResult = await extractLogs(
-          targetRepo,
-          result.runsWithoutArtifacts,
-          outputDir,
-          logger,
-        );
-
-        let totalLogsExtracted = 0;
-        logResult.logs.forEach((runLogs) => {
-          totalLogsExtracted += runLogs.filter(
-            (log) => log.extractionStatus === "success",
-          ).length;
-        });
-
-        logger.info(`\n=== Log extraction complete ===`);
-        logger.info(`Total logs extracted: ${totalLogsExtracted}`);
-
-        // Collect artifacts from logs
-        logger.info("\n=== Collecting artifacts from logs ===");
-
-        // Merge global and workflow-specific extraction configs
-        const extractionConfig = getExtractionConfig(
-          config,
-          result.workflowRuns,
-          logResult.logs,
-        );
-
-        const artifactResult = await collectArtifactsFromLogs(
-          outputDir,
-          logResult.logs,
-          extractionConfig,
-          logger,
-        );
-
-        let totalArtifactOutputs = 0;
-        artifactResult.artifactOutputs.forEach((outputs) => {
-          totalArtifactOutputs += outputs.length;
-        });
-
-        logger.info(`\n=== Artifact collection complete ===`);
-        logger.info(`Total artifacts extracted: ${totalArtifactOutputs}`);
-      }
-
-      // Catalog artifacts and normalize to JSON
-      let catalogResult;
-      if (!options.dryRun) {
-        logger.info("\n=== Cataloging artifacts and normalizing to JSON ===");
-        const allRunIds = Array.from(result.runStates.keys());
-        const customTypes = getCustomArtifactTypes(config, result.workflowRuns);
-        catalogResult = await catalogArtifacts(
-          outputDir,
-          allRunIds,
-          result.inventory,
-          logger,
-          customTypes.length > 0 ? customTypes : undefined,
-        );
-
-        const convertedCount = catalogResult.catalog.filter(
-          (c) => c.converted,
-        ).length;
-        const skippedCount = catalogResult.catalog.filter(
-          (c) => c.skipped,
-        ).length;
-
-        logger.info(`\n=== Cataloging complete ===`);
-        logger.info(
-          `Total artifacts cataloged: ${catalogResult.catalog.length}`,
-        );
-        logger.info(`  Artifacts normalized to JSON: ${convertedCount}`);
-        logger.info(`  Binary files skipped: ${skippedCount}`);
-
-        // Generate master summary
-        logger.info("\n=== Generating summary ===");
-        const summary = generateSummary(
-          {
-            repo: targetRepo,
-            pr: prNumber,
-            prBranch: result.prBranch,
-            branch: branchName,
-            headSha: result.headSha,
-            inventory: result.inventory,
-            runStates: result.runStates,
-            logs: logResult?.logs || new Map(),
-            catalog: catalogResult.catalog,
-            validationResults: result.validationResults,
-            workflowRuns: result.workflowRuns,
-          },
-          outputDir,
-        );
-
-        logger.info(`\n=== Complete ===`);
-        logger.info(`Status: ${summary.status}`);
-
-        // Report validation results if any
-        if (summary.validationResults && summary.validationResults.length > 0) {
-          const totalRequiredViolations = summary.validationResults.reduce(
-            (sum, v) => sum + v.missingRequired.length,
-            0,
-          );
-          const totalOptionalViolations = summary.validationResults.reduce(
-            (sum, v) => sum + v.missingOptional.length,
-            0,
-          );
-
-          if (totalRequiredViolations > 0) {
-            logger.error(
-              `Validation: ${totalRequiredViolations} required artifact(s) missing`,
-            );
-          }
-          if (totalOptionalViolations > 0) {
-            logger.warn(
-              `Validation: ${totalOptionalViolations} optional artifact(s) missing`,
-            );
-          }
-        }
-
+      if (!options.dryRun && summary) {
         logger.info(`Summary saved to: ${outputDir}/summary.json`);
         logger.info(`Catalog saved to: ${outputDir}/catalog.json`);
         logger.info(`Inventory saved to: ${outputDir}/artifacts.json`);
@@ -333,101 +181,13 @@ program
             `\nOpen ${outputDir}/index.html in your browser to explore results`,
           );
         }
-
-        // Exit with appropriate code
-        const exitCode = determineExitCode(summary.status);
-        process.exit(exitCode);
       }
+
+      process.exit(exitCode);
     } catch (error) {
       logger.error(error instanceof Error ? error.message : String(error));
       process.exit(1);
     }
   });
-
-/**
- * Get custom artifact type mappings, merging global and workflow-specific configs.
- * Returns the combined mappings for all workflows being processed.
- */
-function getCustomArtifactTypes(
-  config: Config,
-  workflowRuns: Map<
-    string,
-    { name: string; path: string; run_attempt: number; run_number: number }
-  >,
-): ArtifactTypeMapping[] {
-  const allMappings: ArtifactTypeMapping[] = [];
-
-  // Add global defaults first
-  if (config.customArtifactTypes) {
-    allMappings.push(...config.customArtifactTypes);
-  }
-
-  // Add workflow-specific mappings
-  if (config.workflows) {
-    for (const workflow of config.workflows) {
-      if (workflow.customArtifactTypes) {
-        allMappings.push(...workflow.customArtifactTypes);
-      }
-    }
-  }
-
-  return allMappings;
-}
-
-/**
- * Get artifact extraction configuration, merging global and workflow-specific configs.
- * Returns the appropriate extraction config based on the workflows of the runs being processed.
- */
-function getExtractionConfig(
-  config: Config,
-  workflowRuns: Map<
-    string,
-    { name: string; path: string; run_attempt: number; run_number: number }
-  >,
-  logsByRun: Map<string, JobLog[]>,
-): ArtifactExtractionConfig[] | undefined {
-  // If there are no workflow-specific configs, use global config
-  if (!config.workflows || config.workflows.length === 0) {
-    return config.extractArtifactTypesFromLogs;
-  }
-
-  // Map from runId to workflow name
-  const runToWorkflow = new Map<string, string>();
-  for (const [runId, workflowInfo] of workflowRuns) {
-    runToWorkflow.set(runId, workflowInfo.name);
-  }
-
-  // Collect all extraction configs from runs being processed
-  const extractionConfigs = new Map<string, ArtifactExtractionConfig>();
-
-  // Add global defaults first
-  if (config.extractArtifactTypesFromLogs) {
-    for (const extractConfig of config.extractArtifactTypesFromLogs) {
-      extractionConfigs.set(extractConfig.type, extractConfig);
-    }
-  }
-
-  // Override with workflow-specific configs for runs that match
-  for (const runId of logsByRun.keys()) {
-    const workflowName = runToWorkflow.get(runId);
-    if (!workflowName) continue;
-
-    const matchingWorkflow = config.workflows.find(
-      (w) => w.workflow === workflowName,
-    );
-    if (
-      matchingWorkflow &&
-      matchingWorkflow.extractArtifactTypesFromLogs
-    ) {
-      for (const extractConfig of matchingWorkflow.extractArtifactTypesFromLogs) {
-        extractionConfigs.set(extractConfig.type, extractConfig);
-      }
-    }
-  }
-
-  return extractionConfigs.size > 0
-    ? Array.from(extractionConfigs.values())
-    : undefined;
-}
 
 program.parse();
