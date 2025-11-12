@@ -1,3 +1,10 @@
+# [1.18.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.17.1...v1.18.0) (2025-11-12)
+
+
+### Features
+
+* add skip reason tooltip to HTML report logs ([b5e86d9](https://github.com/jmchilton/gh-ci-artifacts/commit/b5e86d97ba8318fb20a3b7d7d78dab39f544aa54))
+
 ## [1.17.1](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.17.0...v1.17.1) (2025-11-12)
 
 
