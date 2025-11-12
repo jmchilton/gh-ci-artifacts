@@ -402,7 +402,11 @@ function renderRunDetails(run) {
     html += '<table class="detail-table"><thead><tr>';
     html += '<th>Job Name</th><th>Status</th><th>Linter Outputs</th><th>GitHub Actions</th></tr></thead><tbody>';
     run.logs.forEach(l => {
-      const statusBadge = '<span class="badge badge-' + l.extractionStatus + '">' + l.extractionStatus + '</span>';
+      let statusBadge = '<span class="badge badge-' + l.extractionStatus + '"';
+      if (l.skipReason) {
+        statusBadge += ' title="' + escapeHtml(l.skipReason) + '" style="cursor: help;"';
+      }
+      statusBadge += '>' + l.extractionStatus + '</span>';
       const linters = l.linterOutputs ? l.linterOutputs.length : 0;
       let jobLink = '';
       if (l.jobId && run.repo && run.runId) {
