@@ -1,3 +1,10 @@
+## [1.17.1](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.17.0...v1.17.1) (2025-11-12)
+
+
+### Bug Fixes
+
+* skip log extraction for jobs that never ran ([33550ef](https://github.com/jmchilton/gh-ci-artifacts/commit/33550ef98537632bff0e563183dc1992ebc5a7e0))
+
 # [1.17.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.16.0...v1.17.0) (2025-11-12)
 
 
