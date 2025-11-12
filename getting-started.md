@@ -2,19 +2,9 @@
 
 ## Installation
 
-### Using npx (Recommended - No Installation Required)
-
-The easiest way to get started is using `npx`:
-
-```bash
-npx gh-ci-artifacts 123
-```
-
-This downloads and runs the latest version without any installation.
-
 ### Install Globally
 
-For regular use, install globally:
+Install globally for regular use:
 
 ```bash
 npm install -g gh-ci-artifacts
@@ -29,6 +19,16 @@ For use in scripts or automation:
 npm install gh-ci-artifacts
 npx gh-ci-artifacts 123
 ```
+
+### Using npx (No Installation Required)
+
+You can also use `npx` without installing:
+
+```bash
+npx gh-ci-artifacts 123
+```
+
+This downloads and runs the latest version without any installation.
 
 ## Requirements
 
