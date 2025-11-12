@@ -121,9 +121,9 @@ export async function catalogArtifacts(
           }
         }
 
-        // Handle HTML conversion
+        // Handle normalization to JSON
         if (!isJSON(detection) && canConvertToJSON(detection)) {
-          logger.debug(`  Converting ${basename(filePath)} to JSON...`);
+          logger.debug(`  Normalizing ${basename(filePath)} to JSON...`);
 
           try {
             // Use appropriate extractor based on detected type
@@ -159,8 +159,8 @@ export async function catalogArtifacts(
 
               logger.debug(`    Saved to ${convertedFilePath}`);
             } else {
-              // Couldn't extract JSON, catalog the HTML as-is
-              logger.debug(`    Could not extract JSON, cataloging original`);
+              // Couldn't normalize to JSON, catalog the original as-is
+              logger.debug(`    Could not normalize to JSON, cataloging original`);
               catalog.push({
                 artifactName,
                 artifactId,

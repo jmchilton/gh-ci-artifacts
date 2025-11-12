@@ -277,7 +277,7 @@ CLI arguments override config file values.
     ├── raw/                  # Downloaded artifacts (original format)
     │   └── <run-id>/
     │       └── artifact-<artifact-id>/  # Each artifact in its own directory
-    ├── converted/            # HTML→JSON conversions
+    ├── converted/            # Normalized artifacts (HTML/NDJSON/TXT → JSON)
     │   └── <run-id>/
     │       └── <filename>.json
     └── linting/              # Extracted linter outputs
@@ -407,7 +407,7 @@ Array<{
     | "unknown";
   originalFormat: "json" | "xml" | "html" | "txt" | "binary";
   filePath: string;
-  converted?: boolean; // True if HTML was converted to JSON
+  converted?: boolean; // True if artifact was normalized to JSON
   skipped?: boolean; // True for binary files
   artifact?: {
     // ArtifactDescriptor with metadata optimized for AI consumption
@@ -602,9 +602,11 @@ When analyzing CI failures from gh-ci-artifacts, the tool downloads and organize
 
 ### Directory Structure
 
-- **`converted/`** - HTML reports converted to JSON (PREFER THESE over originals)
+- **`converted/`** - Normalized artifacts (HTML/NDJSON/TXT → JSON) (PREFER THESE over originals)
   - Playwright HTML → JSON with test results, failures, traces
   - pytest-html → JSON with test outcomes, errors, durations
+  - NDJSON formats normalized to JSON arrays
+  - Text formats parsed and converted to JSON
 - **`raw/`** - Original downloaded artifacts organized by `<run-id>/artifact-<id>/`
 - **`linting/`** - Extracted linter outputs (ESLint, Prettier, Ruff, flake8, mypy, tsc, etc.) organized by `<run-id>/<job-name>-<linter>.txt`
 

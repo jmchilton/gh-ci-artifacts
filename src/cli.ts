@@ -216,10 +216,10 @@ program
         logger.info(`Total artifacts extracted: ${totalArtifactOutputs}`);
       }
 
-      // Catalog artifacts and convert HTML
+      // Catalog artifacts and normalize to JSON
       let catalogResult;
       if (!options.dryRun) {
-        logger.info("\n=== Cataloging artifacts and converting HTML ===");
+        logger.info("\n=== Cataloging artifacts and normalizing to JSON ===");
         const allRunIds = Array.from(result.runStates.keys());
         const customTypes = getCustomArtifactTypes(config, result.workflowRuns);
         catalogResult = await catalogArtifacts(
@@ -241,7 +241,7 @@ program
         logger.info(
           `Total artifacts cataloged: ${catalogResult.catalog.length}`,
         );
-        logger.info(`  HTML converted to JSON: ${convertedCount}`);
+        logger.info(`  Artifacts normalized to JSON: ${convertedCount}`);
         logger.info(`  Binary files skipped: ${skippedCount}`);
 
         // Generate master summary
