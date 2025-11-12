@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { existsSync, statSync, renameSync } from "fs";
+import { existsSync, statSync, renameSync, readFileSync } from "fs";
 import { exec } from "child_process";
+import { fileURLToPath } from "url";
+import { join, dirname } from "path";
 import { loadConfig, mergeConfig, getOutputDir } from "./config.js";
 import { validateGhSetup, getCurrentRepo } from "./utils/gh.js";
 import { Logger } from "./utils/logger.js";
@@ -17,6 +19,14 @@ import type {
   ArtifactTypeMapping,
 } from "./types.js";
 
+// Read version from package.json
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJson = JSON.parse(
+  readFileSync(join(__dirname, "../package.json"), "utf-8"),
+);
+const version = packageJson.version;
+
 const program = new Command();
 
 program
@@ -24,7 +34,7 @@ program
   .description(
     "Download and parse GitHub Actions CI artifacts and logs for LLM analysis",
   )
-  .version("0.1.0")
+  .version(version)
   .argument("<ref>", "Pull request number or branch name")
   .option(
     "-r, --repo <owner/repo>",
