@@ -1,3 +1,16 @@
+# [1.17.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.16.0...v1.17.0) (2025-11-12)
+
+
+### Bug Fixes
+
+* conditionally pass --repo to gh run download when explicitly provided ([a26c9ad](https://github.com/jmchilton/gh-ci-artifacts/commit/a26c9add35b1759ec5ea9ad37a3dd8c54176f064))
+* read version from package.json instead of hardcoding ([7d0de2d](https://github.com/jmchilton/gh-ci-artifacts/commit/7d0de2d709c4b0d0fe106ed791a33762c234a386))
+
+
+### Features
+
+* **api:** export downloadArtifacts for programmatic API use ([a399d35](https://github.com/jmchilton/gh-ci-artifacts/commit/a399d35b52589850e0adc35ce409b68e0d0e6b92))
+
 # [1.16.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.15.0...v1.16.0) (2025-11-12)
 
 
