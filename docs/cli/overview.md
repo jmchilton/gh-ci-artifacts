@@ -32,6 +32,12 @@ gh-ci-artifacts <ref> [options]
 --include-successes    Include successful runs (default: failures only)
 ```
 
+### Configuration
+
+```bash
+--config <path>        Path to config file (absolute or relative to cwd)
+```
+
 ### Filtering & Limits
 
 ```bash
@@ -97,14 +103,33 @@ gh-ci-artifacts 123 --include-successes --open
 # Custom output with debug
 gh-ci-artifacts 123 --output-dir ./ci-analysis --debug
 
+# Use custom config file
+gh-ci-artifacts 123 --config ./config/ci-config.json
+
 # Multiple options
 gh-ci-artifacts 123 \
   --repo owner/repo \
   --output-dir ./results \
+  --config ./config/ci-config.json \
   --resume \
   --include-successes \
   --debug
 ```
+
+### Custom Config Files
+
+You can specify a custom config file path with `--config`:
+
+```bash
+# Absolute path
+gh-ci-artifacts 123 --config /etc/gh-ci-artifacts/production.json
+
+# Relative path (relative to cwd)
+gh-ci-artifacts 123 --config ./config/pr-analysis.json
+gh-ci-artifacts 123 --config ../shared/ci-config.yml
+```
+
+The CLI config file path takes precedence over default `.gh-ci-artifacts.{json,yml,yaml}` files in the current directory.
 
 ## Exit Codes
 

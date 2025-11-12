@@ -1,6 +1,6 @@
 # Configuration
 
-Configure `gh-ci-artifacts` with a `.gh-ci-artifacts.json` file in your project root.
+Configure `gh-ci-artifacts` with a `.gh-ci-artifacts.json` file (or `.gh-ci-artifacts.yml`) in your project root, or specify a custom config path via CLI.
 
 ## Basic Configuration
 
@@ -20,6 +20,27 @@ Then use simplified commands:
 ```bash
 gh-ci-artifacts 123
 ```
+
+## Specifying Custom Config File Path
+
+Use the `--config` option to specify a config file at any location:
+
+```bash
+# Use a config file in a subdirectory
+gh-ci-artifacts 123 --config ./config/ci-config.json
+
+# Use absolute path
+gh-ci-artifacts 123 --config /etc/gh-ci-artifacts/production.json
+
+# Use parent directory config
+gh-ci-artifacts 123 --config ../shared/ci-config.yml
+```
+
+The `--config` path can be:
+- **Absolute**: `/path/to/config.json`
+- **Relative to cwd**: `./config/file.json`, `../shared/file.json`
+
+The CLI config file path always takes precedence over default `.gh-ci-artifacts.{json,yml,yaml}` files.
 
 ## Configuration Options
 

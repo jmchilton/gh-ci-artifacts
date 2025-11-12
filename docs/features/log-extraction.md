@@ -11,10 +11,13 @@ Log extraction downloads the raw console output from GitHub Actions jobs and sav
 Logs are automatically extracted for workflow runs that:
 
 - **Don't have downloadable artifacts** - Runs that failed before producing artifacts
-- **Have failed or completed jobs** - Only jobs with `conclusion: "failure"` or `status: "completed"` are processed
+- **Have jobs that ran** - Only jobs that actually executed are processed (jobs with `started_at !== null`)
+- **Have failed or completed jobs** - Jobs with `conclusion: "failure"` or `status: "completed"` are processed
 - **Are part of the analysis** - Only runs matching the PR or branch being analyzed
 
 The tool extracts logs **only when needed** - if a run has downloadable artifacts, logs are not extracted (since artifacts contain the structured data).
+
+**Skipped jobs** (those that never ran due to failed dependencies) are detected and reported separately - no log fetch is attempted for them.
 
 ## Extraction Process
 
@@ -30,25 +33,33 @@ runsWithoutArtifacts: string[] // Array of run IDs
 
 For each run, the tool:
 1. Fetches all jobs for the run using GitHub API
-2. Filters to failed/completed jobs
-3. Retrieves job metadata (name, ID, status)
+2. Separates jobs into three categories:
+   - **Skipped**: `conclusion: "skipped"` OR `started_at: null` (never ran, no logs)
+   - **Runnable**: Jobs that actually executed
+   - **Failed/Completed**: From runnable jobs with failure or completed status
+3. Retrieves job metadata (name, ID, status, started_at)
 
 ### Step 3: Download Logs
 
-For each job:
+For each job that ran (not skipped):
 1. Downloads raw log content via GitHub API (`GET /repos/{owner}/{repo}/actions/jobs/{job_id}/logs`)
 2. Sanitizes job name for filesystem safety
 3. Saves log to `raw/{runId}/{jobName}.log`
 
+For skipped jobs:
+- No log fetch is attempted (jobs never ran, so no logs exist)
+- Job is recorded with `extractionStatus: "skipped"` and `skipReason: "Job was skipped (never ran)"`
+
 ### Step 4: Store Results
 
 Log extraction results are stored in:
-- **Files**: `raw/{runId}/{jobName}.log` - Raw log content
+- **Files**: `raw/{runId}/{jobName}.log` - Raw log content (only for successfully extracted logs)
 - **Memory**: `JobLog[]` objects with metadata:
   - `jobName`: Original job name
   - `jobId`: GitHub job ID
-  - `extractionStatus`: `"success"` or `"failed"`
+  - `extractionStatus`: `"success"`, `"failed"`, or `"skipped"`
   - `logFile`: Path to saved log file (if successful)
+  - `skipReason`: Reason job was skipped (if skipped)
 
 ## Output Structure
 
@@ -107,7 +118,7 @@ No explicit configuration is needed for log extraction itself - it's triggered a
 - **Log retention**: GitHub retains logs for 90 days
 - **Size limits**: Very large logs may be truncated
 - **Rate limiting**: Subject to GitHub API rate limits
-- **Only failed/completed jobs**: In-progress jobs are skipped
+- **Executed jobs only**: Only jobs that actually ran are processed (skipped jobs, which never ran due to failed dependencies, are detected and reported separately)
 
 ## Use Cases
 
