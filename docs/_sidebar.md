@@ -7,6 +7,7 @@
   - [CLI Usage](cli/overview.md)
   - [Configuration](guide/configuration.md)
   - [Output Format](guide/output-format.md)
+  - [Claude Integration](guide/claude-integration.md)
   - [Exit Codes](guide/exit-codes.md)
 
 - **Features**

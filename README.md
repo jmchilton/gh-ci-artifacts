@@ -153,7 +153,7 @@ See [Exit Codes Guide](https://jmchilton.github.io/gh-ci-artifacts/#/guide/exit-
 
 ### Claude Integration
 
-After downloading artifacts, analyze failures with Claude using the structured JSON output. See the [full documentation](https://jmchilton.github.io/gh-ci-artifacts/#/) for Claude integration examples and best practices.
+After downloading artifacts, analyze failures with Claude using the structured JSON output. See the [Claude Integration Guide](https://jmchilton.github.io/gh-ci-artifacts/#/guide/claude-integration) for detailed examples and best practices.
 
 ### Programmatic Usage
 
