@@ -19,7 +19,7 @@
 - **Architecture**
   - [Overview](architecture/)
   - [Artifact Detection](architecture/detection.md)
-  - [HTML Parsing](architecture/html-parsing.md)
+  - [Normalization](architecture/normalization.md)
   - [Data Flow](architecture/data-flow.md)
 
 - **API Reference**
