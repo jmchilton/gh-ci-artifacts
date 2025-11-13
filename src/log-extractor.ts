@@ -48,6 +48,7 @@ export async function extractLogs(
           jobName: job.name,
           jobId: String(job.id),
           extractionStatus: "skipped",
+          jobStatus: job.conclusion || "skipped",
           skipReason: "Job was skipped (never ran)",
         });
       }
@@ -73,6 +74,7 @@ export async function extractLogs(
             jobName: job.name,
             jobId: String(job.id),
             extractionStatus: "success",
+            jobStatus: job.conclusion || "completed",
             logFile: logFilePath,
           });
         } catch (error) {
@@ -84,6 +86,7 @@ export async function extractLogs(
             jobName: job.name,
             jobId: String(job.id),
             extractionStatus: "failed",
+            jobStatus: job.conclusion || "completed",
           });
         }
       }

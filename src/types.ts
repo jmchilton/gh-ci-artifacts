@@ -61,6 +61,7 @@ export interface JobLog {
   jobName: string;
   jobId?: string;
   extractionStatus: ExtractionStatus;
+  jobStatus?: string; // Job conclusion: "failure", "success", "skipped", etc.
   logFile?: string;
   skipReason?: string;
   linterOutputs?: LinterOutput[];

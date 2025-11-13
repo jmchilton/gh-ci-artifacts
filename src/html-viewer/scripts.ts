@@ -400,20 +400,24 @@ function renderRunDetails(run) {
   if (run.logs && run.logs.length > 0) {
     html += '<h4>Logs</h4>';
     html += '<table class="detail-table"><thead><tr>';
-    html += '<th>Job Name</th><th>Status</th><th>Linter Outputs</th><th>GitHub Actions</th></tr></thead><tbody>';
+    html += '<th>Job Name</th><th>Job Status</th><th>Download Status</th><th>Artifacts Extracted</th><th>GitHub Actions</th></tr></thead><tbody>';
     run.logs.forEach(l => {
+      let jobStatusBadge = '';
+      if (l.jobStatus) {
+        jobStatusBadge = '<span class="badge badge-' + l.jobStatus + '">' + l.jobStatus + '</span>';
+      }
       let statusBadge = '<span class="badge badge-' + l.extractionStatus + '"';
       if (l.skipReason) {
         statusBadge += ' title="' + escapeHtml(l.skipReason) + '" style="cursor: help;"';
       }
       statusBadge += '>' + l.extractionStatus + '</span>';
-      const linters = l.linterOutputs ? l.linterOutputs.length : 0;
+      const artifacts = l.linterOutputs ? l.linterOutputs.length : 0;
       let jobLink = '';
       if (l.jobId && run.repo && run.runId) {
         const jobUrl = 'https://github.com/' + run.repo + '/actions/runs/' + run.runId + '/job/' + l.jobId;
         jobLink = '<a href="' + jobUrl + '" target="_blank" rel="noopener noreferrer">View Logs</a>';
       }
-      html += '<tr><td>' + l.jobName + '</td><td>' + statusBadge + '</td><td>' + linters + '</td><td>' + jobLink + '</td></tr>';
+      html += '<tr><td>' + l.jobName + '</td><td>' + jobStatusBadge + '</td><td>' + statusBadge + '</td><td>' + artifacts + '</td><td>' + jobLink + '</td></tr>';
     });
     html += '</tbody></table>';
   }
