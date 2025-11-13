@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.19.0...v1.20.0) (2025-11-13)
+
+
+### Features
+
+* add local log links to HTML report summary ([52b824d](https://github.com/jmchilton/gh-ci-artifacts/commit/52b824d404656c799422b17386ef20a38a58a0e4))
+
 # [1.19.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.18.0...v1.19.0) (2025-11-13)
 
 
