@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.18.0...v1.19.0) (2025-11-13)
+
+
+### Features
+
+* enhance logs table with job status and clearer column names ([ec55571](https://github.com/jmchilton/gh-ci-artifacts/commit/ec55571aec793c9c70c12d20709989b29bcaed40))
+
 # [1.18.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.17.1...v1.18.0) (2025-11-12)
 
 
