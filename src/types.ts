@@ -126,6 +126,10 @@ interface BaseSummary {
   runs: RunSummary[];
   catalogFile: string;
   validationResults?: ValidationResult[];
+  versions: {
+    "gh-ci-artifacts": string;
+    "artifact-detective": string;
+  };
   stats: {
     totalRuns: number;
     artifactsDownloaded: number;

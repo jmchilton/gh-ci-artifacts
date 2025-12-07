@@ -1,6 +1,20 @@
-import { writeFileSync } from "fs";
-import { join } from "path";
+import { readFileSync, writeFileSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 import { generateHtmlViewer } from "./html-viewer/index.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+function getVersions(): { "gh-ci-artifacts": string; "artifact-detective": string } {
+  const pkgPath = join(__dirname, "../package.json");
+  const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+  const adVersion = pkg.dependencies?.["artifact-detective"]?.replace(/^\^/, "") || "unknown";
+  return {
+    "gh-ci-artifacts": pkg.version,
+    "artifact-detective": adVersion,
+  };
+}
 import type {
   Summary,
   SummaryStatus,
@@ -277,6 +291,7 @@ export function generateSummary(
   };
 
   // Build summary with discriminated union based on mode
+  const versions = getVersions();
   const summary: Summary =
     pr !== undefined
       ? {
@@ -294,6 +309,7 @@ export function generateSummary(
             allValidationResults.length > 0
               ? allValidationResults
               : undefined,
+          versions,
           stats,
         }
       : {
@@ -310,6 +326,7 @@ export function generateSummary(
             allValidationResults.length > 0
               ? allValidationResults
               : undefined,
+          versions,
           stats,
         };
 
