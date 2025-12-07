@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.21.1...v1.22.0) (2025-12-07)
+
+
+### Features
+
+* add versions field to summary.json ([c2c0a70](https://github.com/jmchilton/gh-ci-artifacts/commit/c2c0a7061eb6021b08c309a7b5b25be23cdd3ece)), closes [#ci-artifacts](https://github.com/jmchilton/gh-ci-artifacts/issues/ci-artifacts)
+
 ## [1.21.1](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.21.0...v1.21.1) (2025-12-07)
 
 
