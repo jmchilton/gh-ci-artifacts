@@ -206,6 +206,10 @@ export async function runAction(
 
     logger.info(`\n=== Artifact collection complete ===`);
     logger.info(`Total artifacts extracted: ${totalArtifactOutputs}`);
+
+    // Store found artifact types for later validation
+    (logResult as any).foundArtifactTypes = artifactResult.foundArtifactTypes;
+    (logResult as any).extractionConfig = extractionConfig;
   }
 
   // Catalog artifacts and normalize to JSON
@@ -251,6 +255,10 @@ export async function runAction(
         catalog: catalogResult.catalog,
         validationResults: result.validationResults,
         workflowRuns: result.workflowRuns,
+        // Log artifact validation inputs
+        foundArtifactTypes: (logResult as any)?.foundArtifactTypes,
+        extractionConfigs: (logResult as any)?.extractionConfig,
+        workflowConfigs: config.workflows,
       },
       outputDir,
     );
@@ -268,10 +276,26 @@ export async function runAction(
         (sum, v) => sum + v.missingOptional.length,
         0,
       );
+      const totalRequiredLogArtifactViolations = summary.validationResults.reduce(
+        (sum, v) => sum + (v.missingRequiredLogArtifacts?.length || 0),
+        0,
+      );
+      const totalOptionalLogArtifactViolations = summary.validationResults.reduce(
+        (sum, v) => sum + (v.missingOptionalLogArtifacts?.length || 0),
+        0,
+      );
 
       logger.info("\nValidation results:");
-      logger.info(`  Required violations: ${totalRequiredViolations}`);
-      logger.info(`  Optional violations: ${totalOptionalViolations}`);
+      if (totalRequiredViolations > 0 || totalOptionalViolations > 0) {
+        logger.info(`  Artifact expectations:`);
+        logger.info(`    Required violations: ${totalRequiredViolations}`);
+        logger.info(`    Optional violations: ${totalOptionalViolations}`);
+      }
+      if (totalRequiredLogArtifactViolations > 0 || totalOptionalLogArtifactViolations > 0) {
+        logger.info(`  Log artifact expectations:`);
+        logger.info(`    Required violations: ${totalRequiredLogArtifactViolations}`);
+        logger.info(`    Optional violations: ${totalOptionalLogArtifactViolations}`);
+      }
     }
 
     const exitCode = determineExitCode(summary.status);

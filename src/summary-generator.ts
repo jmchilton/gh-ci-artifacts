@@ -10,6 +10,9 @@ import type {
   CatalogEntry,
   JobLog,
   ValidationResult,
+  LogArtifactViolation,
+  ArtifactExtractionConfig,
+  WorkflowConfig,
 } from "./types.js";
 
 export interface SummaryInput {
@@ -27,6 +30,94 @@ export interface SummaryInput {
     string,
     { name: string; path: string; run_attempt: number; run_number: number }
   >;
+  // Log artifact validation inputs
+  foundArtifactTypes?: Map<string, Set<string>>; // runId -> Set of found artifact types
+  extractionConfigs?: ArtifactExtractionConfig[]; // Global extraction config with expectations
+  workflowConfigs?: WorkflowConfig[]; // Workflow-specific configs
+}
+
+/**
+ * Validate log artifact expectations for a specific run.
+ * Compares expected artifact types from config against actually found types.
+ */
+function validateLogArtifacts(
+  runId: string,
+  workflowName: string,
+  workflowPath: string,
+  logs: JobLog[],
+  foundTypes: Set<string> | undefined,
+  globalConfigs: ArtifactExtractionConfig[] | undefined,
+  workflowConfigs: WorkflowConfig[] | undefined,
+): { missingRequired: LogArtifactViolation[]; missingOptional: LogArtifactViolation[] } {
+  const missingRequired: LogArtifactViolation[] = [];
+  const missingOptional: LogArtifactViolation[] = [];
+
+  // Get extraction configs for this workflow
+  const extractionConfigs: ArtifactExtractionConfig[] = [];
+
+  // Start with global configs
+  if (globalConfigs) {
+    extractionConfigs.push(...globalConfigs);
+  }
+
+  // Override with workflow-specific configs
+  if (workflowConfigs) {
+    const matchingWorkflow = workflowConfigs.find(
+      (w) => w.workflow === workflowName || workflowPath.includes(w.workflow),
+    );
+    if (matchingWorkflow?.extractArtifactTypesFromLogs) {
+      // Workflow-specific configs override global ones for the same type
+      const workflowTypes = new Set(
+        matchingWorkflow.extractArtifactTypesFromLogs.map((c) => c.type),
+      );
+      // Remove global configs that are overridden
+      const filteredGlobal = extractionConfigs.filter(
+        (c) => !workflowTypes.has(c.type),
+      );
+      extractionConfigs.length = 0;
+      extractionConfigs.push(...filteredGlobal);
+      extractionConfigs.push(...matchingWorkflow.extractArtifactTypesFromLogs);
+    }
+  }
+
+  // No expectations defined
+  if (extractionConfigs.length === 0) {
+    return { missingRequired, missingOptional };
+  }
+
+  const actualTypes = foundTypes || new Set<string>();
+
+  for (const config of extractionConfigs) {
+    // Check if matchJobName filter applies
+    if (config.matchJobName) {
+      const jobNameRegex = new RegExp(config.matchJobName, "i");
+      const matchingJobs = logs.filter(
+        (log) => log.extractionStatus === "success" && jobNameRegex.test(log.jobName),
+      );
+      // If no jobs match the filter, skip this expectation
+      if (matchingJobs.length === 0) {
+        continue;
+      }
+    }
+
+    // Check if expected type was found
+    if (!actualTypes.has(config.type)) {
+      const violation: LogArtifactViolation = {
+        type: config.type,
+        required: config.required ?? false,
+        reason: config.reason,
+        matchJobName: config.matchJobName,
+      };
+
+      if (config.required) {
+        missingRequired.push(violation);
+      } else {
+        missingOptional.push(violation);
+      }
+    }
+  }
+
+  return { missingRequired, missingOptional };
 }
 
 export function generateSummary(
@@ -45,22 +136,18 @@ export function generateSummary(
     catalog,
     validationResults,
     workflowRuns,
+    foundArtifactTypes,
+    extractionConfigs,
+    workflowConfigs,
   } = input;
 
-  // Determine overall status
+  // Count in-progress runs and failed artifacts for status determination
   const inProgressCount = Array.from(runStates.values()).filter(
     (state) => state === "in_progress",
   ).length;
-
   const failedArtifacts = inventory.filter((a) => a.status === "failed").length;
-  const status: SummaryStatus =
-    inProgressCount > 0
-      ? "incomplete"
-      : failedArtifacts > 0
-        ? "partial"
-        : "complete";
 
-  // Build run summaries
+  // Build run summaries (status will be determined after, once we have all validation results)
   const runs: RunSummary[] = [];
 
   for (const [runId, conclusion] of runStates.entries()) {
@@ -87,11 +174,49 @@ export function generateSummary(
 
     const runLogs = logs.get(runId) || [];
 
-    // Find validation result for this run
-    const validationResult = validationResults?.find((v) => v.runId === runId);
+    // Find validation result for this run (from artifact expectations)
+    let validationResult = validationResults?.find((v) => v.runId === runId);
 
     // Get workflow info for this run
     const workflowInfo = workflowRuns.get(runId);
+
+    // Validate log artifact expectations
+    const logArtifactValidation = validateLogArtifacts(
+      runId,
+      workflowInfo?.name || "Unknown",
+      workflowInfo?.path || "",
+      runLogs,
+      foundArtifactTypes?.get(runId),
+      extractionConfigs,
+      workflowConfigs,
+    );
+
+    // Merge log artifact violations into validation result
+    if (
+      logArtifactValidation.missingRequired.length > 0 ||
+      logArtifactValidation.missingOptional.length > 0
+    ) {
+      if (validationResult) {
+        // Extend existing validation result
+        validationResult = {
+          ...validationResult,
+          missingRequiredLogArtifacts: logArtifactValidation.missingRequired,
+          missingOptionalLogArtifacts: logArtifactValidation.missingOptional,
+        };
+      } else {
+        // Create new validation result for log artifacts only
+        validationResult = {
+          workflowName: workflowInfo?.name || "Unknown",
+          workflowPath: workflowInfo?.path || "",
+          runId,
+          runName: workflowInfo?.name || "Unknown",
+          missingRequired: [],
+          missingOptional: [],
+          missingRequiredLogArtifacts: logArtifactValidation.missingRequired,
+          missingOptionalLogArtifacts: logArtifactValidation.missingOptional,
+        };
+      }
+    }
 
     runs.push({
       runId,
@@ -105,6 +230,25 @@ export function generateSummary(
       validationResult,
     });
   }
+
+  // Collect all validation results from runs (includes log artifact validations)
+  const allValidationResults: ValidationResult[] = runs
+    .filter((run) => run.validationResult)
+    .map((run) => run.validationResult!);
+
+  // Count log artifact violations for status determination
+  const requiredLogArtifactViolations = allValidationResults.reduce(
+    (sum, v) => sum + (v.missingRequiredLogArtifacts?.length || 0),
+    0,
+  );
+
+  // Determine overall status (after building runs so we have log artifact violations)
+  const status: SummaryStatus =
+    inProgressCount > 0
+      ? "incomplete"
+      : failedArtifacts > 0 || requiredLogArtifactViolations > 0
+        ? "partial"
+        : "complete";
 
   // Calculate stats
   const stats = {
@@ -147,8 +291,8 @@ export function generateSummary(
           runs,
           catalogFile: "./catalog.json",
           validationResults:
-            validationResults && validationResults.length > 0
-              ? validationResults
+            allValidationResults.length > 0
+              ? allValidationResults
               : undefined,
           stats,
         }
@@ -163,8 +307,8 @@ export function generateSummary(
           runs,
           catalogFile: "./catalog.json",
           validationResults:
-            validationResults && validationResults.length > 0
-              ? validationResults
+            allValidationResults.length > 0
+              ? allValidationResults
               : undefined,
           stats,
         };

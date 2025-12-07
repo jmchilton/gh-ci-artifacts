@@ -85,6 +85,13 @@ export interface ExpectationViolation {
   reason?: string;
 }
 
+export interface LogArtifactViolation {
+  type: string; // The expected artifact type (e.g., "jest-json")
+  required: boolean;
+  reason?: string;
+  matchJobName?: string; // If filtering was applied
+}
+
 export interface ValidationResult {
   workflowName: string;
   workflowPath: string;
@@ -92,6 +99,9 @@ export interface ValidationResult {
   runName: string;
   missingRequired: ExpectationViolation[];
   missingOptional: ExpectationViolation[];
+  // Log artifact validation results
+  missingRequiredLogArtifacts?: LogArtifactViolation[];
+  missingOptionalLogArtifacts?: LogArtifactViolation[];
 }
 
 export interface RunSummary {

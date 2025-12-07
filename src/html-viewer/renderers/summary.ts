@@ -90,6 +90,14 @@ function renderValidationSection(results: ValidationResult[]): string {
     (sum, r) => sum + r.missingOptional.length,
     0,
   );
+  const totalRequiredLogArtifacts = results.reduce(
+    (sum, r) => sum + (r.missingRequiredLogArtifacts?.length || 0),
+    0,
+  );
+  const totalOptionalLogArtifacts = results.reduce(
+    (sum, r) => sum + (r.missingOptionalLogArtifacts?.length || 0),
+    0,
+  );
 
   let content = '<div class="validation-summary">';
 
@@ -99,30 +107,58 @@ function renderValidationSection(results: ValidationResult[]): string {
   if (totalOptional > 0) {
     content += `<div class="validation-warning">⚠ ${totalOptional} optional artifact(s) missing</div>`;
   }
+  if (totalRequiredLogArtifacts > 0) {
+    content += `<div class="validation-error">✗ ${totalRequiredLogArtifacts} required log artifact type(s) missing</div>`;
+  }
+  if (totalOptionalLogArtifacts > 0) {
+    content += `<div class="validation-warning">⚠ ${totalOptionalLogArtifacts} optional log artifact type(s) missing</div>`;
+  }
 
   content += '<div class="validation-details">';
 
   results.forEach((result) => {
-    const violations = [...result.missingRequired, ...result.missingOptional];
-    if (violations.length === 0) return;
+    const artifactViolations = [...result.missingRequired, ...result.missingOptional];
+    const logArtifactViolations = [
+      ...(result.missingRequiredLogArtifacts || []),
+      ...(result.missingOptionalLogArtifacts || []),
+    ];
+    if (artifactViolations.length === 0 && logArtifactViolations.length === 0) return;
 
     content += `
       <div class="validation-workflow">
-        <strong>${escapeHtml(result.workflowName)}</strong> 
+        <strong>${escapeHtml(result.workflowName)}</strong>
         <span class="text-muted">(Run ${result.runId})</span>
         <ul class="validation-list">
     `;
 
+    // Artifact pattern violations
     result.missingRequired.forEach((v) => {
       content += `<li class="validation-item-error">
-        <code>${escapeHtml(v.pattern)}</code> (required)
+        <code>${escapeHtml(v.pattern)}</code> (required artifact)
         ${v.reason ? `<span class="text-muted">- ${escapeHtml(v.reason)}</span>` : ""}
       </li>`;
     });
 
     result.missingOptional.forEach((v) => {
       content += `<li class="validation-item-warning">
-        <code>${escapeHtml(v.pattern)}</code> (optional)
+        <code>${escapeHtml(v.pattern)}</code> (optional artifact)
+        ${v.reason ? `<span class="text-muted">- ${escapeHtml(v.reason)}</span>` : ""}
+      </li>`;
+    });
+
+    // Log artifact type violations
+    result.missingRequiredLogArtifacts?.forEach((v) => {
+      content += `<li class="validation-item-error">
+        <code>${escapeHtml(v.type)}</code> (required log artifact type)
+        ${v.matchJobName ? `<span class="text-muted">in jobs matching "${escapeHtml(v.matchJobName)}"</span>` : ""}
+        ${v.reason ? `<span class="text-muted">- ${escapeHtml(v.reason)}</span>` : ""}
+      </li>`;
+    });
+
+    result.missingOptionalLogArtifacts?.forEach((v) => {
+      content += `<li class="validation-item-warning">
+        <code>${escapeHtml(v.type)}</code> (optional log artifact type)
+        ${v.matchJobName ? `<span class="text-muted">in jobs matching "${escapeHtml(v.matchJobName)}"</span>` : ""}
         ${v.reason ? `<span class="text-muted">- ${escapeHtml(v.reason)}</span>` : ""}
       </li>`;
     });
