@@ -271,6 +271,21 @@ describe("renderDigest", () => {
     );
   });
 
+  it("does not report green before any runs exist", () => {
+    const text = renderDigest({
+      ...data,
+      totalRuns: 0,
+      passedRuns: 0,
+      jobs: [],
+      failures: [],
+      pending: [],
+      failedWithoutFailedJobs: [],
+    });
+    expect(text.trim().split("\n").at(-1)).toBe(
+      "No workflow runs for this commit yet.",
+    );
+  });
+
   it("reports when nothing failed", () => {
     const text = renderDigest({
       ...data,

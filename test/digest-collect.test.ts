@@ -83,6 +83,15 @@ const JOBS: Record<string, JobWithSteps[]> = {
       steps: [],
     },
   ],
+  base3: [
+    {
+      id: "b13",
+      name: "Test (3.14)",
+      conclusion: "cancelled",
+      html_url: "",
+      steps: [],
+    },
+  ],
 };
 
 const LOGS: Record<string, string> = {
@@ -107,7 +116,7 @@ vi.mock("../src/github/api.js", () => ({
   ) => [`${baseRepo} ${base}...${headRepo}@${sha}`],
   getBaseBranchRuns: (repo: string, file: string) => {
     baseRepos.add(repo);
-    return file === "unit.yaml" ? ["base1", "base2"] : [];
+    return file === "unit.yaml" ? ["base1", "base2", "base3"] : [];
   },
   getJobLogs: (_repo: string, jobId: string) => LOGS[jobId] ?? "",
 }));

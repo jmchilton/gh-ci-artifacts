@@ -264,6 +264,10 @@ export function renderDigest(
     );
   }
 
+  if (data.totalRuns === 0) {
+    out.push("", "No workflow runs for this commit yet.");
+    return out.join("\n") + "\n";
+  }
   if (data.jobs.length === 0) {
     out.push("", data.pending.length ? "No failures yet." : "No failures.");
     return out.join("\n") + "\n";
@@ -510,7 +514,13 @@ export function collectDigest(
         baseRunCount,
       )) {
         for (const job of getJobsWithSteps(base.repo, runId)) {
-          if (!names.has(job.name) || job.conclusion === "skipped") continue;
+          // Skipped and cancelled (often superseded by a newer push) base jobs say nothing about flakiness.
+          if (
+            !names.has(job.name) ||
+            job.conclusion === "skipped" ||
+            job.conclusion === "cancelled"
+          )
+            continue;
           const count = counts.get(job.name) ?? { failed: 0, total: 0 };
           count.total++;
           if (job.conclusion && FAILED_CONCLUSIONS.has(job.conclusion)) {
