@@ -12,9 +12,15 @@ gh-ci-artifacts 123 --digest 2>/dev/null
 
 - The failed jobs, each with its failing step, its URL and, for PRs, how often the same job failed in the last `--base-runs` completed push runs of the base branch.
 - Failing tests from pytest reports (pytest-html, pytest-json-report), or from pytest's short test summary in the job log when a run has no report. They are grouped by error signature, with the innermost traceback location and the exception most often seen in the tests' captured output.
-- `[PR file]` marks a test or traceback location in a file the PR changes. `[fails on <base>]` marks a test that also failed on a recent base-branch run.
+- `[changed file]` marks a test or traceback location in a file the PR changes. `[fails on <base>]` marks a test that also failed on a recent base-branch run.
 - For failed jobs with no parseable tests, the log lines just before the first error.
 - Runs that are still in progress, listed as pending.
+
+For a branch without a PR, pass its base, and for a fork the upstream repository, to get the same changed-file and base-branch marks:
+
+```bash
+gh-ci-artifacts my-feature --repo me/project --base main --base-repo org/project --digest
+```
 
 The digest is saved as `digest.txt` next to `summary.json`.
 

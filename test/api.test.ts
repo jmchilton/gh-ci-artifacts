@@ -5,6 +5,7 @@ import {
   getArtifactsForRun,
   getBaseBranchRuns,
   getBranchHeadSha,
+  getChangedFiles,
   getJobsForRun,
   getJobsWithSteps,
   getPRDetails,
@@ -171,6 +172,20 @@ describe("github api", () => {
     expect(() => getBaseBranchRuns("o/r", "unit.yaml", "dev", 2)).toThrow(
       /dev runs of unit.yaml: boom/,
     );
+  });
+
+  it("lists files changed between a base branch and a fork commit", () => {
+    returns("a.py\nb/c.py\n");
+    expect(
+      getChangedFiles("up/galaxy", "release_26.1", "me/galaxy", "abc"),
+    ).toEqual(["a.py", "b/c.py"]);
+    expect(command()).toBe(
+      "gh api 'repos/up/galaxy/compare/release_26.1...me:abc' --jq '.files[].filename'",
+    );
+    fails("boom");
+    expect(() =>
+      getChangedFiles("up/galaxy", "dev", "me/galaxy", "abc"),
+    ).toThrow(/dev...me:abc: boom/);
   });
 
   it("downloads an artifact by name", () => {

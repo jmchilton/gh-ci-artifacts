@@ -71,6 +71,14 @@ program
     "Print a compact failure digest to stdout (also saved as digest.txt)",
   )
   .option(
+    "--base <branch>",
+    "Base branch for the digest in branch mode (PRs use their own base)",
+  )
+  .option(
+    "--base-repo <owner/repo>",
+    "Repository of the digest's base branch, e.g. upstream when analyzing a fork",
+  )
+  .option(
     "--base-runs <count>",
     "Recent base-branch push runs the digest compares failures against (default: 3, 0 to skip)",
     parseInt,
@@ -173,6 +181,8 @@ program
           ) as CatalogEntry[];
           const digest = writeDigest(outputDir, summary, catalog, logger, {
             baseRuns: options.baseRuns,
+            base: options.base,
+            baseRepo: options.baseRepo,
           });
           logger.info(`Digest saved to: ${outputDir}/digest.txt`);
           process.stdout.write(digest);

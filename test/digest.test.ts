@@ -103,6 +103,21 @@ describe("testsFromLog", () => {
     );
   });
 
+  it("reads Galaxy/planemo tool test results", () => {
+    const parsed = testsFromLog(
+      [
+        "2026-10-25T12:39:50.7Z tabular_to_csv (Test #1): passed",
+        "2026-10-25T12:39:50.7Z tabular_to_dbnsfp (Test #1): failed",
+        "2026-10-25T12:39:50.7Z cat1 (Test #2): error",
+        "##[error]Process completed with exit code 1.",
+      ].join("\n"),
+    );
+    expect(parsed.tests.map((t) => [t.id, t.message])).toEqual([
+      ["tabular_to_dbnsfp (Test #1)", "tool test failed"],
+      ["cat1 (Test #2)", "tool test error"],
+    ]);
+  });
+
   it("keeps the lines up to the first error annotation for logs without tests", () => {
     const parsed = testsFromLog(
       [
@@ -160,7 +175,10 @@ describe("renderDigest", () => {
     headSha: "baeca0d7dc6ce8144de0",
     baseBranch: "dev",
     baseRuns: 3,
-    prFiles: ["lib/galaxy/jobs/runners/pulsar.py", "test/unit/test_pulsar.py"],
+    changedFiles: [
+      "lib/galaxy/jobs/runners/pulsar.py",
+      "test/unit/test_pulsar.py",
+    ],
     totalRuns: 4,
     passedRuns: 1,
     pending: ["API tests"],
@@ -209,11 +227,11 @@ describe("renderDigest", () => {
     ],
   };
 
-  it("groups failures by signature across sources and marks PR files and base failures", () => {
+  it("groups failures by signature across sources and marks changed files and base failures", () => {
     expect(renderDigest(data)).toBe(
       [
         "CI digest: o/r PR #7 @ baeca0d7 vs dev",
-        "PR files (2): lib/galaxy/jobs/runners/pulsar.py, test/unit/test_pulsar.py",
+        "Changed files (2): lib/galaxy/jobs/runners/pulsar.py, test/unit/test_pulsar.py",
         "Runs: 4 (1 passed, 2 failed, 1 pending)",
         "Pending: API tests",
         "Failed runs with no failed job (setup/skips): CWL",
@@ -224,11 +242,11 @@ describe("renderDigest", () => {
         "",
         "Failing tests: 3 in 2 signatures",
         "#1 2 tests: TypeError: no url 1",
-        "   at lib/galaxy/jobs/runners/pulsar.py:782: TypeError  [PR file]",
+        "   at lib/galaxy/jobs/runners/pulsar.py:782: TypeError  [changed file]",
         "   from: Unit results; Packages / Test (3.10)",
         "   also failing on dev: 0/2",
-        "   - test/unit/test_pulsar.py::a  [PR file]",
-        "   - test/unit/test_pulsar.py::b  [PR file]",
+        "   - test/unit/test_pulsar.py::a  [changed file]",
+        "   - test/unit/test_pulsar.py::b  [changed file]",
         "#2 1 test: AssertionError: timing",
         "   from: Unit results",
         "   also failing on dev: 1/1",
@@ -249,7 +267,7 @@ describe("renderDigest", () => {
     };
     const text = renderDigest(many, { testsPerGroup: 1, groups: 1 });
     expect(text).toContain(
-      "   - test/unit/test_pulsar.py::a  [PR file]\n   - +1 more\n",
+      "   - test/unit/test_pulsar.py::a  [changed file]\n   - +1 more\n",
     );
   });
 

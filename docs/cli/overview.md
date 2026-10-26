@@ -60,6 +60,8 @@ gh-ci-artifacts <ref> [options]
 --open                 Open HTML viewer automatically when complete
 --digest               Print a compact failure digest to stdout (also saved as digest.txt)
 --base-runs <n>        Base-branch push runs the digest compares against (default: 3, 0 to skip)
+--base <branch>        Digest base branch in branch mode (PRs use their own base)
+--base-repo <o/r>      Repository of the digest base, e.g. upstream when analyzing a fork
 ```
 
 ## Examples

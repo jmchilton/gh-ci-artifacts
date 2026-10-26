@@ -342,3 +342,24 @@ export function getBaseBranchRuns(
     );
   }
 }
+
+/** Files changed between a base branch and a head commit, possibly in a fork. */
+export function getChangedFiles(
+  baseRepo: string,
+  base: string,
+  headRepo: string,
+  headSha: string,
+): string[] {
+  const owner = headRepo.split("/")[0];
+  try {
+    const output = execSync(
+      `gh api 'repos/${baseRepo}/compare/${encodeURIComponent(base)}...${owner}:${headSha}' --jq '.files[].filename'`,
+      { encoding: "utf-8", maxBuffer: 50 * 1024 * 1024 },
+    );
+    return output.split("\n").filter((line) => line.trim());
+  } catch (error) {
+    throw new Error(
+      `Failed to compare ${base}...${owner}:${headSha}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}

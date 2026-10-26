@@ -11,6 +11,7 @@ import {
   getBaseBranchRuns,
   getJobLogs,
   getJobsWithSteps,
+  getChangedFiles,
   getPRDetails,
 } from "./github/api.js";
 import type { Logger } from "./utils/logger.js";
@@ -49,7 +50,8 @@ export interface DigestData {
   headSha: string;
   baseBranch?: string;
   baseRuns: number;
-  prFiles?: string[];
+  /** Files the PR (or branch, against its base) changes. */
+  changedFiles?: string[];
   totalRuns: number;
   passedRuns: number;
   pending: string[];
@@ -149,15 +151,19 @@ export function testsFromLog(log: string): {
   const seen = new Set<string>();
   let result: string | undefined;
   const lines = log.split("\n").map(cleanLine);
+  const add = (id: string, message: string) => {
+    if (seen.has(id)) return;
+    seen.add(id);
+    tests.push({ id, message, causes: [] });
+  };
   for (const line of lines) {
     const match = line.match(/^(FAILED|ERROR) (\S.*?)(?: - (.*))?$/);
-    if (match && /::|\.py\b/.test(match[2]) && !seen.has(match[2])) {
-      seen.add(match[2]);
-      tests.push({
-        id: match[2],
-        message: shortException(match[3] ?? match[1].toLowerCase()),
-        causes: [],
-      });
+    // Galaxy tool tests (planemo, run_tests.sh -framework): "tool_id (Test #1): failed"
+    const toolTest = line.match(/^(\S+ \(Test #\d+\)): (failed|error)$/);
+    if (match && /::|\.py\b/.test(match[2])) {
+      add(match[2], shortException(match[3] ?? match[1].toLowerCase()));
+    } else if (toolTest) {
+      add(toolTest[1], `tool test ${toolTest[2]}`);
     } else if (
       /^=+ .*\b(failed|passed|errors?)\b.* in [\d.]+s.*=+$/.test(line)
     ) {
@@ -241,11 +247,11 @@ export function renderDigest(
   out.push(
     `CI digest: ${data.repo} ${data.ref} @ ${data.headSha.slice(0, 8)}${base ? ` vs ${base}` : ""}`,
   );
-  if (data.prFiles) {
-    const shown = data.prFiles.slice(0, 15).join(", ");
-    const more =
-      data.prFiles.length > 15 ? `, +${data.prFiles.length - 15} more` : "";
-    out.push(`PR files (${data.prFiles.length}): ${shown}${more}`);
+  if (data.changedFiles) {
+    const files = data.changedFiles;
+    const shown = files.slice(0, 15).join(", ");
+    const more = files.length > 15 ? `, +${files.length - 15} more` : "";
+    out.push(`Changed files (${files.length}): ${shown}${more}`);
   }
   const failedRuns = data.totalRuns - data.passedRuns - data.pending.length;
   out.push(
@@ -296,8 +302,8 @@ export function renderDigest(
       `#${i + 1} ${group.tests.size} test${group.tests.size === 1 ? "" : "s"}: ${group.message}`,
     );
     if (group.location) {
-      const mark = inFiles(group.location.split(":")[0], data.prFiles)
-        ? "  [PR file]"
+      const mark = inFiles(group.location.split(":")[0], data.changedFiles)
+        ? "  [changed file]"
         : "";
       out.push(`   at ${group.location}${mark}`);
     }
@@ -313,7 +319,7 @@ export function renderDigest(
     }
     failures.slice(0, limits.testsPerGroup).forEach((f) => {
       const marks = [
-        inFiles(testPath(f.test.id), data.prFiles) ? "PR file" : "",
+        inFiles(testPath(f.test.id), data.changedFiles) ? "changed file" : "",
         data.baseFailures.get(f.workflow)?.has(f.test.id)
           ? `fails on ${base}`
           : "",
@@ -371,16 +377,44 @@ function jobLog(
   }
 }
 
-/** Gathers digest data for a completed gh-ci-artifacts run, querying GitHub for jobs, PR files and base runs. */
+export interface DigestOptions {
+  /** Recent base-branch push runs to compare against (default 3, 0 to skip). */
+  baseRuns?: number;
+  /** Base branch for branch mode; PRs use their own base. */
+  base?: string;
+  /** Repository the base branch and its runs live in (default: the analyzed repo), e.g. upstream for a fork. */
+  baseRepo?: string;
+}
+
+function baseOf(
+  summary: Summary,
+  options: DigestOptions,
+): { branch: string; repo: string; files: string[] } | undefined {
+  if (summary.mode === "pr") {
+    const pr = getPRDetails(summary.repo, summary.pr);
+    return { branch: pr.baseRefName, repo: summary.repo, files: pr.files };
+  }
+  if (!options.base) return undefined;
+  const repo = options.baseRepo ?? summary.repo;
+  const files = getChangedFiles(
+    repo,
+    options.base,
+    summary.repo,
+    summary.headSha,
+  );
+  return { branch: options.base, repo, files };
+}
+
+/** Gathers digest data for a completed gh-ci-artifacts run, querying GitHub for jobs, changed files and base runs. */
 export function collectDigest(
   summary: Summary,
   catalog: CatalogEntry[],
   logger: Logger,
-  options: { baseRuns?: number } = {},
+  options: DigestOptions = {},
 ): DigestData {
   const repo = summary.repo;
   const baseRunCount = options.baseRuns ?? 3;
-  const pr = summary.mode === "pr" ? getPRDetails(repo, summary.pr) : undefined;
+  const base = baseOf(summary, options);
   const logFiles = new Map<string, string>();
   for (const run of summary.runs) {
     for (const log of run.logs)
@@ -392,9 +426,9 @@ export function collectDigest(
     ref:
       summary.mode === "pr" ? `PR #${summary.pr}` : `branch ${summary.branch}`,
     headSha: summary.headSha,
-    baseBranch: pr?.baseRefName,
-    baseRuns: pr ? baseRunCount : 0,
-    prFiles: pr?.files,
+    baseBranch: base?.branch,
+    baseRuns: base ? baseRunCount : 0,
+    changedFiles: base?.files,
     totalRuns: summary.runs.length,
     passedRuns: summary.runs.filter((r) => r.conclusion === "success").length,
     pending: [],
@@ -464,25 +498,25 @@ export function collectDigest(
     }
   }
 
-  if (pr && baseRunCount > 0) {
+  if (base && baseRunCount > 0) {
     for (const [workflowName, { path, names }] of failedJobsByWorkflow) {
-      logger.info(`Digest: ${pr.baseRefName} runs of ${workflowName}`);
+      logger.info(`Digest: ${base.branch} runs of ${workflowName}`);
       const counts = new Map<string, { failed: number; total: number }>();
       const failing = new Set<string>();
       for (const runId of getBaseBranchRuns(
-        repo,
+        base.repo,
         basename(path),
-        pr.baseRefName,
+        base.branch,
         baseRunCount,
       )) {
-        for (const job of getJobsWithSteps(repo, runId)) {
+        for (const job of getJobsWithSteps(base.repo, runId)) {
           if (!names.has(job.name) || job.conclusion === "skipped") continue;
           const count = counts.get(job.name) ?? { failed: 0, total: 0 };
           count.total++;
           if (job.conclusion && FAILED_CONCLUSIONS.has(job.conclusion)) {
             count.failed++;
             for (const test of testsFromLog(
-              jobLog(repo, job.id, new Map(), logger),
+              jobLog(base.repo, job.id, new Map(), logger),
             ).tests)
               failing.add(test.id);
           }
@@ -505,7 +539,7 @@ export function writeDigest(
   summary: Summary,
   catalog: CatalogEntry[],
   logger: Logger,
-  options: { baseRuns?: number } = {},
+  options: DigestOptions = {},
 ): string {
   const text = renderDigest(collectDigest(summary, catalog, logger, options));
   writeFileSync(join(outputDir, "digest.txt"), text);

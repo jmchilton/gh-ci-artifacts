@@ -4,7 +4,12 @@ import { tmpdir } from "os";
 import { join } from "path";
 import { collectDigest, writeDigest } from "../src/digest.js";
 import { Logger } from "../src/utils/logger.js";
-import type { CatalogEntry, PRSummary, RunSummary } from "../src/types.js";
+import type {
+  BranchSummary,
+  CatalogEntry,
+  PRSummary,
+  RunSummary,
+} from "../src/types.js";
 import type { JobWithSteps } from "../src/github/api.js";
 
 const JOBS: Record<string, JobWithSteps[]> = {
@@ -86,14 +91,24 @@ const LOGS: Record<string, string> = {
   b11: "FAILED test/unit/test_flaky.py::test_timing - AssertionError: slow",
 };
 
+const baseRepos = new Set<string>();
+
 vi.mock("../src/github/api.js", () => ({
   getPRDetails: () => ({
     baseRefName: "dev",
     files: ["lib/galaxy/jobs/runners/pulsar.py"],
   }),
   getJobsWithSteps: (_repo: string, runId: string) => JOBS[runId] ?? [],
-  getBaseBranchRuns: (_repo: string, file: string) =>
-    file === "unit.yaml" ? ["base1", "base2"] : [],
+  getChangedFiles: (
+    baseRepo: string,
+    base: string,
+    headRepo: string,
+    sha: string,
+  ) => [`${baseRepo} ${base}...${headRepo}@${sha}`],
+  getBaseBranchRuns: (repo: string, file: string) => {
+    baseRepos.add(repo);
+    return file === "unit.yaml" ? ["base1", "base2"] : [];
+  },
   getJobLogs: (_repo: string, jobId: string) => LOGS[jobId] ?? "",
 }));
 
@@ -237,6 +252,41 @@ describe("collectDigest", () => {
         ],
       },
     ]);
+  });
+
+  it("compares a branch against a base in another repository", () => {
+    baseRepos.clear();
+    const branch: BranchSummary = {
+      ...summary,
+      mode: "branch",
+      branch: "feature",
+      repo: "me/fork",
+    };
+    const data = collectDigest(branch, catalog, new Logger(false), {
+      base: "dev",
+      baseRepo: "up/stream",
+    });
+    expect(data).toMatchObject({
+      ref: "branch feature",
+      baseBranch: "dev",
+      changedFiles: ["up/stream dev...me/fork@abcdef1234567890"],
+    });
+    expect([...baseRepos]).toEqual(["up/stream"]);
+    expect(data.baseFailures.get(".github/workflows/unit.yaml")).toEqual(
+      new Set(["test/unit/test_flaky.py::test_timing"]),
+    );
+  });
+
+  it("has no base for a branch without --base", () => {
+    const branch: BranchSummary = {
+      ...summary,
+      mode: "branch",
+      branch: "feature",
+    };
+    const data = collectDigest(branch, catalog, new Logger(false));
+    expect(data.baseBranch).toBeUndefined();
+    expect(data.changedFiles).toBeUndefined();
+    expect(data.jobs.every((j) => j.base === undefined)).toBe(true);
   });
 
   it("skips the base comparison when asked", () => {
