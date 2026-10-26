@@ -256,12 +256,20 @@ export function downloadArtifact(
 }
 
 export function getJobLogs(repo: string, jobId: string): string {
-  try {
-    const output = execSync(`gh api repos/${repo}/actions/jobs/${jobId}/logs`, {
+  const fetch = (flags: string) =>
+    execSync(`gh api ${flags}repos/${repo}/actions/jobs/${jobId}/logs`, {
       encoding: "utf-8",
       maxBuffer: 50 * 1024 * 1024,
+      stdio: ["ignore", "pipe", "pipe"],
     });
-    return output;
+  try {
+    try {
+      return fetch("");
+    } catch (error) {
+      // Newer gh refuses output with ANSI escapes unless allowed; older gh lacks the flag.
+      if (!String(error).includes("--allow-escape-sequences")) throw error;
+      return fetch("--allow-escape-sequences ");
+    }
   } catch (error) {
     throw new Error(
       `Failed to fetch logs for job ${jobId}: ${error instanceof Error ? error.message : String(error)}`,
