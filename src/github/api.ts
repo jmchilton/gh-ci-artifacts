@@ -276,3 +276,69 @@ export function getJobLogs(repo: string, jobId: string): string {
     );
   }
 }
+
+export interface JobWithSteps {
+  id: string;
+  name: string;
+  conclusion: string | null;
+  html_url: string;
+  /** Names of failed steps. */
+  steps: string[];
+}
+
+export function getJobsWithSteps(repo: string, runId: string): JobWithSteps[] {
+  try {
+    const output = execSync(
+      `gh api --paginate 'repos/${repo}/actions/runs/${runId}/jobs?per_page=100' --jq '.jobs[] | {id: (.id | tostring), name, conclusion, html_url, steps: [.steps[]? | select(.conclusion == "failure") | .name]}'`,
+      { encoding: "utf-8", maxBuffer: 50 * 1024 * 1024 },
+    );
+    return output
+      .trim()
+      .split("\n")
+      .filter((line) => line.trim())
+      .map((line) => JSON.parse(line) as JobWithSteps);
+  } catch (error) {
+    throw new Error(
+      `Failed to fetch jobs for run ${runId}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+export interface PRDetails {
+  baseRefName: string;
+  files: string[];
+}
+
+export function getPRDetails(repo: string, prNumber: number): PRDetails {
+  try {
+    const output = execSync(
+      `gh pr view ${prNumber} --repo ${repo} --json baseRefName,files --jq '{baseRefName, files: [.files[].path]}'`,
+      { encoding: "utf-8", maxBuffer: 50 * 1024 * 1024 },
+    );
+    return JSON.parse(output) as PRDetails;
+  } catch (error) {
+    throw new Error(
+      `Failed to fetch PR details: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+/** IDs of the latest completed push runs of a workflow on a branch, newest first. */
+export function getBaseBranchRuns(
+  repo: string,
+  workflowFile: string,
+  branch: string,
+  count: number,
+): string[] {
+  try {
+    const output = execSync(
+      `gh api 'repos/${repo}/actions/workflows/${workflowFile}/runs?branch=${encodeURIComponent(branch)}&event=push&status=completed&per_page=${count}' --jq '.workflow_runs[].id'`,
+      { encoding: "utf-8" },
+    );
+    return output.split("\n").filter((line) => line.trim());
+  } catch (error) {
+    throw new Error(
+      `Failed to fetch ${branch} runs of ${workflowFile}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}

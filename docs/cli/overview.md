@@ -58,6 +58,8 @@ gh-ci-artifacts <ref> [options]
 ```bash
 --debug                Enable debug logging
 --open                 Open HTML viewer automatically when complete
+--digest               Print a compact failure digest to stdout (also saved as digest.txt)
+--base-runs <n>        Base-branch push runs the digest compares against (default: 3, 0 to skip)
 ```
 
 ## Examples

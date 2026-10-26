@@ -2,6 +2,22 @@
 
 `gh-ci-artifacts` is optimized for LLM analysis, particularly with Claude. This guide shows how to integrate it into your Claude workflow.
 
+## Failure digest
+
+`--digest` prints a short plain-text report, meant to be the only thing an agent reads:
+
+```bash
+gh-ci-artifacts 123 --digest 2>/dev/null
+```
+
+- The failed jobs, each with its failing step, its URL and, for PRs, how often the same job failed in the last `--base-runs` completed push runs of the base branch.
+- Failing tests from pytest reports (pytest-html, pytest-json-report), or from pytest's short test summary in the job log when a run has no report. They are grouped by error signature, with the innermost traceback location and the exception most often seen in the tests' captured output.
+- `[PR file]` marks a test or traceback location in a file the PR changes. `[fails on <base>]` marks a test that also failed on a recent base-branch run.
+- For failed jobs with no parseable tests, the log lines just before the first error.
+- Runs that are still in progress, listed as pending.
+
+The digest is saved as `digest.txt` next to `summary.json`.
+
 ## Using with Claude Code
 
 After downloading artifacts, you can create a custom Claude command to analyze the failures. Add this context block to your `.claude/commands/analyze-ci.md` file (or include it in any command prompt):
