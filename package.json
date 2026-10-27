@@ -70,7 +70,7 @@
   },
   "dependencies": {
     "@types/node": "^24.9.2",
-    "artifact-detective": "^2.0.0",
+    "artifact-detective": "^2.0.1",
     "cheerio": "^1.1.2",
     "commander": "^14.0.2",
     "junit-xml-parser": "^0.0.3",
