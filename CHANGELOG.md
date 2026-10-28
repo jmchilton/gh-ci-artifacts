@@ -1,3 +1,19 @@
+# [2.1.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v2.0.0...v2.1.0) (2026-10-28)
+
+
+### Bug Fixes
+
+* **deps:** artifact-detective 2.0.1 keeps pytest-html xfail outcomes ([4c33b83](https://github.com/jmchilton/gh-ci-artifacts/commit/4c33b83cc958ffa2e89d6ddab510b767f1d208b5))
+* digest ignores cancelled base jobs and never calls zero runs green ([e6bdfb0](https://github.com/jmchilton/gh-ci-artifacts/commit/e6bdfb0c3330dcb3e656ba586f42940cfa700e91))
+* fetch job logs with gh versions that refuse escape sequences ([2a8eaf7](https://github.com/jmchilton/gh-ci-artifacts/commit/2a8eaf7b8dc4c7c771782d10bd38f6c424ed4abd))
+* keep converted reports from different artifacts of a run apart ([0f54e20](https://github.com/jmchilton/gh-ci-artifacts/commit/0f54e206b36b0c844a0b96d4f34e21263c67aacf))
+
+
+### Features
+
+* add --digest, a compact failure report for agents ([91ef2ba](https://github.com/jmchilton/gh-ci-artifacts/commit/91ef2ba7a139542cb4c01ffeb9a8122a879b8e55))
+* digest branch mode and Galaxy tool test results ([bcdd95a](https://github.com/jmchilton/gh-ci-artifacts/commit/bcdd95ab776b4ae41eb1788a39a2bd2b4d643201)), closes [#1](https://github.com/jmchilton/gh-ci-artifacts/issues/1)
+
 # [2.0.0](https://github.com/jmchilton/gh-ci-artifacts/compare/v1.22.0...v2.0.0) (2025-12-07)
 
 
