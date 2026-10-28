@@ -198,7 +198,7 @@ All paths in JSON are relative to the artifact directory:
 
 ```
 Raw artifacts:     raw/1234567/file.zip
-Converted JSON:    converted/file.json
+Converted JSON:    converted/1234567/artifact-89/file.json
 Log files:         raw/1234567/job-name.log
 ```
 

@@ -256,15 +256,110 @@ export function downloadArtifact(
 }
 
 export function getJobLogs(repo: string, jobId: string): string {
-  try {
-    const output = execSync(`gh api repos/${repo}/actions/jobs/${jobId}/logs`, {
+  const fetch = (flags: string) =>
+    execSync(`gh api ${flags}repos/${repo}/actions/jobs/${jobId}/logs`, {
       encoding: "utf-8",
       maxBuffer: 50 * 1024 * 1024,
+      stdio: ["ignore", "pipe", "pipe"],
     });
-    return output;
+  try {
+    try {
+      return fetch("");
+    } catch (error) {
+      // Newer gh refuses output with ANSI escapes unless allowed; older gh lacks the flag.
+      if (!String(error).includes("--allow-escape-sequences")) throw error;
+      return fetch("--allow-escape-sequences ");
+    }
   } catch (error) {
     throw new Error(
       `Failed to fetch logs for job ${jobId}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+export interface JobWithSteps {
+  id: string;
+  name: string;
+  conclusion: string | null;
+  html_url: string;
+  /** Names of failed steps. */
+  steps: string[];
+}
+
+export function getJobsWithSteps(repo: string, runId: string): JobWithSteps[] {
+  try {
+    const output = execSync(
+      `gh api --paginate 'repos/${repo}/actions/runs/${runId}/jobs?per_page=100' --jq '.jobs[] | {id: (.id | tostring), name, conclusion, html_url, steps: [.steps[]? | select(.conclusion == "failure") | .name]}'`,
+      { encoding: "utf-8", maxBuffer: 50 * 1024 * 1024 },
+    );
+    return output
+      .trim()
+      .split("\n")
+      .filter((line) => line.trim())
+      .map((line) => JSON.parse(line) as JobWithSteps);
+  } catch (error) {
+    throw new Error(
+      `Failed to fetch jobs for run ${runId}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+export interface PRDetails {
+  baseRefName: string;
+  files: string[];
+}
+
+export function getPRDetails(repo: string, prNumber: number): PRDetails {
+  try {
+    const output = execSync(
+      `gh pr view ${prNumber} --repo ${repo} --json baseRefName,files --jq '{baseRefName, files: [.files[].path]}'`,
+      { encoding: "utf-8", maxBuffer: 50 * 1024 * 1024 },
+    );
+    return JSON.parse(output) as PRDetails;
+  } catch (error) {
+    throw new Error(
+      `Failed to fetch PR details: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+/** IDs of the latest completed push runs of a workflow on a branch, newest first. */
+export function getBaseBranchRuns(
+  repo: string,
+  workflowFile: string,
+  branch: string,
+  count: number,
+): string[] {
+  try {
+    const output = execSync(
+      `gh api 'repos/${repo}/actions/workflows/${workflowFile}/runs?branch=${encodeURIComponent(branch)}&event=push&status=completed&per_page=${count}' --jq '.workflow_runs[].id'`,
+      { encoding: "utf-8" },
+    );
+    return output.split("\n").filter((line) => line.trim());
+  } catch (error) {
+    throw new Error(
+      `Failed to fetch ${branch} runs of ${workflowFile}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+/** Files changed between a base branch and a head commit, possibly in a fork. */
+export function getChangedFiles(
+  baseRepo: string,
+  base: string,
+  headRepo: string,
+  headSha: string,
+): string[] {
+  const owner = headRepo.split("/")[0];
+  try {
+    const output = execSync(
+      `gh api 'repos/${baseRepo}/compare/${encodeURIComponent(base)}...${owner}:${headSha}' --jq '.files[].filename'`,
+      { encoding: "utf-8", maxBuffer: 50 * 1024 * 1024 },
+    );
+    return output.split("\n").filter((line) => line.trim());
+  } catch (error) {
+    throw new Error(
+      `Failed to compare ${base}...${owner}:${headSha}: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 }

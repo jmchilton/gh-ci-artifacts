@@ -130,8 +130,8 @@ export async function catalogArtifacts(
             const conversionResult = convertToJSON(detection, filePath);
 
             if (conversionResult) {
-              // Save converted JSON
-              const convertedRunDir = join(convertedDir, runId);
+              // Save converted JSON (per artifact: a run's artifacts often share file names)
+              const convertedRunDir = join(convertedDir, runId, dirName);
               mkdirSync(convertedRunDir, { recursive: true });
 
               const convertedFileName =

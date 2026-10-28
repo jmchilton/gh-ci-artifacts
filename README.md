@@ -66,6 +66,9 @@ npx gh-ci-artifacts 123 --wait
 
 # Open HTML viewer in browser when complete
 npx gh-ci-artifacts 123 --open
+
+# Print a compact failure digest for an agent to read
+npx gh-ci-artifacts 123 --digest 2>/dev/null
 ```
 
 After downloading, open `.gh-ci-artifacts/<ref>/index.html` in your browser for an interactive file tree viewer (where `<ref>` is `pr-<number>` for PRs or `branch-<remote>-<name>` for branches).
@@ -112,6 +115,7 @@ See the [Configuration Guide](https://jmchilton.github.io/gh-ci-artifacts/#/guid
 └── pr-<number>/              # or branch-<remote>-<name>/
     ├── index.html            # Interactive HTML viewer
     ├── summary.json          # Master summary with all metadata
+    ├── digest.txt            # Compact failure digest (with --digest)
     ├── catalog.json          # Artifact catalog with type detection
     ├── artifacts.json        # Download inventory
     ├── raw/                  # Original downloaded artifacts

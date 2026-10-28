@@ -8,7 +8,8 @@ import { loadConfig, mergeConfig, getOutputDir } from "./config.js";
 import { validateGhSetup, getCurrentRepo } from "./utils/gh.js";
 import { Logger } from "./utils/logger.js";
 import { runAction } from "./action.js";
-import type { Config } from "./types.js";
+import { writeDigest } from "./digest.js";
+import type { CatalogEntry, Config } from "./types.js";
 
 // Read version from package.json
 const __filename = fileURLToPath(import.meta.url);
@@ -65,6 +66,23 @@ program
     parseInt,
   )
   .option("--open", "Open the generated HTML viewer in default browser")
+  .option(
+    "--digest",
+    "Print a compact failure digest to stdout (also saved as digest.txt)",
+  )
+  .option(
+    "--base <branch>",
+    "Base branch for the digest in branch mode (PRs use their own base)",
+  )
+  .option(
+    "--base-repo <owner/repo>",
+    "Repository of the digest's base branch, e.g. upstream when analyzing a fork",
+  )
+  .option(
+    "--base-runs <count>",
+    "Recent base-branch push runs the digest compares failures against (default: 3, 0 to skip)",
+    parseInt,
+  )
   .option("--debug", "Enable debug logging")
   .option("--dry-run", "Show what would be downloaded without downloading")
   .action(async (ref: string, options) => {
@@ -156,6 +174,19 @@ program
         logger.info(`Catalog saved to: ${outputDir}/catalog.json`);
         logger.info(`Inventory saved to: ${outputDir}/artifacts.json`);
         logger.info(`HTML viewer saved to: ${outputDir}/index.html`);
+
+        if (options.digest) {
+          const catalog = JSON.parse(
+            readFileSync(join(outputDir, "catalog.json"), "utf-8"),
+          ) as CatalogEntry[];
+          const digest = writeDigest(outputDir, summary, catalog, logger, {
+            baseRuns: options.baseRuns,
+            base: options.base,
+            baseRepo: options.baseRepo,
+          });
+          logger.info(`Digest saved to: ${outputDir}/digest.txt`);
+          process.stdout.write(digest);
+        }
 
         // Open HTML in browser if requested
         if (options.open) {
