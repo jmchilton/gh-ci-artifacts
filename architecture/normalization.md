@@ -67,7 +67,7 @@ Detected Artifact → Check Format → Check Capability → Normalize → Save J
 **Component:** File system operations in `cataloger.ts`
 
 **Process:**
-1. **Create directory:** `outputDir/converted/{runId}/`
+1. **Create directory:** `outputDir/converted/{runId}/artifact-{artifactId}/`
 2. **Generate filename:** `{originalName}.json` (preserve base name, change extension)
 3. **Write JSON:** `JSON.stringify(jsonData, null, 2)` (pretty-printed)
 4. **Save file:** Write to `converted/` directory
@@ -81,7 +81,8 @@ outputDir/
         playwright-report.html  (original)
   converted/
     {runId}/
-      playwright-report.json    (normalized)
+      artifact-{artifactId}/
+        playwright-report.json  (normalized)
 ```
 
 ### Stage 5: Catalog Update
